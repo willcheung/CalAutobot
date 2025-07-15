@@ -259,9 +259,45 @@ def handle_mailgun_webhook():
                 user = user_email.user
 
         if user:
-            # Check if this is a temp user (no google_id) or real user
-            if user.google_id is None:
-                # This is a temp user - add events and send signup email
+            # Check if email was found via UserEmail lookup (treat as existing user regardless of google_id)
+            user_email = UserEmail.query.filter_by(email=sender_email).first()
+            is_additional_email = user_email is not None
+            
+            # If found via UserEmail or has google_id, treat as existing user
+            if is_additional_email or user.google_id is not None:
+                # This is an existing user - process and send confirmation
+                try:
+                    # Auto-sync only if user has google_id
+                    auto_sync = user.google_id is not None
+                    
+                    result = process_text_to_events(
+                        formatted_text, 
+                        user, 
+                        source_type="email", 
+                        auto_sync=auto_sync
+                    )
+
+                    events_count = len(result['events'])
+                    synced_count = result['synced_count']
+
+                    logger.info(f"Processed {events_count} events for existing user {user.id} (via {'additional email' if is_additional_email else 'primary email'}), synced {synced_count}")
+
+                    # Send confirmation email
+                    send_confirmation_email(sender_email, events_count, synced_count)
+
+                    return jsonify({
+                        "status": "success",
+                        "user_id": user.id,
+                        "events_extracted": events_count,
+                        "events_synced": synced_count
+                    }), 200
+
+                except Exception as e:
+                    logger.error(f"Error processing email for existing user {sender_email}: {str(e)}")
+                    sentry_sdk.capture_exception(e)
+                    return jsonify({"error": "Failed to process email"}), 500
+            else:
+                # This is a temp user found by primary email with no google_id - send signup email
                 try:
                     result = process_text_to_events(
                         formatted_text, 
@@ -301,35 +337,6 @@ def handle_mailgun_webhook():
 
                 except Exception as e:
                     logger.error(f"Error processing email for temp user {sender_email}: {str(e)}")
-                    sentry_sdk.capture_exception(e)
-                    return jsonify({"error": "Failed to process email"}), 500
-            else:
-                # This is a real user with google_id - process and send confirmation
-                try:
-                    result = process_text_to_events(
-                        formatted_text, 
-                        user, 
-                        source_type="email", 
-                        auto_sync=True
-                    )
-
-                    events_count = len(result['events'])
-                    synced_count = result['synced_count']
-
-                    logger.info(f"Processed {events_count} events for existing user {user.id}, synced {synced_count}")
-
-                    # Send confirmation email
-                    send_confirmation_email(sender_email, events_count, synced_count)
-
-                    return jsonify({
-                        "status": "success",
-                        "user_id": user.id,
-                        "events_extracted": events_count,
-                        "events_synced": synced_count
-                    }), 200
-
-                except Exception as e:
-                    logger.error(f"Error processing email for existing user {sender_email}: {str(e)}")
                     sentry_sdk.capture_exception(e)
                     return jsonify({"error": "Failed to process email"}), 500
 
