@@ -361,14 +361,16 @@ if ('serviceWorker' in navigator) {
 // Email management functions
 function initializeEmailManagement() {
     const addEmailForm = document.getElementById('add-email-form');
-    const removeEmailButtons = document.querySelectorAll('.remove-email-ajax');
     
     if (addEmailForm) {
         addEmailForm.addEventListener('submit', handleAddEmail);
     }
     
-    removeEmailButtons.forEach(button => {
-        button.addEventListener('click', handleRemoveEmail);
+    // Use event delegation for remove buttons (including dynamically added ones)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-email-ajax')) {
+            handleRemoveEmail(e);
+        }
     });
 }
 
@@ -513,9 +515,7 @@ function addEmailToList(emailData) {
         </button>
     `;
     
-    // Add event listener to the new remove button
-    const removeButton = emailItem.querySelector('.remove-email-ajax');
-    removeButton.addEventListener('click', handleRemoveEmail);
+    // Event listener will be handled by event delegation
     
     // Append to container
     container.appendChild(emailItem);
