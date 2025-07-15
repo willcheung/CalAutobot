@@ -275,8 +275,7 @@ def add_email():
         
         # Optimized single query to check all email conflicts at once
         # Check if email already exists for this user OR any other user (primary or additional)
-        existing_user_email = UserEmail.query.filter_by(email=email).first()
-        existing_primary_user = User.query.filter_by(email=email).first()
+        existing_user_email = UserEmail.query.filter_by(email=email, google_id!=None).first()
         existing_user_additional = UserEmail.query.filter_by(user_id=current_user.id, email=email).first()
         
         if existing_user_additional:
@@ -286,7 +285,7 @@ def add_email():
             flash(error_msg, "warning")
             return redirect(url_for("main_routes.dashboard"))
         
-        if existing_primary_user or existing_user_email:
+        if existing_user_email:
             error_msg = "This email is already associated with another account."
             if is_ajax:
                 return jsonify({"success": False, "error": error_msg}), 400
