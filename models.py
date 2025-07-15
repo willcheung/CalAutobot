@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     # Relationship with events
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
     text_inputs = db.relationship('TextInput', backref='user', lazy=True, cascade='all, delete-orphan')
+    additional_emails = db.relationship('UserEmail', backref='user', lazy=True, cascade='all, delete-orphan')
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,6 +45,16 @@ class Event(db.Model):
     
     # Link to original text input
     text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'))
+
+class UserEmail(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    is_verified = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Add unique constraint on email to prevent duplicates across users
+    __table_args__ = (db.UniqueConstraint('email', name='unique_user_email'),)
 
 class TextInput(db.Model):
     id = db.Column(db.Integer, primary_key=True)

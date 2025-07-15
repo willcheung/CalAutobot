@@ -3,7 +3,7 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from models import User, Event, TextInput
+from models import User, Event, TextInput, UserEmail
 from google_calendar import create_calendar_event, update_calendar_event, delete_calendar_event, check_user_has_calendar_scope
 from datetime import datetime
 import sentry_sdk
@@ -72,11 +72,14 @@ def dashboard():
     # Get user's events ordered by extraction datetime (oldest first)
     events = Event.query.filter_by(user_id=current_user.id).order_by(Event.created_at.desc()).all()
     text_inputs = TextInput.query.filter_by(user_id=current_user.id).order_by(TextInput.created_at.desc()).limit(10).all()
+    
+    # Get user's additional emails
+    additional_emails = UserEmail.query.filter_by(user_id=current_user.id).order_by(UserEmail.created_at.desc()).all()
 
     # Check if user has granted calendar scope
     has_calendar_scope = check_user_has_calendar_scope(current_user)
 
-    return render_template("dashboard.html", events=events, text_inputs=text_inputs, has_calendar_scope=has_calendar_scope)
+    return render_template("dashboard.html", events=events, text_inputs=text_inputs, additional_emails=additional_emails, has_calendar_scope=has_calendar_scope)
 
 @main_routes.route("/extract_events", methods=["POST"])
 @login_required
@@ -234,6 +237,79 @@ def email_instructions():
     """Display email integration instructions"""
     mailgun_domain = os.environ.get("MAILGUN_DOMAIN", "your-domain.com")
     return render_template('email_instructions.html', mailgun_domain=mailgun_domain)
+
+@main_routes.route("/add_email", methods=["POST"])
+@login_required
+def add_email():
+    """Add an additional email address to the user's account"""
+    try:
+        email = request.form.get("email", "").lower().strip()
+        
+        if not email:
+            flash("Please enter a valid email address.", "error")
+            return redirect(url_for("main_routes.dashboard"))
+        
+        # Validate email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            flash("Please enter a valid email address format.", "error")
+            return redirect(url_for("main_routes.dashboard"))
+        
+        # Check if email is already the user's primary email
+        if email == current_user.email:
+            flash("This is already your primary email address.", "warning")
+            return redirect(url_for("main_routes.dashboard"))
+        
+        # Check if email already exists for this user
+        existing_email = UserEmail.query.filter_by(user_id=current_user.id, email=email).first()
+        if existing_email:
+            flash("This email is already added to your account.", "warning")
+            return redirect(url_for("main_routes.dashboard"))
+        
+        # Check if email is already used by another user (primary or additional)
+        existing_user = User.query.filter_by(email=email).first()
+        existing_user_email = UserEmail.query.filter_by(email=email).first()
+        
+        if existing_user or existing_user_email:
+            flash("This email is already associated with another account.", "error")
+            return redirect(url_for("main_routes.dashboard"))
+        
+        # Add the email
+        user_email = UserEmail(user_id=current_user.id, email=email)
+        db.session.add(user_email)
+        db.session.commit()
+        
+        flash(f"Email {email} added successfully! Emails sent to this address will now be processed for your calendar.", "success")
+        
+    except Exception as e:
+        logger.error(f"Error adding email for user {current_user.id}: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        flash("Error adding email. Please try again.", "error")
+    
+    return redirect(url_for("main_routes.dashboard"))
+
+@main_routes.route("/remove_email/<int:email_id>", methods=["POST"])
+@login_required
+def remove_email(email_id):
+    """Remove an additional email address from the user's account"""
+    try:
+        user_email = UserEmail.query.filter_by(id=email_id, user_id=current_user.id).first_or_404()
+        
+        email_address = user_email.email
+        db.session.delete(user_email)
+        db.session.commit()
+        
+        flash(f"Email {email_address} removed successfully.", "success")
+        
+    except Exception as e:
+        logger.error(f"Error removing email {email_id} for user {current_user.id}: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        flash("Error removing email. Please try again.", "error")
+    
+    return redirect(url_for("main_routes.dashboard"))
 
 @main_routes.route("/api/extract_events", methods=["POST"])
 @login_required

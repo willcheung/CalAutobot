@@ -8,7 +8,7 @@ from flask import Blueprint, request, jsonify
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
-from models import User, Event
+from models import User, Event, UserEmail
 from helpers.event_processing import process_text_to_events
 from helpers.event_utils import format_event_for_api
 from helpers.domain_utils import get_base_url
@@ -249,7 +249,14 @@ def handle_mailgun_webhook():
         formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{email_text}"
 
         # Check if sender is an existing user (including temp users)
+        # First check primary email
         user = User.query.filter_by(email=sender_email).first()
+        
+        # If not found, check additional emails
+        if not user:
+            user_email = UserEmail.query.filter_by(email=sender_email).first()
+            if user_email:
+                user = user_email.user
 
         if user:
             # Check if this is a temp user (no google_id) or real user

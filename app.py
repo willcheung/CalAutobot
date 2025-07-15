@@ -150,4 +150,5 @@ with app.app_context():
     app.register_blueprint(google_auth)
     app.register_blueprint(mailgun_webhook)
 
+    # Create all tables including the new UserEmail table
     db.create_all()

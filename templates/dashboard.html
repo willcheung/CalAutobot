@@ -39,9 +39,9 @@
         </div>
     </div>
 
-    <!-- Email Forwarding CTA -->
+    <!-- Email Forwarding CTA and Additional Emails -->
     <div class="row mb-4">
-        <div class="col-12">
+        <div class="col-lg-9 col-md-8 mb-3">
             <div class="email-cta">
                 <div class="email-forward-instruction text-center">
                     <span class="email-label">Get started by forwarding any email to:</span>
@@ -52,6 +52,51 @@
                         </button>
                     </div>
                     <p class="mt-3 mb-0">Our AI will extract events and sync them to your Google Calendar!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-4">
+            <div class="additional-emails-card">
+                <h5 class="mb-3">
+                    <i data-feather="mail" class="me-2"></i>
+                    Additional Emails
+                </h5>
+                
+                <!-- Add Email Form -->
+                <form method="POST" action="{{ url_for('main_routes.add_email') }}" class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <input type="email" class="form-control" name="email" placeholder="Add email address" required>
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i data-feather="plus"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Current Additional Emails -->
+                <div class="additional-emails-list">
+                    <div class="primary-email mb-2">
+                        <small class="text-muted d-block">Primary:</small>
+                        <div class="email-item">
+                            <span class="email-text">{{ current_user.email }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if additional_emails %}
+                        <small class="text-muted d-block mb-2">Additional:</small>
+                        {% for user_email in additional_emails %}
+                            <div class="email-item mb-2">
+                                <span class="email-text">{{ user_email.email }}</span>
+                                <form method="POST" action="{{ url_for('main_routes.remove_email', email_id=user_email.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger email-remove-btn" title="Remove email">
+                                        <i data-feather="x"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <small class="text-muted">No additional emails added yet.</small>
+                    {% endif %}
                 </div>
             </div>
         </div>

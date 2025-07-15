@@ -871,6 +871,64 @@ code, pre {
     cursor: not-allowed;
 }
 
+/* Additional emails section */
+.additional-emails-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    height: fit-content;
+}
+
+.additional-emails-card h5 {
+    color: var(--text-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.additional-emails-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.email-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.email-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+}
+
+.email-remove-btn {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.primary-email .email-item {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+}
+
+.input-group-sm .form-control {
+    font-size: 0.85rem;
+}
+
+.input-group-sm .btn {
+    font-size: 0.85rem;
+}
+
 /* Legal pages styling */
 .card h1 {
     color: var(--primary-color);
