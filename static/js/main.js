@@ -437,7 +437,8 @@ function handleRemoveEmail(e) {
     
     const emailId = button.dataset.emailId;
     const emailItem = button.closest('[data-email-id]');
-    const emailText = emailItem.querySelector('.email-text').textContent;
+    const emailTextElement = emailItem.querySelector('.email-text');
+    const emailText = emailTextElement ? emailTextElement.textContent : 'this email';
     
     if (!confirm(`Are you sure you want to remove ${emailText}?`)) {
         return;
