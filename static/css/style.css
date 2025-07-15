@@ -929,6 +929,12 @@ code, pre {
     font-size: 0.85rem;
 }
 
+.alert-sm {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 0.375rem;
+}
+
 /* Legal pages styling */
 .card h1 {
     color: var(--primary-color);

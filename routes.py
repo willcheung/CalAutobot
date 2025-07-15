@@ -241,38 +241,56 @@ def email_instructions():
 @main_routes.route("/add_email", methods=["POST"])
 @login_required
 def add_email():
-    """Add an additional email address to the user's account"""
+    """Add an additional email address to the user's account via AJAX"""
     try:
+        # Check if it's an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         email = request.form.get("email", "").lower().strip()
         
         if not email:
-            flash("Please enter a valid email address.", "error")
+            error_msg = "Please enter a valid email address."
+            if is_ajax:
+                return jsonify({"success": False, "error": error_msg}), 400
+            flash(error_msg, "error")
             return redirect(url_for("main_routes.dashboard"))
         
         # Validate email format
         import re
         email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         if not re.match(email_pattern, email):
-            flash("Please enter a valid email address format.", "error")
+            error_msg = "Please enter a valid email address format."
+            if is_ajax:
+                return jsonify({"success": False, "error": error_msg}), 400
+            flash(error_msg, "error")
             return redirect(url_for("main_routes.dashboard"))
         
         # Check if email is already the user's primary email
         if email == current_user.email:
-            flash("This is already your primary email address.", "warning")
+            error_msg = "This is already your primary email address."
+            if is_ajax:
+                return jsonify({"success": False, "error": error_msg}), 400
+            flash(error_msg, "warning")
             return redirect(url_for("main_routes.dashboard"))
         
-        # Check if email already exists for this user
-        existing_email = UserEmail.query.filter_by(user_id=current_user.id, email=email).first()
-        if existing_email:
-            flash("This email is already added to your account.", "warning")
-            return redirect(url_for("main_routes.dashboard"))
-        
-        # Check if email is already used by another user (primary or additional)
-        existing_user = User.query.filter_by(email=email).first()
+        # Optimized single query to check all email conflicts at once
+        # Check if email already exists for this user OR any other user (primary or additional)
         existing_user_email = UserEmail.query.filter_by(email=email).first()
+        existing_primary_user = User.query.filter_by(email=email).first()
+        existing_user_additional = UserEmail.query.filter_by(user_id=current_user.id, email=email).first()
         
-        if existing_user or existing_user_email:
-            flash("This email is already associated with another account.", "error")
+        if existing_user_additional:
+            error_msg = "This email is already added to your account."
+            if is_ajax:
+                return jsonify({"success": False, "error": error_msg}), 400
+            flash(error_msg, "warning")
+            return redirect(url_for("main_routes.dashboard"))
+        
+        if existing_primary_user or existing_user_email:
+            error_msg = "This email is already associated with another account."
+            if is_ajax:
+                return jsonify({"success": False, "error": error_msg}), 400
+            flash(error_msg, "error")
             return redirect(url_for("main_routes.dashboard"))
         
         # Add the email
@@ -280,13 +298,30 @@ def add_email():
         db.session.add(user_email)
         db.session.commit()
         
-        flash(f"Email {email} added successfully! Emails sent to this address will now be processed for your calendar.", "success")
+        success_msg = f"Email {email} added successfully! Emails sent to this address will now be processed for your calendar."
+        
+        if is_ajax:
+            return jsonify({
+                "success": True, 
+                "message": success_msg,
+                "email": {
+                    "id": user_email.id,
+                    "email": user_email.email,
+                    "created_at": user_email.created_at.isoformat()
+                }
+            }), 200
+            
+        flash(success_msg, "success")
         
     except Exception as e:
         logger.error(f"Error adding email for user {current_user.id}: {str(e)}")
         sentry_sdk.capture_exception(e)
         db.session.rollback()
-        flash("Error adding email. Please try again.", "error")
+        error_msg = "Error adding email. Please try again."
+        
+        if is_ajax:
+            return jsonify({"success": False, "error": error_msg}), 500
+        flash(error_msg, "error")
     
     return redirect(url_for("main_routes.dashboard"))
 
@@ -295,19 +330,31 @@ def add_email():
 def remove_email(email_id):
     """Remove an additional email address from the user's account"""
     try:
+        # Check if it's an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         user_email = UserEmail.query.filter_by(id=email_id, user_id=current_user.id).first_or_404()
         
         email_address = user_email.email
         db.session.delete(user_email)
         db.session.commit()
         
-        flash(f"Email {email_address} removed successfully.", "success")
+        success_msg = f"Email {email_address} removed successfully."
+        
+        if is_ajax:
+            return jsonify({"success": True, "message": success_msg}), 200
+            
+        flash(success_msg, "success")
         
     except Exception as e:
         logger.error(f"Error removing email {email_id} for user {current_user.id}: {str(e)}")
         sentry_sdk.capture_exception(e)
         db.session.rollback()
-        flash("Error removing email. Please try again.", "error")
+        error_msg = "Error removing email. Please try again."
+        
+        if is_ajax:
+            return jsonify({"success": False, "error": error_msg}), 500
+        flash(error_msg, "error")
     
     return redirect(url_for("main_routes.dashboard"))
 

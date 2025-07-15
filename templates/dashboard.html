@@ -64,13 +64,14 @@
                 </h5>
                 
                 <!-- Add Email Form -->
-                <form method="POST" action="{{ url_for('main_routes.add_email') }}" class="mb-3">
+                <form id="add-email-form" method="POST" action="{{ url_for('main_routes.add_email') }}" class="mb-3">
                     <div class="input-group input-group-sm">
-                        <input type="email" class="form-control" name="email" placeholder="Add email address" required>
-                        <button class="btn btn-outline-primary" type="submit">
+                        <input type="email" class="form-control" id="email-input" name="email" placeholder="Add email address" required>
+                        <button class="btn btn-outline-primary" type="submit" id="add-email-btn">
                             <i data-feather="plus"></i>
                         </button>
                     </div>
+                    <div id="email-form-message" class="mt-2" style="display: none;"></div>
                 </form>
                 
                 <!-- Current Additional Emails -->
@@ -82,21 +83,22 @@
                         </div>
                     </div>
                     
-                    {% if additional_emails %}
-                        <small class="text-muted d-block mb-2">Additional:</small>
-                        {% for user_email in additional_emails %}
-                            <div class="email-item mb-2">
-                                <span class="email-text">{{ user_email.email }}</span>
-                                <form method="POST" action="{{ url_for('main_routes.remove_email', email_id=user_email.id) }}" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger email-remove-btn" title="Remove email">
+                    <div id="additional-emails-container">
+                        {% if additional_emails %}
+                            <small class="text-muted d-block mb-2">Additional:</small>
+                            {% for user_email in additional_emails %}
+                                <div class="email-item mb-2" data-email-id="{{ user_email.id }}">
+                                    <span class="email-text">{{ user_email.email }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger email-remove-btn remove-email-ajax" 
+                                            data-email-id="{{ user_email.id }}" title="Remove email">
                                         <i data-feather="x"></i>
                                     </button>
-                                </form>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <small class="text-muted">No additional emails added yet.</small>
-                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <small class="text-muted" id="no-emails-message">No additional emails added yet.</small>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

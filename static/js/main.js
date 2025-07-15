@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
         feather.replace();
     }
     
+    // Initialize email management
+    initializeEmailManagement();
+    
     // Auto-resize textarea
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
@@ -353,4 +356,196 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
         // Service worker code would go here for offline functionality
     });
+}
+
+// Email management functions
+function initializeEmailManagement() {
+    const addEmailForm = document.getElementById('add-email-form');
+    const removeEmailButtons = document.querySelectorAll('.remove-email-ajax');
+    
+    if (addEmailForm) {
+        addEmailForm.addEventListener('submit', handleAddEmail);
+    }
+    
+    removeEmailButtons.forEach(button => {
+        button.addEventListener('click', handleRemoveEmail);
+    });
+}
+
+function handleAddEmail(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    const emailInput = document.getElementById('email-input');
+    const addButton = document.getElementById('add-email-btn');
+    const messageDiv = document.getElementById('email-form-message');
+    
+    // Disable form elements
+    emailInput.disabled = true;
+    addButton.disabled = true;
+    addButton.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+    
+    // Clear previous messages
+    messageDiv.style.display = 'none';
+    messageDiv.className = 'mt-2';
+    
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Clear the input
+            emailInput.value = '';
+            
+            // Show success message
+            showEmailMessage(data.message, 'success');
+            
+            // Add the new email to the list
+            addEmailToList(data.email);
+            
+        } else {
+            showEmailMessage(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showEmailMessage('An error occurred. Please try again.', 'danger');
+    })
+    .finally(() => {
+        // Re-enable form elements
+        emailInput.disabled = false;
+        addButton.disabled = false;
+        addButton.innerHTML = '<i data-feather="plus"></i>';
+        feather.replace();
+    });
+}
+
+function handleRemoveEmail(e) {
+    const button = e.currentTarget;
+    const emailId = button.dataset.emailId;
+    const emailItem = button.closest('[data-email-id]');
+    const emailText = emailItem.querySelector('.email-text').textContent;
+    
+    if (!confirm(`Are you sure you want to remove ${emailText}?`)) {
+        return;
+    }
+    
+    // Disable button
+    button.disabled = true;
+    button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+    
+    fetch(`/remove_email/${emailId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the email item from the list
+            removeEmailFromList(emailId);
+            showEmailMessage(data.message, 'success');
+        } else {
+            showEmailMessage(data.error, 'danger');
+            // Re-enable button on error
+            button.disabled = false;
+            button.innerHTML = '<i data-feather="x"></i>';
+            feather.replace();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showEmailMessage('An error occurred. Please try again.', 'danger');
+        // Re-enable button on error
+        button.disabled = false;
+        button.innerHTML = '<i data-feather="x"></i>';
+        feather.replace();
+    });
+}
+
+function showEmailMessage(message, type) {
+    const messageDiv = document.getElementById('email-form-message');
+    messageDiv.className = `mt-2 alert alert-${type} alert-sm`;
+    messageDiv.textContent = message;
+    messageDiv.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        messageDiv.style.display = 'none';
+    }, 5000);
+}
+
+function addEmailToList(emailData) {
+    const container = document.getElementById('additional-emails-container');
+    const noEmailsMessage = document.getElementById('no-emails-message');
+    
+    // Hide "no emails" message if it exists
+    if (noEmailsMessage) {
+        noEmailsMessage.style.display = 'none';
+    }
+    
+    // Add "Additional:" label if this is the first additional email
+    let additionalLabel = container.querySelector('small.text-muted');
+    if (!additionalLabel) {
+        additionalLabel = document.createElement('small');
+        additionalLabel.className = 'text-muted d-block mb-2';
+        additionalLabel.textContent = 'Additional:';
+        container.insertBefore(additionalLabel, container.firstChild);
+    }
+    
+    // Create new email item
+    const emailItem = document.createElement('div');
+    emailItem.className = 'email-item mb-2';
+    emailItem.setAttribute('data-email-id', emailData.id);
+    
+    emailItem.innerHTML = `
+        <span class="email-text">${emailData.email}</span>
+        <button type="button" class="btn btn-sm btn-outline-danger email-remove-btn remove-email-ajax" 
+                data-email-id="${emailData.id}" title="Remove email">
+            <i data-feather="x"></i>
+        </button>
+    `;
+    
+    // Add event listener to the new remove button
+    const removeButton = emailItem.querySelector('.remove-email-ajax');
+    removeButton.addEventListener('click', handleRemoveEmail);
+    
+    // Append to container
+    container.appendChild(emailItem);
+    
+    // Refresh feather icons
+    feather.replace();
+}
+
+function removeEmailFromList(emailId) {
+    const emailItem = document.querySelector(`[data-email-id="${emailId}"]`);
+    if (emailItem) {
+        emailItem.remove();
+    }
+    
+    // Check if there are any additional emails left
+    const container = document.getElementById('additional-emails-container');
+    const remainingEmails = container.querySelectorAll('.email-item[data-email-id]');
+    
+    if (remainingEmails.length === 0) {
+        // Remove the "Additional:" label
+        const additionalLabel = container.querySelector('small.text-muted');
+        if (additionalLabel) {
+            additionalLabel.remove();
+        }
+        
+        // Show "no emails" message
+        const noEmailsMessage = document.createElement('small');
+        noEmailsMessage.className = 'text-muted';
+        noEmailsMessage.id = 'no-emails-message';
+        noEmailsMessage.textContent = 'No additional emails added yet.';
+        container.appendChild(noEmailsMessage);
+    }
 }
