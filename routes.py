@@ -275,7 +275,7 @@ def add_email():
         
         # Optimized single query to check all email conflicts at once
         # Check if email already exists for this user OR any other user (primary or additional)
-        existing_user_email = UserEmail.query.filter_by(email=email, google_id!=None).first()
+        existing_user_email = User.query.filter_by(email=email).filter(User.google_id != None).first()
         existing_user_additional = UserEmail.query.filter_by(user_id=current_user.id, email=email).first()
         
         if existing_user_additional:
