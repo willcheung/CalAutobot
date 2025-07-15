@@ -429,7 +429,12 @@ function handleAddEmail(e) {
 }
 
 function handleRemoveEmail(e) {
-    const button = e.currentTarget;
+    e.preventDefault();
+    
+    // Find the actual button that was clicked
+    const button = e.target.closest('.remove-email-ajax');
+    if (!button) return;
+    
     const emailId = button.dataset.emailId;
     const emailItem = button.closest('[data-email-id]');
     const emailText = emailItem.querySelector('.email-text').textContent;
@@ -440,6 +445,7 @@ function handleRemoveEmail(e) {
     
     // Disable button
     button.disabled = true;
+    const originalHTML = button.innerHTML;
     button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
     
     fetch(`/remove_email/${emailId}`, {
@@ -458,7 +464,7 @@ function handleRemoveEmail(e) {
             showEmailMessage(data.error, 'danger');
             // Re-enable button on error
             button.disabled = false;
-            button.innerHTML = '<i data-feather="x"></i>';
+            button.innerHTML = originalHTML;
             feather.replace();
         }
     })
@@ -467,7 +473,7 @@ function handleRemoveEmail(e) {
         showEmailMessage('An error occurred. Please try again.', 'danger');
         // Re-enable button on error
         button.disabled = false;
-        button.innerHTML = '<i data-feather="x"></i>';
+        button.innerHTML = originalHTML;
         feather.replace();
     });
 }
