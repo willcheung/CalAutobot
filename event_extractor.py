@@ -110,14 +110,14 @@ def extract_events_from_text(text, current_date=None, user_timezone="UTC", image
                     }
                 ]
             }
-            model = "gpt-4o"  # Use vision model for images
+            model = "gpt-4.1"  # Use vision model for images, latest model
         else:
             # For text-only processing
             user_message = {
                 "role": "user",
                 "content": prompt
             }
-            model = "gpt-4o-mini"  # Use text model for text-only
+            model = "gpt-4.1"  # Use text model for text-only, latest model
         
         messages.append(user_message)
         

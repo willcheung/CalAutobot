@@ -26,4 +26,5 @@ dependencies = [
     "pypdf2>=3.0.1",
     "python-docx>=1.2.0",
     "python-magic>=0.4.27",
+    "replit-object-storage>=1.0.2",
 ]
