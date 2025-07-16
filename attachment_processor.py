@@ -3,12 +3,10 @@ import logging
 import requests
 import mimetypes
 from typing import List, Dict, Optional, Tuple
-from object_store import object_store
 from models import EmailAttachment, TextInput, Event
 from app import db
 from event_extractor import extract_events_from_text
 import json
-import tempfile
 import base64
 
 logger = logging.getLogger(__name__)
@@ -16,7 +14,7 @@ logger = logging.getLogger(__name__)
 class AttachmentProcessor:
     """
     Process email attachments from Mailgun for event extraction.
-    Uses Replit Object Store for temporary file storage.
+    Uses Mailgun Email API to fetch stored emails and attachments.
     """
     
     SUPPORTED_FORMATS = {
@@ -31,6 +29,7 @@ class AttachmentProcessor:
     def __init__(self):
         self.mailgun_api_key = os.environ.get('MAILGUN_API_KEY')
         self.mailgun_domain = os.environ.get('MAILGUN_DOMAIN')
+        self.mailgun_base_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}"
     
     def process_email_attachments(self, text_input: TextInput, attachments_data: List[Dict]) -> List[EmailAttachment]:
         """
@@ -100,10 +99,20 @@ class AttachmentProcessor:
             db.session.add(attachment_record)
             db.session.flush()  # Get the ID without committing
             
-            # Process the attachment directly with content
-            success = self._process_attachment_content(
-                attachment_record, file_content, text_input
-            )
+            # Process the attachment directly with content (base64 decode if needed)
+            try:
+                if isinstance(file_content, str):
+                    # Base64 decode the content
+                    file_content_bytes = base64.b64decode(file_content)
+                else:
+                    file_content_bytes = file_content
+                    
+                success = self._process_attachment_content(
+                    attachment_record, file_content_bytes, text_input
+                )
+            except Exception as decode_error:
+                logger.error(f"Failed to decode attachment content: {str(decode_error)}")
+                success = False
             
             if success:
                 attachment_record.processing_status = 'processed'
@@ -160,37 +169,23 @@ class AttachmentProcessor:
         try:
             logger.info(f"📥 PROCESSING attachment content: {attachment_record.filename} ({len(file_content)} bytes)")
             
-            # Store in Object Store temporarily for processing
-            object_key = object_store.upload_file(
-                file_content, 
-                attachment_record.filename, 
-                attachment_record.file_type
+            # Process attachment for event extraction directly
+            extracted_events = self._extract_events_from_attachment(
+                file_content, attachment_record, text_input
             )
             
-            if not object_key:
-                logger.error("Failed to upload file to Object Store")
-                return False
+            if extracted_events:
+                # Save extracted events to database
+                self._save_extracted_events(extracted_events, attachment_record, text_input)
+                attachment_record.extracted_events_count = len(extracted_events)
+                logger.info(f"✅ EXTRACTED {len(extracted_events)} events from {attachment_record.filename}")
+            else:
+                logger.info(f"⚠️  No events extracted from {attachment_record.filename}")
             
-            try:
-                # Process attachment for event extraction
-                extracted_events = self._extract_events_from_attachment(
-                    file_content, attachment_record, text_input
-                )
-                
-                if extracted_events:
-                    # Save extracted events to database
-                    self._save_extracted_events(extracted_events, attachment_record, text_input)
-                    attachment_record.extracted_events_count = len(extracted_events)
-                    logger.info(f"Extracted {len(extracted_events)} events from {attachment_record.filename}")
-                
-                return True
-                
-            finally:
-                # Clean up from Object Store
-                object_store.delete_file(object_key)
+            return True
                 
         except Exception as e:
-            logger.error(f"Error processing attachment content: {str(e)}")
+            logger.error(f"❌ Error processing attachment content: {str(e)}")
             return False
     
     

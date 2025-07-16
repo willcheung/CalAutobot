@@ -114,13 +114,13 @@ Preferred communication style: Simple, everyday language.
 ## Changelog
 
 - July 16, 2025:
-  - Added comprehensive attachment processing system using Replit Object Store
+  - Added comprehensive attachment processing system using direct file content
   - Enhanced OpenAI integration with multimodal GPT-4o for image and document processing
   - Added EmailAttachment model for tracking attachment processing status
   - Integrated Mailgun attachment download and processing pipeline
   - Added support for PDF, Word, and image file processing
   - Enhanced event extraction to handle visual content (calendars, schedules, itineraries)
-  - Implemented secure temporary file storage using Replit Object Store bucket
+  - Implemented direct attachment processing without temporary file storage
   - Added automatic cleanup of processed files to optimize storage usage
   - Enhanced database schema to track attachment processing and event sources
 - June 15, 2025:
