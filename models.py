@@ -91,3 +91,27 @@ class TextInput(db.Model):
     @extracted_events.setter
     def extracted_events(self, events_list):
         self.extracted_events_json = json.dumps(events_list)
+
+
+class EmailAttachment(db.Model):
+    """
+    Model for storing email attachment metadata and processing status.
+    Used for tracking attachment processing from Mailgun emails.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'), nullable=False)
+    
+    # File metadata
+    filename = db.Column(db.String(255), nullable=False)
+    file_type = db.Column(db.String(50), nullable=False)  # MIME type
+    file_size = db.Column(db.Integer, nullable=False)
+    
+    # Processing status
+    processing_status = db.Column(db.String(50), default='pending')  # pending, processed, failed
+    extracted_events_count = db.Column(db.Integer, default=0)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship back to text input
+    text_input = db.relationship('TextInput', backref=db.backref('attachments', lazy=True))

@@ -51,7 +51,7 @@ Provide the output as a JSON object with a "events" key containing a list, where
 Text: '''{text}'''"""
 
 
-def extract_events_from_text(text, current_date=None, user_timezone="UTC"):
+def extract_events_from_text(text, current_date=None, user_timezone="UTC", image_data=None):
     """
     Extract events from text using OpenAI API synchronously.
 
@@ -59,6 +59,7 @@ def extract_events_from_text(text, current_date=None, user_timezone="UTC"):
         text (str): The input text containing event information
         current_date (str): Current date in YYYY-MM-DD format for resolving relative dates
         user_timezone (str): User's timezone for proper time handling
+        image_data (str): Base64 encoded image data for multimodal processing
 
     Returns:
         tuple: (list of extracted events, from_email, is_offline, openai_status, openai_error)
@@ -85,16 +86,45 @@ def extract_events_from_text(text, current_date=None, user_timezone="UTC"):
         #logger.info(sys_prompt)
         #logger.info(prompt)
 
-        # Make synchronous OpenAI API call
-        response = openai.chat.completions.create(
-            model="gpt-4.1",
-            messages=[{
-                "role": "system",
-                "content": sys_prompt
-            }, {
+        # Prepare messages for OpenAI API call
+        messages = [{
+            "role": "system",
+            "content": sys_prompt
+        }]
+        
+        # Add user message with optional image
+        if image_data:
+            # For multimodal processing with image
+            user_message = {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{image_data}"
+                        }
+                    }
+                ]
+            }
+            model = "gpt-4o"  # Use vision model for images
+        else:
+            # For text-only processing
+            user_message = {
                 "role": "user",
                 "content": prompt
-            }],
+            }
+            model = "gpt-4o-mini"  # Use text model for text-only
+        
+        messages.append(user_message)
+        
+        # Make synchronous OpenAI API call
+        response = openai.chat.completions.create(
+            model=model,
+            messages=messages,
             response_format={"type": "json_object"},
             temperature=0.1,
             timeout=30.0)
