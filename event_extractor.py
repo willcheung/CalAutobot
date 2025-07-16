@@ -15,13 +15,13 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # Centralized prompt template - single place to edit the extraction prompt
-EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text. Always respond with valid JSON format. If text is non-English, retain original language as much as possible.
+EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible.
 
-Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction."""
+Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction. If it's an image or document, extract events from the content of the image or document."""
 
 EVENT_EXTRACTION_PROMPT = """Given the following text, extract all event information. 
 
-If text is a flight itinerary, extract each event and carefully convert timezones:
+If text, image or document is a flight itinerary, extract each event and carefully convert timezones:
 - Traveler's timezone is {user_timezone}.
 - The event name. Add traveler's name(s) from the text into the event name. Also generate one relevant emoji for the event name, given the context of the event.
 - The event description that gives context to this calendar event. Include flight duration and other critical travel details like travel agent contact, confirmation number, booking details. If there are multiple travelers, list all of them. Make description easily human readable with new lines and bullet points.
@@ -33,7 +33,7 @@ Taiwan Taoyuan International Airport (TPE) = Asia/Taipei (UTC+8 year-round))
 - The event location is departure airport.
 - IMPORTANT: Always ensure end datetime is after start datetime, especially for international flights.
 
-If text is not a flight itinerary, extract event and identify:
+If text, image or document is not a flight itinerary, extract event and identify:
 - The event name. Also generate one relevant emoji for the event name, given the context of the event.
 - The event description that summarizes this calendar event. Include details like booking codes, confirmation numbers, and other important details for the event. Make description easily human readable with new lines and bullet points.
 - The start datetime as a combined date-time value (formatted according to IETF Datatracker RFC3339)
