@@ -1,42 +1,35 @@
+
 import os
 import logging
-import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
 import uuid
 from datetime import datetime
+from replit.object_storage import Client
 
 logger = logging.getLogger(__name__)
 
 class ReplitObjectStore:
     """
     Replit Object Store integration for temporary file storage during processing.
-    Uses S3-compatible API with automatic cleanup.
+    Uses the official Replit Object Storage SDK.
     """
     
     def __init__(self):
-        self.bucket_name = "replit-objstore-42af3b1d-2f64-453b-91fd-821709ea91e8"
-        self.s3_client = None
+        self.client = None
         self._initialize_client()
     
     def _initialize_client(self):
-        """Initialize S3 client with Replit Object Store credentials."""
+        """Initialize Replit Object Storage client."""
         try:
-            # Replit Object Store uses AWS S3 compatible API
-            self.s3_client = boto3.client(
-                's3',
-                endpoint_url=os.environ.get('REPLIT_OBJECT_STORE_ENDPOINT'),
-                aws_access_key_id=os.environ.get('REPLIT_OBJECT_STORE_ACCESS_KEY'),
-                aws_secret_access_key=os.environ.get('REPLIT_OBJECT_STORE_SECRET_KEY'),
-                region_name='us-east-1'  # Default region for Replit Object Store
-            )
+            # Create client instance - no parameters needed for Replit Object Storage
+            self.client = Client()
             logger.info("Replit Object Store client initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize Object Store client: {str(e)}")
-            self.s3_client = None
+            self.client = None
     
     def is_available(self):
         """Check if Object Store is available and configured."""
-        return self.s3_client is not None
+        return self.client is not None
     
     def upload_file(self, file_content, filename, content_type='application/octet-stream'):
         """
@@ -61,27 +54,29 @@ class ReplitObjectStore:
             file_extension = os.path.splitext(filename)[1]
             object_key = f"temp_attachments/{timestamp}_{unique_id}_{filename}"
             
-            # Upload file to Object Store
-            self.s3_client.put_object(
-                Bucket=self.bucket_name,
-                Key=object_key,
-                Body=file_content,
-                ContentType=content_type,
-                Metadata={
-                    'original_filename': filename,
-                    'upload_timestamp': timestamp,
-                    'processing_status': 'pending'
-                }
-            )
+            # Convert bytes to string if needed for upload_from_text
+            if isinstance(file_content, bytes):
+                try:
+                    # Try to decode as text first
+                    content_str = file_content.decode('utf-8')
+                    self.client.upload_from_text(object_key, content_str)
+                except UnicodeDecodeError:
+                    # For binary files, use upload_from_bytes if available
+                    # If not available, encode as base64
+                    import base64
+                    content_str = base64.b64encode(file_content).decode('ascii')
+                    # Store with metadata indicating it's base64 encoded
+                    object_key = f"temp_attachments/{timestamp}_{unique_id}_b64_{filename}"
+                    self.client.upload_from_text(object_key, content_str)
+            else:
+                # Already a string
+                self.client.upload_from_text(object_key, file_content)
             
             logger.info(f"File uploaded to Object Store: {object_key}")
             return object_key
             
-        except ClientError as e:
-            logger.error(f"Error uploading file to Object Store: {str(e)}")
-            return None
         except Exception as e:
-            logger.error(f"Unexpected error uploading file: {str(e)}")
+            logger.error(f"Error uploading file to Object Store: {str(e)}")
             return None
     
     def download_file(self, object_key):
@@ -99,20 +94,21 @@ class ReplitObjectStore:
             return None
         
         try:
-            response = self.s3_client.get_object(
-                Bucket=self.bucket_name,
-                Key=object_key
-            )
+            content = self.client.download_as_text(object_key)
             
-            file_content = response['Body'].read()
+            # Check if this was a base64 encoded file
+            if "_b64_" in object_key:
+                import base64
+                file_content = base64.b64decode(content.encode('ascii'))
+            else:
+                # Return as bytes
+                file_content = content.encode('utf-8')
+            
             logger.info(f"File downloaded from Object Store: {object_key}")
             return file_content
             
-        except ClientError as e:
-            logger.error(f"Error downloading file from Object Store: {str(e)}")
-            return None
         except Exception as e:
-            logger.error(f"Unexpected error downloading file: {str(e)}")
+            logger.error(f"Error downloading file from Object Store: {str(e)}")
             return None
     
     def delete_file(self, object_key):
@@ -130,19 +126,12 @@ class ReplitObjectStore:
             return False
         
         try:
-            self.s3_client.delete_object(
-                Bucket=self.bucket_name,
-                Key=object_key
-            )
-            
+            self.client.delete(object_key)
             logger.info(f"File deleted from Object Store: {object_key}")
             return True
             
-        except ClientError as e:
-            logger.error(f"Error deleting file from Object Store: {str(e)}")
-            return False
         except Exception as e:
-            logger.error(f"Unexpected error deleting file: {str(e)}")
+            logger.error(f"Error deleting file from Object Store: {str(e)}")
             return False
     
     def cleanup_temp_files(self, max_age_hours=24):
@@ -160,36 +149,41 @@ class ReplitObjectStore:
             return 0
         
         try:
-            # List all objects in temp_attachments folder
-            response = self.s3_client.list_objects_v2(
-                Bucket=self.bucket_name,
-                Prefix='temp_attachments/'
-            )
+            # List all objects
+            objects = self.client.list()
             
-            if 'Contents' not in response:
-                logger.info("No temporary files found for cleanup")
+            if not objects:
+                logger.info("No files found for cleanup")
                 return 0
             
             cleanup_count = 0
             current_time = datetime.utcnow()
             
-            for obj in response['Contents']:
-                # Check if file is older than max_age_hours
-                last_modified = obj['LastModified'].replace(tzinfo=None)
-                age_hours = (current_time - last_modified).total_seconds() / 3600
-                
-                if age_hours > max_age_hours:
-                    if self.delete_file(obj['Key']):
-                        cleanup_count += 1
+            for obj in objects:
+                # Check if it's a temp file
+                if obj.name.startswith('temp_attachments/'):
+                    # Extract timestamp from filename
+                    try:
+                        # Format: temp_attachments/YYYYMMDD_HHMMSS_uniqueid_filename
+                        parts = obj.name.split('/')
+                        if len(parts) >= 2:
+                            filename_parts = parts[1].split('_')
+                            if len(filename_parts) >= 2:
+                                timestamp_str = f"{filename_parts[0]}_{filename_parts[1]}"
+                                file_time = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
+                                age_hours = (current_time - file_time).total_seconds() / 3600
+                                
+                                if age_hours > max_age_hours:
+                                    if self.delete_file(obj.name):
+                                        cleanup_count += 1
+                    except Exception as e:
+                        logger.warning(f"Could not parse timestamp for {obj.name}: {str(e)}")
             
             logger.info(f"Cleaned up {cleanup_count} temporary files")
             return cleanup_count
             
-        except ClientError as e:
-            logger.error(f"Error during cleanup: {str(e)}")
-            return 0
         except Exception as e:
-            logger.error(f"Unexpected error during cleanup: {str(e)}")
+            logger.error(f"Error during cleanup: {str(e)}")
             return 0
 
 # Global instance
