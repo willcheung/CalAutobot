@@ -74,13 +74,17 @@ class AttachmentProcessor:
         filename = attachment_data.get('name', 'unknown')
         file_size = attachment_data.get('size', 0)
         content_type = attachment_data.get('content-type', 'application/octet-stream')
-        attachment_url = attachment_data.get('url')
+        file_content = attachment_data.get('content')
         
         logger.info(f"Processing attachment: {filename} ({content_type}, {file_size} bytes)")
         
         # Validate file
         if not self._validate_attachment(filename, file_size, content_type):
             logger.warning(f"Attachment validation failed: {filename}")
+            return None
+        
+        if not file_content:
+            logger.error(f"No file content provided for attachment: {filename}")
             return None
         
         # Create database record
@@ -96,9 +100,9 @@ class AttachmentProcessor:
             db.session.add(attachment_record)
             db.session.flush()  # Get the ID without committing
             
-            # Download and process the attachment
-            success = self._download_and_process_attachment(
-                attachment_record, attachment_url, text_input
+            # Process the attachment directly with content
+            success = self._process_attachment_content(
+                attachment_record, file_content, text_input
             )
             
             if success:
@@ -140,30 +144,23 @@ class AttachmentProcessor:
         
         return True
     
-    def _download_and_process_attachment(self, attachment_record: EmailAttachment, 
-                                       attachment_url: str, text_input: TextInput) -> bool:
+    def _process_attachment_content(self, attachment_record: EmailAttachment, 
+                                   file_content: bytes, text_input: TextInput) -> bool:
         """
-        Download attachment from Mailgun and process for event extraction.
+        Process attachment content directly for event extraction.
         
         Args:
             attachment_record (EmailAttachment): Database record
-            attachment_url (str): Mailgun attachment URL
+            file_content (bytes): Actual file content
             text_input (TextInput): Parent text input
         
         Returns:
             bool: True if successful, False otherwise
         """
         try:
-            # Download attachment from Mailgun
-            logger.info(f"📥 DOWNLOADING attachment: {attachment_record.filename} from Mailgun")
-            file_content = self._download_from_mailgun(attachment_url)
-            if not file_content:
-                logger.error(f"❌ FAILED to download attachment: {attachment_record.filename}")
-                return False
+            logger.info(f"📥 PROCESSING attachment content: {attachment_record.filename} ({len(file_content)} bytes)")
             
-            logger.info(f"✅ DOWNLOADED attachment: {attachment_record.filename} ({len(file_content)} bytes)")
-            
-            # Store in Object Store temporarily
+            # Store in Object Store temporarily for processing
             object_key = object_store.upload_file(
                 file_content, 
                 attachment_record.filename, 
@@ -193,35 +190,10 @@ class AttachmentProcessor:
                 object_store.delete_file(object_key)
                 
         except Exception as e:
-            logger.error(f"Error downloading and processing attachment: {str(e)}")
+            logger.error(f"Error processing attachment content: {str(e)}")
             return False
     
-    def _download_from_mailgun(self, attachment_url: str) -> Optional[bytes]:
-        """
-        Download attachment from Mailgun API.
-        
-        Args:
-            attachment_url (str): Mailgun attachment URL
-        
-        Returns:
-            bytes: File content or None if failed
-        """
-        try:
-            response = requests.get(
-                attachment_url,
-                auth=('api', self.mailgun_api_key),
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                return response.content
-            else:
-                logger.error(f"Failed to download attachment: HTTP {response.status_code}")
-                return None
-                
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error downloading attachment from Mailgun: {str(e)}")
-            return None
+    
     
     def _extract_events_from_attachment(self, file_content: bytes, 
                                       attachment_record: EmailAttachment, 

@@ -246,23 +246,28 @@ def handle_mailgun_webhook():
 
         logger.info(f"Processing email from {sender_email}, subject: {subject}")
 
-        # Extract attachment information from Mailgun webhook
-        attachment_count = int(request.form.get('attachment-count', 0))
+        # Extract attachment information from Mailgun webhook (API 2.0 format)
         attachments_data = []
         
-        if attachment_count > 0:
-            logger.info(f"🔍 DETECTED {attachment_count} attachments in email from {sender_email}")
-            for i in range(1, attachment_count + 1):
-                attachment_info = {
-                    'name': request.form.get(f'attachment-{i}'),
-                    'content-type': request.form.get(f'content-type-{i}'),
-                    'size': int(request.form.get(f'size-{i}', 0)),
-                    'url': request.form.get(f'url-{i}')
-                }
-                if attachment_info['name'] and attachment_info['url']:
+        # In Mailgun API 2.0, attachments are provided as file uploads in request.files
+        if request.files:
+            logger.info(f"🔍 DETECTED {len(request.files)} attachments in email from {sender_email}")
+            
+            for field_name, file_obj in request.files.items():
+                if file_obj and file_obj.filename:
+                    # Read file content
+                    file_content = file_obj.read()
+                    file_size = len(file_content)
+                    
+                    attachment_info = {
+                        'name': file_obj.filename,
+                        'content-type': file_obj.content_type or 'application/octet-stream',
+                        'size': file_size,
+                        'content': file_content  # Store actual file content instead of URL
+                    }
+                    
                     attachments_data.append(attachment_info)
-                    logger.info(f"📎 Attachment {i}: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
-                    logger.info(f"⬇️  Download URL: {attachment_info['url']}")
+                    logger.info(f"📎 Attachment: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
         else:
             logger.info(f"📧 No attachments found in email from {sender_email}")
 
