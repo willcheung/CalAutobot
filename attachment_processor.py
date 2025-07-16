@@ -155,9 +155,13 @@ class AttachmentProcessor:
         """
         try:
             # Download attachment from Mailgun
+            logger.info(f"📥 DOWNLOADING attachment: {attachment_record.filename} from Mailgun")
             file_content = self._download_from_mailgun(attachment_url)
             if not file_content:
+                logger.error(f"❌ FAILED to download attachment: {attachment_record.filename}")
                 return False
+            
+            logger.info(f"✅ DOWNLOADED attachment: {attachment_record.filename} ({len(file_content)} bytes)")
             
             # Store in Object Store temporarily
             object_key = object_store.upload_file(

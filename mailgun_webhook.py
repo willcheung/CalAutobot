@@ -251,7 +251,7 @@ def handle_mailgun_webhook():
         attachments_data = []
         
         if attachment_count > 0:
-            logger.info(f"Found {attachment_count} attachments in email")
+            logger.info(f"🔍 DETECTED {attachment_count} attachments in email from {sender_email}")
             for i in range(1, attachment_count + 1):
                 attachment_info = {
                     'name': request.form.get(f'attachment-{i}'),
@@ -261,7 +261,10 @@ def handle_mailgun_webhook():
                 }
                 if attachment_info['name'] and attachment_info['url']:
                     attachments_data.append(attachment_info)
-                    logger.info(f"Attachment {i}: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
+                    logger.info(f"📎 Attachment {i}: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
+                    logger.info(f"⬇️  Download URL: {attachment_info['url']}")
+        else:
+            logger.info(f"📧 No attachments found in email from {sender_email}")
 
         # Process text to events using helper function
         formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{email_text}"
@@ -299,11 +302,18 @@ def handle_mailgun_webhook():
                     if attachments_data:
                         text_input = result.get('text_input')
                         if text_input:
-                            logger.info(f"Processing {len(attachments_data)} attachments for user {user.id}")
+                            logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for existing user {user.id}")
                             processed_attachments = attachment_processor.process_email_attachments(
                                 text_input, attachments_data
                             )
-                            logger.info(f"Successfully processed {len(processed_attachments)} attachments")
+                            logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for user {user.id}")
+                            
+                            # Log attachment processing results
+                            total_events_from_attachments = sum(att.extracted_events_count for att in processed_attachments)
+                            if total_events_from_attachments > 0:
+                                logger.info(f"📅 EXTRACTED {total_events_from_attachments} events from attachments")
+                        else:
+                            logger.error("❌ No text_input found for attachment processing")
 
                     events_count = len(result['events'])
                     synced_count = result['synced_count']
@@ -338,11 +348,18 @@ def handle_mailgun_webhook():
                     if attachments_data:
                         text_input = result.get('text_input')
                         if text_input:
-                            logger.info(f"Processing {len(attachments_data)} attachments for temp user {user.id}")
+                            logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for temp user {user.id}")
                             processed_attachments = attachment_processor.process_email_attachments(
                                 text_input, attachments_data
                             )
-                            logger.info(f"Successfully processed {len(processed_attachments)} attachments")
+                            logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for temp user {user.id}")
+                            
+                            # Log attachment processing results
+                            total_events_from_attachments = sum(att.extracted_events_count for att in processed_attachments)
+                            if total_events_from_attachments > 0:
+                                logger.info(f"📅 EXTRACTED {total_events_from_attachments} events from attachments")
+                        else:
+                            logger.error("❌ No text_input found for attachment processing")
 
                     events_count = len(result['events'])
 
@@ -404,11 +421,18 @@ def handle_mailgun_webhook():
                 if attachments_data:
                     text_input = result.get('text_input')
                     if text_input:
-                        logger.info(f"Processing {len(attachments_data)} attachments for new user {temp_user.id}")
+                        logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for new user {temp_user.id}")
                         processed_attachments = attachment_processor.process_email_attachments(
                             text_input, attachments_data
                         )
-                        logger.info(f"Successfully processed {len(processed_attachments)} attachments")
+                        logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for new user {temp_user.id}")
+                        
+                        # Log attachment processing results
+                        total_events_from_attachments = sum(att.extracted_events_count for att in processed_attachments)
+                        if total_events_from_attachments > 0:
+                            logger.info(f"📅 EXTRACTED {total_events_from_attachments} events from attachments")
+                    else:
+                        logger.error("❌ No text_input found for attachment processing")
 
                 events_count = len(result['events'])
 
