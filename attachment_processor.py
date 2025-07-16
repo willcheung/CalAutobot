@@ -248,7 +248,7 @@ class AttachmentProcessor:
     
     def _extract_from_image(self, image_content: bytes, text_input: TextInput) -> List[Dict]:
         """
-        Extract events from image using OpenAI Vision API.
+        Extract events from image using OpenAI API.
         
         Args:
             image_content (bytes): Image file content

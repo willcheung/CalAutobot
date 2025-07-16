@@ -8,11 +8,12 @@ from flask import Blueprint, request, jsonify
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
-from models import User, Event, UserEmail
+from models import User, Event, UserEmail, TextInput
 from helpers.event_processing import process_text_to_events
 from helpers.event_utils import format_event_for_api
 from helpers.domain_utils import get_base_url
 from app import db
+from attachment_processor import attachment_processor
 import sentry_sdk
 
 logger = logging.getLogger(__name__)
@@ -245,6 +246,23 @@ def handle_mailgun_webhook():
 
         logger.info(f"Processing email from {sender_email}, subject: {subject}")
 
+        # Extract attachment information from Mailgun webhook
+        attachment_count = int(request.form.get('attachment-count', 0))
+        attachments_data = []
+        
+        if attachment_count > 0:
+            logger.info(f"Found {attachment_count} attachments in email")
+            for i in range(1, attachment_count + 1):
+                attachment_info = {
+                    'name': request.form.get(f'attachment-{i}'),
+                    'content-type': request.form.get(f'content-type-{i}'),
+                    'size': int(request.form.get(f'size-{i}', 0)),
+                    'url': request.form.get(f'url-{i}')
+                }
+                if attachment_info['name'] and attachment_info['url']:
+                    attachments_data.append(attachment_info)
+                    logger.info(f"Attachment {i}: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
+
         # Process text to events using helper function
         formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{email_text}"
 
@@ -277,6 +295,16 @@ def handle_mailgun_webhook():
                         auto_sync=auto_sync
                     )
 
+                    # Process attachments if present
+                    if attachments_data:
+                        text_input = result.get('text_input')
+                        if text_input:
+                            logger.info(f"Processing {len(attachments_data)} attachments for user {user.id}")
+                            processed_attachments = attachment_processor.process_email_attachments(
+                                text_input, attachments_data
+                            )
+                            logger.info(f"Successfully processed {len(processed_attachments)} attachments")
+
                     events_count = len(result['events'])
                     synced_count = result['synced_count']
 
@@ -305,6 +333,16 @@ def handle_mailgun_webhook():
                         source_type="email", 
                         auto_sync=False  # Don't auto-sync for temp users
                     )
+
+                    # Process attachments if present
+                    if attachments_data:
+                        text_input = result.get('text_input')
+                        if text_input:
+                            logger.info(f"Processing {len(attachments_data)} attachments for temp user {user.id}")
+                            processed_attachments = attachment_processor.process_email_attachments(
+                                text_input, attachments_data
+                            )
+                            logger.info(f"Successfully processed {len(processed_attachments)} attachments")
 
                     events_count = len(result['events'])
 
@@ -361,6 +399,16 @@ def handle_mailgun_webhook():
                     source_type="email", 
                     auto_sync=False  # Don't auto-sync for temp users
                 )
+
+                # Process attachments if present
+                if attachments_data:
+                    text_input = result.get('text_input')
+                    if text_input:
+                        logger.info(f"Processing {len(attachments_data)} attachments for new user {temp_user.id}")
+                        processed_attachments = attachment_processor.process_email_attachments(
+                            text_input, attachments_data
+                        )
+                        logger.info(f"Successfully processed {len(processed_attachments)} attachments")
 
                 events_count = len(result['events'])
 
