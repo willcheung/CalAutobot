@@ -117,11 +117,12 @@ Preferred communication style: Simple, everyday language.
   - Added comprehensive attachment processing system using direct file content
   - Enhanced OpenAI integration with multimodal GPT-4o for image and document processing
   - Added EmailAttachment model for tracking attachment processing status
-  - Integrated Mailgun attachment download and processing pipeline
+  - Integrated Mailgun Email API for fetching stored emails and attachments
+  - Implemented Mailgun storage key-based email retrieval with fallback to direct uploads
   - Added support for PDF, Word, and image file processing
   - Enhanced event extraction to handle visual content (calendars, schedules, itineraries)
   - Implemented direct attachment processing without temporary file storage
-  - Added automatic cleanup of processed files to optimize storage usage
+  - Removed all Object Store dependencies and switched to Mailgun Email API
   - Enhanced database schema to track attachment processing and event sources
 - June 15, 2025:
   - Implemented minimal OAuth scope approach using only "calendar.app.created" permission

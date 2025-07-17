@@ -15,6 +15,7 @@ from helpers.domain_utils import get_base_url
 from app import db
 from attachment_processor import attachment_processor
 import sentry_sdk
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,72 @@ def verify_webhook_signature(token, timestamp, signature):
     ).hexdigest()
 
     return hmac.compare_digest(signature, expected_signature)
+
+def fetch_email_from_storage(storage_key):
+    """
+    Fetch email content and attachments from Mailgun's Email API using storage key.
+    
+    Args:
+        storage_key (str): The storage key from the webhook
+        
+    Returns:
+        dict: Email data including attachments, or None if failed
+    """
+    try:
+        # Construct the API URL
+        url = f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages/{storage_key}"
+        
+        # Make authenticated request to Mailgun API
+        response = requests.get(
+            url,
+            auth=("api", MAILGUN_API_KEY),
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            email_data = response.json()
+            logger.info(f"✅ Successfully fetched email from storage: {storage_key}")
+            
+            # Parse attachments from the email data
+            attachments_data = []
+            attachments = email_data.get('attachments', [])
+            
+            if attachments:
+                logger.info(f"🔍 DETECTED {len(attachments)} attachments in stored email")
+                
+                for attachment in attachments:
+                    # Download attachment content
+                    attachment_url = attachment.get('url')
+                    if attachment_url:
+                        attachment_response = requests.get(
+                            attachment_url,
+                            auth=("api", MAILGUN_API_KEY),
+                            timeout=30
+                        )
+                        
+                        if attachment_response.status_code == 200:
+                            attachment_info = {
+                                'name': attachment.get('filename', 'unknown'),
+                                'content-type': attachment.get('content-type', 'application/octet-stream'),
+                                'size': attachment.get('size', len(attachment_response.content)),
+                                'content': attachment_response.content
+                            }
+                            attachments_data.append(attachment_info)
+                            logger.info(f"📎 Downloaded attachment: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
+                        else:
+                            logger.error(f"❌ Failed to download attachment from {attachment_url}: {attachment_response.status_code}")
+            
+            return {
+                'email_data': email_data,
+                'attachments': attachments_data
+            }
+        else:
+            logger.error(f"❌ Failed to fetch email from storage: {response.status_code} - {response.text}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"❌ Error fetching email from storage: {str(e)}")
+        return None
 
 def send_signup_email_with_events(recipient_email, events_data, original_subject=""):
     """Send email to new user with extracted events and signup link"""
@@ -246,30 +313,50 @@ def handle_mailgun_webhook():
 
         logger.info(f"Processing email from {sender_email}, subject: {subject}")
 
-        # Extract attachment information from Mailgun webhook (API 2.0 format)
+        # Extract attachment information using Mailgun Email API
         attachments_data = []
+        storage_key = request.form.get('storage-key')
         
-        # In Mailgun API 2.0, attachments are provided as file uploads in request.files
-        if request.files:
-            logger.info(f"🔍 DETECTED {len(request.files)} attachments in email from {sender_email}")
+        if storage_key:
+            logger.info(f"🔑 Using storage key to fetch email: {storage_key}")
             
-            for field_name, file_obj in request.files.items():
-                if file_obj and file_obj.filename:
-                    # Read file content
-                    file_content = file_obj.read()
-                    file_size = len(file_content)
-                    
-                    attachment_info = {
-                        'name': file_obj.filename,
-                        'content-type': file_obj.content_type or 'application/octet-stream',
-                        'size': file_size,
-                        'content': file_content  # Store actual file content instead of URL
-                    }
-                    
-                    attachments_data.append(attachment_info)
-                    logger.info(f"📎 Attachment: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
-        else:
-            logger.info(f"📧 No attachments found in email from {sender_email}")
+            # Fetch email from Mailgun API
+            email_storage_data = fetch_email_from_storage(storage_key)
+            
+            if email_storage_data:
+                attachments_data = email_storage_data.get('attachments', [])
+                
+                if attachments_data:
+                    logger.info(f"🔍 DETECTED {len(attachments_data)} attachments via API from {sender_email}")
+                else:
+                    logger.info(f"📧 No attachments found via API from {sender_email}")
+            else:
+                logger.error(f"❌ Failed to fetch email from storage for {sender_email}")
+        
+        # Fallback to direct file upload method if no storage key or API fetch failed
+        if not storage_key or not attachments_data:
+            logger.info("🔄 Falling back to direct file upload method")
+            
+            if request.files:
+                logger.info(f"🔍 DETECTED {len(request.files)} attachments via direct upload from {sender_email}")
+                
+                for field_name, file_obj in request.files.items():
+                    if file_obj and file_obj.filename:
+                        # Read file content
+                        file_content = file_obj.read()
+                        file_size = len(file_content)
+                        
+                        attachment_info = {
+                            'name': file_obj.filename,
+                            'content-type': file_obj.content_type or 'application/octet-stream',
+                            'size': file_size,
+                            'content': file_content
+                        }
+                        
+                        attachments_data.append(attachment_info)
+                        logger.info(f"📎 Attachment: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
+            else:
+                logger.info(f"📧 No attachments found via any method from {sender_email}")
 
         # Process text to events using helper function
         formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{email_text}"
