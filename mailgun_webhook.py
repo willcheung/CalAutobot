@@ -478,9 +478,9 @@ def handle_mailgun_webhook():
                     
                     for field_name, file_obj in request.files.items():
                         if file_obj and file_obj.filename:
-                        # Read file content
-                        file_content = file_obj.read()
-                        file_size = len(file_content)
+                            # Read file content
+                            file_content = file_obj.read()
+                            file_size = len(file_content)
                         
                         attachment_info = {
                             'name': file_obj.filename,
