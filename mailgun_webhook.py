@@ -363,12 +363,18 @@ def handle_mailgun_webhook():
                         attachment_url = attachment_info.get('url')
                         if attachment_url:
                             try:
+                                logger.info(f"🔗 Attempting to download attachment from: {attachment_url}")
+                                
                                 # Download attachment content from Mailgun storage
+                                # Use the exact URL provided by Mailgun webhook
                                 attachment_response = requests.get(
                                     attachment_url,
                                     auth=("api", MAILGUN_API_KEY),
-                                    timeout=30
+                                    timeout=30,
+                                    allow_redirects=True
                                 )
+                                
+                                logger.info(f"📥 Download response status: {attachment_response.status_code}")
                                 
                                 if attachment_response.status_code == 200:
                                     attachment_data = {
@@ -381,6 +387,7 @@ def handle_mailgun_webhook():
                                     logger.info(f"📎 Downloaded attachment: {attachment_data['name']} ({attachment_data['content-type']}, {attachment_data['size']} bytes)")
                                 else:
                                     logger.error(f"❌ Failed to download attachment from {attachment_url}: {attachment_response.status_code}")
+                                    logger.error(f"❌ Response text: {attachment_response.text[:500]}")
                             except Exception as e:
                                 logger.error(f"❌ Error downloading attachment {attachment_info.get('name', 'unknown')}: {str(e)}")
                 else:
@@ -391,32 +398,85 @@ def handle_mailgun_webhook():
             except Exception as e:
                 logger.error(f"❌ Error processing attachments: {str(e)}")
         
-        # Fallback to storage key method if no attachments in webhook data
+        # Fallback to message-url method if no attachments in webhook data
         if not attachments_data:
-            storage_key = request.form.get('storage-key')
+            message_url = request.form.get('message-url')
             
-            if storage_key:
-                logger.info(f"🔄 Falling back to storage key method: {storage_key}")
+            if message_url:
+                logger.info(f"🔄 Falling back to message-url method: {message_url}")
                 
-                # Fetch email from Mailgun API
-                email_storage_data = fetch_email_from_storage(storage_key)
-                
-                if email_storage_data:
-                    attachments_data = email_storage_data.get('attachments', [])
+                try:
+                    # Fetch the full message from Mailgun
+                    message_response = requests.get(
+                        message_url,
+                        auth=("api", MAILGUN_API_KEY),
+                        timeout=30
+                    )
                     
-                    if attachments_data:
-                        logger.info(f"🔍 DETECTED {len(attachments_data)} attachments via storage API from {sender_email}")
+                    if message_response.status_code == 200:
+                        message_data = message_response.json()
+                        attachments = message_data.get('attachments', [])
+                        
+                        if attachments:
+                            logger.info(f"🔍 DETECTED {len(attachments)} attachments via message-url from {sender_email}")
+                            
+                            for attachment in attachments:
+                                attachment_url = attachment.get('url')
+                                if attachment_url:
+                                    try:
+                                        attachment_response = requests.get(
+                                            attachment_url,
+                                            auth=("api", MAILGUN_API_KEY),
+                                            timeout=30,
+                                            allow_redirects=True
+                                        )
+                                        
+                                        if attachment_response.status_code == 200:
+                                            attachment_data = {
+                                                'name': attachment.get('name', 'unknown'),
+                                                'content-type': attachment.get('content-type', 'application/octet-stream'),
+                                                'size': attachment.get('size', len(attachment_response.content)),
+                                                'content': attachment_response.content
+                                            }
+                                            attachments_data.append(attachment_data)
+                                            logger.info(f"📎 Downloaded attachment via message-url: {attachment_data['name']}")
+                                        else:
+                                            logger.error(f"❌ Failed to download attachment via message-url: {attachment_response.status_code}")
+                                    except Exception as e:
+                                        logger.error(f"❌ Error downloading attachment via message-url: {str(e)}")
+                        else:
+                            logger.info(f"📧 No attachments found via message-url from {sender_email}")
                     else:
-                        logger.info(f"📧 No attachments found via storage API from {sender_email}")
-                else:
-                    logger.error(f"❌ Failed to fetch email from storage for {sender_email}")
+                        logger.error(f"❌ Failed to fetch message via message-url: {message_response.status_code}")
+                except Exception as e:
+                    logger.error(f"❌ Error fetching message via message-url: {str(e)}")
             
-            # Final fallback to direct file upload method
-            if not attachments_data and request.files:
-                logger.info("🔄 Falling back to direct file upload method")
-                logger.info(f"🔍 DETECTED {len(request.files)} attachments via direct upload from {sender_email}")
+            # Fallback to storage key method if message-url failed
+            if not attachments_data:
+                storage_key = request.form.get('storage-key')
                 
-                for field_name, file_obj in request.files.items():
+                if storage_key:
+                    logger.info(f"🔄 Falling back to storage key method: {storage_key}")
+                    
+                    # Fetch email from Mailgun API
+                    email_storage_data = fetch_email_from_storage(storage_key)
+                    
+                    if email_storage_data:
+                        attachments_data = email_storage_data.get('attachments', [])
+                        
+                        if attachments_data:
+                            logger.info(f"🔍 DETECTED {len(attachments_data)} attachments via storage API from {sender_email}")
+                        else:
+                            logger.info(f"📧 No attachments found via storage API from {sender_email}")
+                    else:
+                        logger.error(f"❌ Failed to fetch email from storage for {sender_email}")
+                
+                # Final fallback to direct file upload method
+                if not attachments_data and request.files:
+                    logger.info("🔄 Falling back to direct file upload method")
+                    logger.info(f"🔍 DETECTED {len(request.files)} attachments via direct upload from {sender_email}")
+                    
+                    for field_name, file_obj in request.files.items():
                     if file_obj and file_obj.filename:
                         # Read file content
                         file_content = file_obj.read()
