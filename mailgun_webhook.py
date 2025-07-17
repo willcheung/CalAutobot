@@ -288,6 +288,38 @@ def send_confirmation_email(recipient_email, events_count, synced_count):
 def handle_mailgun_webhook():
     """Handle incoming emails from Mailgun"""
     try:
+        # DEBUG: Print complete webhook data
+        logger.info("=" * 80)
+        logger.info("MAILGUN WEBHOOK DEBUG - COMPLETE REQUEST DATA")
+        logger.info("=" * 80)
+        
+        # Print form data
+        logger.info("FORM DATA:")
+        for key, value in request.form.items():
+            # Truncate very long values for readability
+            display_value = value[:500] + "..." if len(value) > 500 else value
+            logger.info(f"  {key}: {display_value}")
+        
+        # Print files
+        logger.info("FILES:")
+        for field_name, file_obj in request.files.items():
+            logger.info(f"  {field_name}: {file_obj.filename} (size: {file_obj.content_length if hasattr(file_obj, 'content_length') else 'unknown'})")
+        
+        # Print headers
+        logger.info("HEADERS:")
+        for header_name, header_value in request.headers.items():
+            logger.info(f"  {header_name}: {header_value}")
+        
+        # Print JSON data if present
+        try:
+            if request.json:
+                logger.info("JSON DATA:")
+                logger.info(json.dumps(request.json, indent=2))
+        except Exception:
+            logger.info("JSON DATA: None or invalid")
+        
+        logger.info("=" * 80)
+        
         # Verify webhook signature
         token = request.form.get('token', '')
         timestamp = request.form.get('timestamp', '')
