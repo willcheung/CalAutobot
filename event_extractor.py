@@ -199,8 +199,9 @@ def validate_and_clean_event(event_data):
             datetime.strptime(cleaned['start_date'], '%Y-%m-%d')
         if cleaned['end_date']:
             datetime.strptime(cleaned['end_date'], '%Y-%m-%d')
-    except ValueError:
-        raise ValueError("Invalid date format")
+    except ValueError as e:
+        logger.error(f"❌ Date validation failed for event '{cleaned.get('event_name', 'Unknown')}': start_date='{cleaned.get('start_date')}', end_date='{cleaned.get('end_date')}'")
+        raise ValueError(f"Invalid date format: {str(e)}")
 
     # Validate and normalize times
     def normalize_time(time_str):
@@ -238,6 +239,7 @@ def validate_and_clean_event(event_data):
         cleaned['start_time'] = normalize_time(cleaned['start_time'])
         cleaned['end_time'] = normalize_time(cleaned['end_time'])
     except ValueError as e:
+        logger.error(f"❌ Time validation failed for event '{cleaned.get('event_name', 'Unknown')}': start_time='{event_data.get('start_time')}', end_time='{event_data.get('end_time')}'")
         raise ValueError(f"Invalid time format: {str(e)}")
 
     # Validate RFC3339 datetime strings if present

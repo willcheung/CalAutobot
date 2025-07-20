@@ -57,9 +57,13 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
 
     # Create Event records
     created_events = []
-    for event_data in extracted_events:
+    logger.info(f"🔄 PROCESSING {len(extracted_events)} extracted events into database records")
+    
+    for i, event_data in enumerate(extracted_events, 1):
         try:
+            logger.info(f"📝 Processing event {i}/{len(extracted_events)}: {event_data.get('event_name', 'Unnamed')}")
             cleaned_event = validate_and_clean_event(event_data)
+            logger.info(f"✅ Event {i} validation successful")
 
             event = Event()
             event.user_id = user.id
@@ -92,10 +96,12 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
             event.location = sanitize_text_for_db(cleaned_event['location'])
 
             created_events.append(event)
+            logger.info(f"✅ Event {i} successfully prepared for database: '{event.event_name}'")
 
         except Exception as e:
-            logger.error(f"Error processing individual event: {str(e)}")
-            logger.error(f"Raw event data: {event_data}")
+            logger.error(f"❌ VALIDATION FAILED for event {i}/{len(extracted_events)}: {str(e)}")
+            logger.error(f"❌ Failed event data: {event_data}")
+            logger.error(f"❌ This event will be SKIPPED from processing")
             sentry_sdk.capture_exception(e)
             continue
 
@@ -129,7 +135,11 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
                 raise Exception("Failed to save events to database after 3 attempts")
             time.sleep(2 ** attempt)  # Exponential backoff
 
-    logger.info(f"Successfully saved {len(created_events)} events")
+    logger.info(f"📊 PROCESSING SUMMARY: Extracted {len(extracted_events)} events, Successfully processed {len(created_events)} events")
+    
+    if len(extracted_events) != len(created_events):
+        skipped_count = len(extracted_events) - len(created_events)
+        logger.warning(f"⚠️  {skipped_count} events were SKIPPED due to validation errors")
 
     # Auto-sync to Google Calendar if requested
     synced_count = 0
