@@ -332,59 +332,6 @@ def handle_mailgun_webhook():
                 logger.error(f"❌ Failed to parse attachments JSON: {str(e)}")
             except Exception as e:
                 logger.error(f"❌ Error processing attachments: {str(e)}")
-        
-        # Fallback to message-url method if no attachments in webhook data
-        if not attachments_data:
-            message_url = request.form.get('message-url')
-            
-            if message_url:
-                logger.info(f"🔄 Falling back to message-url method: {message_url}")
-                
-                try:
-                    # Fetch the full message from Mailgun
-                    message_response = requests.get(
-                        message_url,
-                        auth=("api", MAILGUN_API_KEY),
-                        timeout=30
-                    )
-                    
-                    if message_response.status_code == 200:
-                        message_data = message_response.json()
-                        attachments = message_data.get('attachments', [])
-                        
-                        if attachments:
-                            logger.info(f"🔍 DETECTED {len(attachments)} attachments via message-url from {sender_email}")
-                            
-                            for attachment in attachments:
-                                attachment_url = attachment.get('url')
-                                if attachment_url:
-                                    try:
-                                        attachment_response = requests.get(
-                                            attachment_url,
-                                            auth=("api", MAILGUN_API_KEY),
-                                            timeout=30,
-                                            allow_redirects=True
-                                        )
-                                        
-                                        if attachment_response.status_code == 200:
-                                            attachment_data = {
-                                                'name': attachment.get('name', 'unknown'),
-                                                'content-type': attachment.get('content-type', 'application/octet-stream'),
-                                                'size': attachment.get('size', len(attachment_response.content)),
-                                                'content': attachment_response.content
-                                            }
-                                            attachments_data.append(attachment_data)
-                                            logger.info(f"📎 Downloaded attachment via message-url: {attachment_data['name']}")
-                                        else:
-                                            logger.error(f"❌ Failed to download attachment via message-url: {attachment_response.status_code}")
-                                    except Exception as e:
-                                        logger.error(f"❌ Error downloading attachment via message-url: {str(e)}")
-                        else:
-                            logger.info(f"📧 No attachments found via message-url from {sender_email}")
-                    else:
-                        logger.error(f"❌ Failed to fetch message via message-url: {message_response.status_code}")
-                except Exception as e:
-                    logger.error(f"❌ Error fetching message via message-url: {str(e)}")
                 
                 # Final fallback to direct file upload method
                 if not attachments_data and request.files:

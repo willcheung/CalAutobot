@@ -17,9 +17,9 @@ openai = OpenAI(api_key=OPENAI_API_KEY)
 # Centralized prompt template - single place to edit the extraction prompt
 EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible.
 
-Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction. If it's an image or document, extract events from the content of the image or document."""
+Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction. If there's an image or document, extract events from the content of the image or document."""
 
-EVENT_EXTRACTION_PROMPT = """Given the following text, extract all event information. 
+EVENT_EXTRACTION_PROMPT = """Given the following text or attached image/document, extract all event information. 
 
 If text, image or document is a flight itinerary, extract each event and carefully convert timezones:
 - Traveler's timezone is {user_timezone}.
