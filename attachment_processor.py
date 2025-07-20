@@ -234,14 +234,16 @@ class AttachmentProcessor:
             encoded_image = base64.b64encode(image_content).decode('utf-8')
             
             # Use existing event extraction with image support
-            # This will need to be enhanced in event_extractor.py
-            events = extract_events_from_text(
+            # extract_events_from_text returns a tuple: (events, from_email, is_offline, openai_status, openai_error)
+            result = extract_events_from_text(
                 text=f"Please extract calendar events from this image attachment.",
                 current_date=text_input.created_at.strftime('%Y-%m-%d'),
                 user_timezone=text_input.user.timezone if text_input.user else "UTC",
-                image_data=encoded_image  # New parameter to be added
+                image_data=encoded_image
             )
             
+            # Extract only the events list from the tuple
+            events = result[0] if isinstance(result, tuple) else result
             return events
             
         except Exception as e:
@@ -271,12 +273,15 @@ class AttachmentProcessor:
                 return []
             
             # Use existing text extraction
-            events = extract_events_from_text(
+            # extract_events_from_text returns a tuple: (events, from_email, is_offline, openai_status, openai_error)
+            result = extract_events_from_text(
                 text=document_text,
                 current_date=text_input.created_at.strftime('%Y-%m-%d'),
                 user_timezone=text_input.user.timezone if text_input.user else "UTC"
             )
             
+            # Extract only the events list from the tuple
+            events = result[0] if isinstance(result, tuple) else result
             return events
             
         except Exception as e:
