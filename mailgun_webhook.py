@@ -41,71 +41,6 @@ def verify_webhook_signature(token, timestamp, signature):
 
     return hmac.compare_digest(signature, expected_signature)
 
-def fetch_email_from_storage(storage_key):
-    """
-    Fetch email content and attachments from Mailgun's Email API using storage key.
-    
-    Args:
-        storage_key (str): The storage key from the webhook
-        
-    Returns:
-        dict: Email data including attachments, or None if failed
-    """
-    try:
-        # Construct the API URL
-        url = f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages/{storage_key}"
-        
-        # Make authenticated request to Mailgun API
-        response = requests.get(
-            url,
-            auth=("api", MAILGUN_API_KEY),
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            email_data = response.json()
-            logger.info(f"✅ Successfully fetched email from storage: {storage_key}")
-            
-            # Parse attachments from the email data
-            attachments_data = []
-            attachments = email_data.get('attachments', [])
-            
-            if attachments:
-                logger.info(f"🔍 DETECTED {len(attachments)} attachments in stored email")
-                
-                for attachment in attachments:
-                    # Download attachment content
-                    attachment_url = attachment.get('url')
-                    if attachment_url:
-                        attachment_response = requests.get(
-                            attachment_url,
-                            auth=("api", MAILGUN_API_KEY),
-                            timeout=30
-                        )
-                        
-                        if attachment_response.status_code == 200:
-                            attachment_info = {
-                                'name': attachment.get('filename', 'unknown'),
-                                'content-type': attachment.get('content-type', 'application/octet-stream'),
-                                'size': attachment.get('size', len(attachment_response.content)),
-                                'content': attachment_response.content
-                            }
-                            attachments_data.append(attachment_info)
-                            logger.info(f"📎 Downloaded attachment: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
-                        else:
-                            logger.error(f"❌ Failed to download attachment from {attachment_url}: {attachment_response.status_code}")
-            
-            return {
-                'email_data': email_data,
-                'attachments': attachments_data
-            }
-        else:
-            logger.error(f"❌ Failed to fetch email from storage: {response.status_code} - {response.text}")
-            return None
-            
-    except Exception as e:
-        logger.error(f"❌ Error fetching email from storage: {str(e)}")
-        return None
 
 def send_signup_email_with_events(recipient_email, events_data, original_subject=""):
     """Send email to new user with extracted events and signup link"""
@@ -333,8 +268,8 @@ def handle_mailgun_webhook():
         sender_email = request.form.get('sender', '').lower().strip()
         recipient = request.form.get('recipient', '')
         subject = request.form.get('subject', '')
-        body_plain = request.form.get('body-plain', '')
-        body_html = request.form.get('body-html', '')
+        body_plain = request.form.get('stripped-text', '')
+        body_html = request.form.get('stripped-html', '')
 
         # Use plain text, fallback to HTML if available
         email_text = body_plain or body_html or ""
@@ -450,26 +385,6 @@ def handle_mailgun_webhook():
                         logger.error(f"❌ Failed to fetch message via message-url: {message_response.status_code}")
                 except Exception as e:
                     logger.error(f"❌ Error fetching message via message-url: {str(e)}")
-            
-            # Fallback to storage key method if message-url failed
-            if not attachments_data:
-                storage_key = request.form.get('storage-key')
-                
-                if storage_key:
-                    logger.info(f"🔄 Falling back to storage key method: {storage_key}")
-                    
-                    # Fetch email from Mailgun API
-                    email_storage_data = fetch_email_from_storage(storage_key)
-                    
-                    if email_storage_data:
-                        attachments_data = email_storage_data.get('attachments', [])
-                        
-                        if attachments_data:
-                            logger.info(f"🔍 DETECTED {len(attachments_data)} attachments via storage API from {sender_email}")
-                        else:
-                            logger.info(f"📧 No attachments found via storage API from {sender_email}")
-                    else:
-                        logger.error(f"❌ Failed to fetch email from storage for {sender_email}")
                 
                 # Final fallback to direct file upload method
                 if not attachments_data and request.files:
