@@ -234,9 +234,10 @@ class AttachmentProcessor:
             encoded_image = base64.b64encode(image_content).decode('utf-8')
             
             # Use existing event extraction with image support
+            # Pass the original email text along with the image for better context
             # extract_events_from_text returns a tuple: (events, from_email, is_offline, openai_status, openai_error)
             result = extract_events_from_text(
-                text=f"Please extract calendar events from this image attachment.",
+                text=text_input.original_text,  # Use the actual email text instead of generic prompt
                 current_date=text_input.created_at.strftime('%Y-%m-%d'),
                 user_timezone=text_input.user.timezone if text_input.user else "UTC",
                 image_data=encoded_image
