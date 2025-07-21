@@ -15,7 +15,6 @@ from helpers.domain_utils import get_base_url
 from app import db
 from attachment_processor import attachment_processor
 import sentry_sdk
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -343,13 +342,13 @@ def handle_mailgun_webhook():
                             # Read file content
                             file_content = file_obj.read()
                             file_size = len(file_content)
-                        
-                        attachment_info = {
-                            'name': file_obj.filename,
-                            'content-type': file_obj.content_type or 'application/octet-stream',
-                            'size': file_size,
-                            'content': file_content
-                        }
+                            
+                            attachment_info = {
+                                'name': file_obj.filename,
+                                'content-type': file_obj.content_type or 'application/octet-stream',
+                                'size': file_size,
+                                'content': file_content
+                            }
                         
                         attachments_data.append(attachment_info)
                         logger.info(f"📎 Attachment: {attachment_info['name']} ({attachment_info['content-type']}, {attachment_info['size']} bytes)")
@@ -389,7 +388,10 @@ def handle_mailgun_webhook():
                         auto_sync=auto_sync
                     )
 
-                    # Process attachments if present
+                    # Process attachments if present and include events in totals
+                    total_attachment_events = 0
+                    total_attachment_synced = 0
+                    
                     if attachments_data:
                         text_input = result.get('text_input')
                         if text_input:
@@ -399,26 +401,48 @@ def handle_mailgun_webhook():
                             )
                             logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for user {user.id}")
                             
-                            # Log attachment processing results
-                            total_events_from_attachments = sum(att.extracted_events_count for att in processed_attachments)
-                            if total_events_from_attachments > 0:
-                                logger.info(f"📅 EXTRACTED {total_events_from_attachments} events from attachments")
+                            # Count events from attachments
+                            for attachment in processed_attachments:
+                                if attachment and hasattr(attachment, 'extracted_events_count'):
+                                    attachment_events = attachment.extracted_events_count or 0
+                                    total_attachment_events += attachment_events
+                                    
+                                    # Count synced events from this attachment
+                                    # Get events created for this attachment
+                                    attachment_synced_events = Event.query.filter_by(
+                                        user_id=user.id,
+                                        text_input_id=text_input.id,
+                                        is_synced=True
+                                    ).filter(
+                                        Event.extracted_at >= attachment.created_at
+                                    ).count()
+                                    total_attachment_synced += attachment_synced_events
+                            
+                            if total_attachment_events > 0:
+                                logger.info(f"📅 EXTRACTED {total_attachment_events} events from attachments, {total_attachment_synced} synced")
                         else:
                             logger.error("❌ No text_input found for attachment processing")
 
-                    events_count = len(result['events'])
-                    synced_count = result['synced_count']
+                    # Calculate total events and synced counts (email + attachments)
+                    email_events_count = len(result['events'])
+                    email_synced_count = result['synced_count']
+                    
+                    total_events_count = email_events_count + total_attachment_events
+                    total_synced_count = email_synced_count + total_attachment_synced
 
-                    logger.info(f"Processed {events_count} events for existing user {user.id} (via {'additional email' if is_additional_email else 'primary email'}), synced {synced_count}")
+                    logger.info(f"📊 TOTAL PROCESSING SUMMARY for user {user.id}: {email_events_count} email events + {total_attachment_events} attachment events = {total_events_count} total events, {total_synced_count} synced")
 
-                    # Send confirmation email
-                    send_confirmation_email(sender_email, events_count, synced_count)
+                    # Send confirmation email with total counts
+                    send_confirmation_email(sender_email, total_events_count, total_synced_count)
 
                     return jsonify({
                         "status": "success",
                         "user_id": user.id,
-                        "events_extracted": events_count,
-                        "events_synced": synced_count
+                        "email_events_extracted": email_events_count,
+                        "attachment_events_extracted": total_attachment_events,
+                        "total_events_extracted": total_events_count,
+                        "total_events_synced": total_synced_count,
+                        "attachments_processed": len(attachments_data) if attachments_data else 0
                     }), 200
 
                 except Exception as e:

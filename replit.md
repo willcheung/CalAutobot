@@ -113,6 +113,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
+- July 21, 2025:
+  - **Unified Attachment Processing Workflow**: Updated attachment processing to use the same workflow as email text processing
+  - **Automatic Calendar Sync for Attachments**: Attachment events now auto-sync to Google Calendar when user authentication is available
+  - **Unified Email Confirmation**: Attachment events are included in confirmation emails with combined totals
+  - **Enhanced Logging and Debugging**: Added comprehensive logging to track event extraction vs processing discrepancies
+  - **Improved Error Handling**: Enhanced validation error logging for better debugging of event processing failures
+  - **Code Reuse**: Leveraged existing `process_text_to_events` workflow for attachments to ensure consistency
 - July 16, 2025:
   - Added comprehensive attachment processing system using direct file content
   - Enhanced OpenAI integration with multimodal GPT-4o for image and document processing

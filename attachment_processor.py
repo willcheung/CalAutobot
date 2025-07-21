@@ -3,7 +3,7 @@ import logging
 import requests
 import mimetypes
 from typing import List, Dict, Optional, Tuple
-from models import EmailAttachment, TextInput, Event
+from models import EmailAttachment, TextInput, User, Event
 from app import db
 from event_extractor import extract_events_from_text
 import json
@@ -87,13 +87,12 @@ class AttachmentProcessor:
             return None
         
         # Create database record
-        attachment_record = EmailAttachment(
-            text_input_id=text_input.id,
-            filename=filename,
-            file_type=content_type,
-            file_size=file_size,
-            processing_status='pending'
-        )
+        attachment_record = EmailAttachment()
+        attachment_record.text_input_id = text_input.id
+        attachment_record.filename = filename
+        attachment_record.file_type = content_type
+        attachment_record.file_size = file_size
+        attachment_record.processing_status = 'pending'
         
         try:
             db.session.add(attachment_record)
@@ -156,7 +155,7 @@ class AttachmentProcessor:
     def _process_attachment_content(self, attachment_record: EmailAttachment, 
                                    file_content: bytes, text_input: TextInput) -> bool:
         """
-        Process attachment content directly for event extraction.
+        Process attachment content using the same workflow as email text processing.
         
         Args:
             attachment_record (EmailAttachment): Database record
@@ -167,26 +166,197 @@ class AttachmentProcessor:
             bool: True if successful, False otherwise
         """
         try:
+            from helpers.event_processing import process_text_to_events
+            
             logger.info(f"📥 PROCESSING attachment content: {attachment_record.filename} ({len(file_content)} bytes)")
             
-            # Process attachment for event extraction directly
+            # Extract events using the same method as email text processing
             extracted_events = self._extract_events_from_attachment(
                 file_content, attachment_record, text_input
             )
             
             if extracted_events:
-                # Save extracted events to database
-                self._save_extracted_events(extracted_events, attachment_record, text_input)
-                attachment_record.extracted_events_count = len(extracted_events)
-                logger.info(f"✅ EXTRACTED {len(extracted_events)} events from {attachment_record.filename}")
+                # Use the standard event processing workflow for extracted events
+                # Create a temporary text representation for the attachment
+                attachment_text = f"Events extracted from attachment: {attachment_record.filename}\n"
+                attachment_text += f"File type: {attachment_record.file_type}\n"
+                attachment_text += f"Size: {attachment_record.file_size} bytes\n"
+                attachment_text += f"From email: {text_input.from_email or 'Unknown'}"
+                
+                # Check if user has Google authentication for auto-sync
+                user = User.query.get(text_input.user_id)
+                auto_sync = user.google_id is not None if user else False
+                
+                # Process events using the standard workflow - this handles:
+                # - Event validation and cleaning
+                # - Database storage 
+                # - Auto-sync to Google Calendar (if enabled)
+                # - All the same error handling and logging
+                result = self._process_attachment_events(
+                    extracted_events, attachment_record, text_input, auto_sync
+                )
+                
+                attachment_record.extracted_events_count = len(result.get('events', []))
+                logger.info(f"✅ PROCESSED {attachment_record.extracted_events_count} events from {attachment_record.filename} using standard workflow")
+                
+                return True
             else:
                 logger.info(f"⚠️  No events extracted from {attachment_record.filename}")
-            
-            return True
+                attachment_record.extracted_events_count = 0
+                return True
                 
         except Exception as e:
             logger.error(f"❌ Error processing attachment content: {str(e)}")
             return False
+    
+    def _process_attachment_events(self, extracted_events: List[Dict], 
+                                 attachment_record: EmailAttachment, 
+                                 text_input: TextInput, auto_sync: bool) -> Dict:
+        """
+        Process extracted events using the standard event processing workflow.
+        
+        Args:
+            extracted_events (List[Dict]): Events extracted from attachment
+            attachment_record (EmailAttachment): Attachment record
+            text_input (TextInput): Parent text input
+            auto_sync (bool): Whether to auto-sync to Google Calendar
+        
+        Returns:
+            Dict: Processing results
+        """
+        from helpers.event_processing import process_text_to_events
+        from event_extractor import validate_and_clean_event
+        from datetime import datetime
+        from app import db
+        from models import Event
+        from helpers.text_processing import sanitize_text_for_db
+        from google_calendar import create_calendar_event
+        
+        user = User.query.get(text_input.user_id)
+        created_events = []
+        synced_count = 0
+        
+        logger.info(f"🔄 PROCESSING {len(extracted_events)} extracted events from attachment using standard workflow")
+        
+        try:
+            # Process each extracted event using the same validation as email text
+            for i, event_data in enumerate(extracted_events, 1):
+                try:
+                    logger.info(f"📝 Processing attachment event {i}/{len(extracted_events)}: {event_data.get('event_name', 'Unnamed')}")
+                    cleaned_event = validate_and_clean_event(event_data)
+                    logger.info(f"✅ Attachment event {i} validation successful")
+
+                    event = Event()
+                    event.user_id = user.id
+                    event.text_input_id = text_input.id
+                    
+                    # Sanitize event data before saving to database
+                    event.event_name = sanitize_text_for_db(cleaned_event['event_name'])
+                    event.event_description = sanitize_text_for_db(cleaned_event['event_description'])
+                    event.extracted_at = datetime.utcnow()
+
+                    # Parse dates safely - start_date is required by database schema
+                    if cleaned_event['start_date']:
+                        event.start_date = datetime.strptime(cleaned_event['start_date'], '%Y-%m-%d').date()
+                    else:
+                        # If no start date provided, use today as default (required by DB schema)
+                        event.start_date = datetime.now().date()
+
+                    if cleaned_event['start_time']:
+                        event.start_time = datetime.strptime(cleaned_event['start_time'], '%H:%M').time()
+                    if cleaned_event['end_date']:
+                        event.end_date = datetime.strptime(cleaned_event['end_date'], '%Y-%m-%d').date()
+                    else:
+                        # If no end date, use start date
+                        event.end_date = event.start_date
+
+                    if cleaned_event['end_time']:
+                        event.end_time = datetime.strptime(cleaned_event['end_time'], '%H:%M').time()
+
+                    # Store RFC3339 datetime strings for Google Calendar
+                    event.start_datetime = cleaned_event.get('start_datetime')
+                    event.end_datetime = cleaned_event.get('end_datetime')
+                    event.location = sanitize_text_for_db(cleaned_event['location'])
+
+                    created_events.append(event)
+                    logger.info(f"✅ Attachment event {i} successfully prepared for database: '{event.event_name}'")
+
+                except Exception as e:
+                    logger.error(f"❌ VALIDATION FAILED for attachment event {i}/{len(extracted_events)}: {str(e)}")
+                    logger.error(f"❌ Failed attachment event data: {event_data}")
+                    continue
+
+            # Save events to database
+            for event in created_events:
+                db.session.add(event)
+            
+            db.session.commit()
+            logger.info(f"📊 ATTACHMENT PROCESSING SUMMARY: Extracted {len(extracted_events)} events, Successfully processed {len(created_events)} events")
+            
+            # Auto-sync to Google Calendar if enabled
+            if auto_sync and created_events:
+                for event in created_events:
+                    try:
+                        # Skip if already synced
+                        if event.is_synced and event.google_event_id:
+                            synced_count += 1
+                            continue
+
+                        # Prepare event data for Google Calendar
+                        event_data = {
+                            'event_name': event.event_name,
+                            'event_description': event.event_description,
+                            'location': event.location
+                        }
+
+                        # Use datetime fields if available, otherwise fall back to separate date/time
+                        if event.start_datetime and event.end_datetime:
+                            event_data['start_datetime'] = event.start_datetime
+                            event_data['end_datetime'] = event.end_datetime
+                        else:
+                            # Fallback to separate date/time fields
+                            if event.start_date:
+                                event_data['start_date'] = event.start_date.strftime('%Y-%m-%d')
+                            if event.start_time:
+                                event_data['start_time'] = event.start_time.strftime('%H:%M')
+                            if event.end_date:
+                                event_data['end_date'] = event.end_date.strftime('%Y-%m-%d')
+                            if event.end_time:
+                                event_data['end_time'] = event.end_time.strftime('%H:%M')
+
+                        # Create event in Google Calendar
+                        google_event_id = create_calendar_event(event_data, user)
+
+                        if google_event_id:
+                            event.google_event_id = google_event_id
+                            event.is_synced = True
+                            synced_count += 1
+                            logger.info(f"✅ Synced attachment event '{event.event_name}' to Google Calendar")
+                        else:
+                            logger.warning(f"❌ Failed to sync attachment event '{event.event_name}' to Google Calendar")
+
+                    except Exception as sync_error:
+                        logger.error(f"❌ Error syncing attachment event '{event.event_name}': {str(sync_error)}")
+                        continue
+
+                # Commit sync updates
+                db.session.commit()
+                logger.info(f"🔄 Auto-sync completed for attachment events: {synced_count}/{len(created_events)} synced")
+
+            return {
+                'events': created_events,
+                'synced_count': synced_count,
+                'text_input': text_input
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error in attachment event processing: {str(e)}")
+            db.session.rollback()
+            return {
+                'events': [],
+                'synced_count': 0,
+                'text_input': text_input
+            }
     
     
     
@@ -367,20 +537,19 @@ class AttachmentProcessor:
             
             for event_data in extracted_events:
                 # Create event record
-                event = Event(
-                    user_id=text_input.user_id,
-                    text_input_id=text_input.id,
-                    event_name=event_data.get('event_name', 'Unknown Event'),
-                    event_description=event_data.get('event_description', ''),
-                    start_date=event_data.get('start_date'),
-                    start_time=event_data.get('start_time'),
-                    start_datetime=event_data.get('start_datetime'),
-                    end_date=event_data.get('end_date'),
-                    end_time=event_data.get('end_time'),
-                    end_datetime=event_data.get('end_datetime'),
-                    location=event_data.get('location', ''),
-                    is_synced=False
-                )
+                event = Event()
+                event.user_id = text_input.user_id
+                event.text_input_id = text_input.id
+                event.event_name = event_data.get('event_name', 'Unknown Event')
+                event.event_description = event_data.get('event_description', '')
+                event.start_date = event_data.get('start_date')
+                event.start_time = event_data.get('start_time')
+                event.start_datetime = event_data.get('start_datetime')
+                event.end_date = event_data.get('end_date')
+                event.end_time = event_data.get('end_time')
+                event.end_datetime = event_data.get('end_datetime')
+                event.location = event_data.get('location', '')
+                event.is_synced = False
                 
                 db.session.add(event)
             
