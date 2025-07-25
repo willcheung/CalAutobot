@@ -96,6 +96,16 @@ Calendar AI is a Flask-based web application that transforms text input (emails,
 
 Preferred communication style: Simple, everyday language.
 
+## Future Expansion Plans
+
+### Chrome Extension Integration
+- **Strategy**: Reuse existing `/webhook/mailgun` endpoint for Chrome extension requests
+- **Text Processing**: Extension will send user-selected text via `stripped-text` parameter
+- **Screenshot Support**: Extension screenshots sent as attachments, processed via existing multimodal GPT-4o Vision
+- **Authentication**: Same Google OAuth flow for seamless user experience
+- **Feature Parity**: Chrome extension users get identical AI extraction and Google Calendar sync
+- **Code Reuse**: 95% of existing codebase remains unchanged, leveraging proven attachment processing workflow
+
 ## Error Handling & Monitoring
 
 ### Comprehensive Error Management
