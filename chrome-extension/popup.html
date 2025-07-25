@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      min-height: 400px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8fafc;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .content {
+      padding: 20px;
+    }
+    
+    .auth-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .auth-status {
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    
+    .auth-status.authenticated {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    
+    .auth-status.unauthenticated {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .section h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      color: #374151;
+    }
+    
+    textarea {
+      width: 100%;
+      height: 80px;
+      padding: 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    
+    .button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+    
+    .button:last-child {
+      margin-bottom: 0;
+    }
+    
+    .button.primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .button.primary:hover {
+      background: #5a67d8;
+    }
+    
+    .button.secondary {
+      background: #6b7280;
+      color: white;
+    }
+    
+    .button.secondary:hover {
+      background: #4b5563;
+    }
+    
+    .button.outline {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+    
+    .button.outline:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .status.processing {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Calendar AI</h1>
+  </div>
+  
+  <div class="content">
+    <!-- Authentication Section -->
+    <div class="auth-section">
+      <div id="authStatus" class="auth-status unauthenticated">
+        Not signed in
+      </div>
+      <button id="authBtn" class="button primary">Sign in with Google</button>
+    </div>
+    
+    <!-- Text Input Section -->
+    <div class="section">
+      <h3>Extract Events from Text</h3>
+      <textarea id="textInput" placeholder="Paste text containing event information (emails, schedules, etc.)"></textarea>
+      <button id="processTextBtn" class="button primary" disabled>
+        <span class="button-text">Extract Events</span>
+      </button>
+    </div>
+    
+    <!-- Screenshot Section -->
+    <div class="section">
+      <h3>Extract from Screenshot</h3>
+      <button id="screenshotBtn" class="button secondary" disabled>
+        <span class="button-text">Take Screenshot</span>
+      </button>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="section">
+      <h3>Quick Actions</h3>
+      <button id="forwardEmailBtn" class="button outline">
+        Forward Email to Calendar AI
+      </button>
+      <button id="dashboardBtn" class="button outline">
+        Open Dashboard
+      </button>
+    </div>
+    
+    <!-- Status Display -->
+    <div id="statusMessage" class="status hidden"></div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
