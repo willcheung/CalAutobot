@@ -36,28 +36,33 @@ class CalendarAIPopup {
     document.getElementById('screenshotBtn').addEventListener('click', () => this.takeScreenshot());
     
     // Quick actions
-    document.getElementById('forwardEmailBtn').addEventListener('click', () => this.showForwardEmailInfo());
     document.getElementById('dashboardBtn').addEventListener('click', () => this.openDashboard());
   }
 
   updateUI() {
     const authStatus = document.getElementById('authStatus');
     const authBtn = document.getElementById('authBtn');
+    const mainSection = document.querySelector('.main-section');
     const processTextBtn = document.getElementById('processTextBtn');
     const screenshotBtn = document.getElementById('screenshotBtn');
+    const textInput = document.getElementById('textInput');
 
     if (this.user) {
       authStatus.textContent = `Signed in as ${this.user.email}`;
       authStatus.className = 'auth-status authenticated';
-      authBtn.textContent = 'Sign Out';
+      authBtn.style.display = 'none';
+      mainSection.classList.add('show');
       processTextBtn.disabled = false;
       screenshotBtn.disabled = false;
+      textInput.disabled = false;
     } else {
-      authStatus.textContent = 'Not signed in';
+      authStatus.textContent = 'Sign in to start creating calendar events';
       authStatus.className = 'auth-status unauthenticated';
-      authBtn.textContent = 'Sign in with Google';
+      authBtn.style.display = 'flex';
+      mainSection.classList.remove('show');
       processTextBtn.disabled = true;
       screenshotBtn.disabled = true;
+      textInput.disabled = true;
     }
   }
 
@@ -79,33 +84,49 @@ class CalendarAIPopup {
     try {
       this.showStatus('Signing in...', 'processing');
       
-      // Simplified sign in - redirect to Calendar AI web app for OAuth
-      const authUrl = `${this.apiBaseUrl}/auth/google?extension=true`;
+      // Open Calendar AI web app for proper Google OAuth
+      const authUrl = `${this.apiBaseUrl}/auth/google`;
       
-      // Open auth in new tab
-      chrome.tabs.create({ url: authUrl }, (tab) => {
-        // For now, user needs to complete auth on web and come back
-        this.showStatus('Complete sign-in in the new tab, then return here', 'processing');
+      // Open auth in new tab and wait for user to complete
+      chrome.tabs.create({ url: authUrl }, async (tab) => {
+        this.showStatus('Complete sign-in in the new tab, then click extension again', 'processing');
         
-        // Simple demo authentication for testing
+        // Check for successful auth every 2 seconds
+        const authCheckInterval = setInterval(async () => {
+          try {
+            // Try to get user info from Calendar AI backend
+            const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
+              credentials: 'include'
+            });
+            
+            if (response.ok) {
+              const userData = await response.json();
+              
+              // Store user data
+              this.user = userData;
+              this.authToken = 'web-session'; // Use session-based auth
+              
+              await chrome.storage.local.set({
+                user: userData,
+                authToken: 'web-session'
+              });
+              
+              clearInterval(authCheckInterval);
+              this.updateUI();
+              this.showStatus('Successfully signed in!', 'success');
+            }
+          } catch (error) {
+            // Continue checking
+          }
+        }, 2000);
+        
+        // Stop checking after 60 seconds
         setTimeout(() => {
-          // Mock user for demo purposes
-          const demoUser = {
-            email: 'demo@example.com',
-            name: 'Demo User'
-          };
-          
-          this.user = demoUser;
-          this.authToken = 'demo-token';
-          
-          chrome.storage.local.set({
-            user: demoUser,
-            authToken: 'demo-token'
-          });
-          
-          this.updateUI();
-          this.showStatus('Demo mode active - ready to test!', 'success');
-        }, 3000);
+          clearInterval(authCheckInterval);
+          if (!this.user) {
+            this.showStatus('Sign in timeout. Please try again.', 'error');
+          }
+        }, 60000);
       });
       
     } catch (error) {
@@ -222,10 +243,7 @@ class CalendarAIPopup {
     return tab;
   }
 
-  showForwardEmailInfo() {
-    // Show instructions for email forwarding
-    this.showStatus('Forward emails to: calautobot@calautobot.com for automatic processing', 'success');
-  }
+  // Removed showForwardEmailInfo - now displayed directly in UI
 
   openDashboard() {
     chrome.tabs.create({ url: `${this.apiBaseUrl}/dashboard` });

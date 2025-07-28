@@ -156,3 +156,6 @@ with app.app_context():
 # Setup Chrome extension API routes
 from chrome_extension_api import setup_chrome_extension_routes
 setup_chrome_extension_routes(app)
+
+# Import extension support routes
+import routes_extension_support
