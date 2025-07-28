@@ -1,16 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Calendar AI",
+  "name": "Calendar Autobot AI",
   "version": "1.0.0",
-  "description": "AI-powered text-to-calendar events extraction",
+  "description": "AI-powered text/image-to-calendar events extraction",
   "permissions": [
     "activeTab",
     "storage",
     "identity",
     "contextMenus",
     "notifications",
-    "scripting",
-    "https://calautobot.com/*"
+    "scripting"
   ],
   "oauth2": {
     "client_id": "609660480116-tnd7the9ooj8sd6rt4grjj7hcpt5frjf.apps.googleusercontent.com",
