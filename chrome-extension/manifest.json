@@ -8,7 +8,6 @@
     "storage",
     "identity",
     "contextMenus",
-    "notifications",
     "scripting"
   ],
   "oauth2": {

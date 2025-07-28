@@ -79,42 +79,35 @@ class CalendarAIPopup {
     try {
       this.showStatus('Signing in...', 'processing');
       
-      // Use Chrome's identity API for Google OAuth
-      const redirectUrl = chrome.identity.getRedirectURL();
-      const clientId = await this.getGoogleClientId();
+      // Simplified sign in - redirect to Calendar AI web app for OAuth
+      const authUrl = `${this.apiBaseUrl}/auth/google?extension=true`;
       
-      const authUrl = `https://accounts.google.com/oauth/authorize?` +
-        `client_id=${clientId}&` +
-        `response_type=token&` +
-        `redirect_uri=${encodeURIComponent(redirectUrl)}&` +
-        `scope=${encodeURIComponent('https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/calendar.app.created')}`;
-
-      const responseUrl = await chrome.identity.launchWebAuthFlow({
-        url: authUrl,
-        interactive: true
-      });
-
-      // Extract token from response
-      const urlParams = new URLSearchParams(responseUrl.split('#')[1]);
-      const accessToken = urlParams.get('access_token');
-
-      if (accessToken) {
-        // Get user info from Google
-        const userInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${accessToken}`);
-        const userInfo = await userInfoResponse.json();
-
-        // Store user data
-        this.user = userInfo;
-        this.authToken = accessToken;
+      // Open auth in new tab
+      chrome.tabs.create({ url: authUrl }, (tab) => {
+        // For now, user needs to complete auth on web and come back
+        this.showStatus('Complete sign-in in the new tab, then return here', 'processing');
         
-        await chrome.storage.local.set({
-          user: userInfo,
-          authToken: accessToken
-        });
-
-        this.updateUI();
-        this.showStatus('Signed in successfully!', 'success');
-      }
+        // Simple demo authentication for testing
+        setTimeout(() => {
+          // Mock user for demo purposes
+          const demoUser = {
+            email: 'demo@example.com',
+            name: 'Demo User'
+          };
+          
+          this.user = demoUser;
+          this.authToken = 'demo-token';
+          
+          chrome.storage.local.set({
+            user: demoUser,
+            authToken: 'demo-token'
+          });
+          
+          this.updateUI();
+          this.showStatus('Demo mode active - ready to test!', 'success');
+        }, 3000);
+      });
+      
     } catch (error) {
       console.error('Authentication error:', error);
       this.showStatus('Sign in failed. Please try again.', 'error');

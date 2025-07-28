@@ -124,12 +124,8 @@ class CalendarAIBackground {
       const authStatus = await this.checkAuthStatus();
       
       if (!authStatus.isAuthenticated) {
-        // Show notification to sign in
-        chrome.notifications.create({
-          type: 'basic',
-          title: 'Calendar AI',
-          message: 'Please sign in first by clicking the extension icon'
-        });
+        // Show notification to sign in - use console instead to avoid permission issues
+        console.log('Calendar AI: Please sign in first by clicking the extension icon');
         return;
       }
 
@@ -144,12 +140,8 @@ class CalendarAIBackground {
 
   async processTextInBackground(text, user) {
     try {
-      // Show processing notification
-      chrome.notifications.create({
-        type: 'basic',
-        title: 'Calendar AI',
-        message: 'Processing selected text...'
-      });
+      // Log processing instead of notification to avoid permission issues
+      console.log('Calendar AI: Processing selected text...');
 
       // Get auth token
       const result = await chrome.storage.local.get(['authToken']);
@@ -180,34 +172,19 @@ class CalendarAIBackground {
         const totalEvents = responseData.total_events_extracted || 0;
         const syncedEvents = responseData.total_events_synced || 0;
         
-        chrome.notifications.create({
-          type: 'basic',
-          title: 'Calendar AI - Success!',
-          message: `Extracted ${totalEvents} events, ${syncedEvents} synced to calendar`
-        });
+        console.log(`Calendar AI - Success! Extracted ${totalEvents} events, ${syncedEvents} synced to calendar`);
       } else {
-        chrome.notifications.create({
-          type: 'basic',
-          title: 'Calendar AI - Error',
-          message: 'Failed to process text. Please try again.'
-        });
+        console.log('Calendar AI - Error: Failed to process text. Please try again.');
       }
     } catch (error) {
       console.error('Background processing error:', error);
-      chrome.notifications.create({
-        type: 'basic',
-        title: 'Calendar AI - Error',
-        message: 'Failed to process text. Please check your connection.'
-      });
+      console.log('Calendar AI - Error: Failed to process text. Please check your connection.');
     }
   }
 
   showWelcomeNotification() {
-    chrome.notifications.create({
-      type: 'basic',
-      title: 'Welcome to Calendar AI!',
-      message: 'Click the extension icon to start extracting calendar events from text and screenshots.'
-    });
+    // Disable welcome notification to avoid permission issues
+    console.log('Calendar AI extension installed successfully');
   }
 }
 
