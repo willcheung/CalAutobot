@@ -127,7 +127,6 @@ class CalendarAIBackground {
         // Show notification to sign in
         chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon48.png',
           title: 'Calendar AI',
           message: 'Please sign in first by clicking the extension icon'
         });
@@ -148,7 +147,6 @@ class CalendarAIBackground {
       // Show processing notification
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png',
         title: 'Calendar AI',
         message: 'Processing selected text...'
       });
@@ -184,14 +182,12 @@ class CalendarAIBackground {
         
         chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon48.png',
           title: 'Calendar AI - Success!',
           message: `Extracted ${totalEvents} events, ${syncedEvents} synced to calendar`
         });
       } else {
         chrome.notifications.create({
           type: 'basic',
-          iconUrl: 'icons/icon48.png',
           title: 'Calendar AI - Error',
           message: 'Failed to process text. Please try again.'
         });
@@ -200,7 +196,6 @@ class CalendarAIBackground {
       console.error('Background processing error:', error);
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png',
         title: 'Calendar AI - Error',
         message: 'Failed to process text. Please check your connection.'
       });
@@ -210,7 +205,6 @@ class CalendarAIBackground {
   showWelcomeNotification() {
     chrome.notifications.create({
       type: 'basic',
-      iconUrl: 'icons/icon48.png',
       title: 'Welcome to Calendar AI!',
       message: 'Click the extension icon to start extracting calendar events from text and screenshots.'
     });
