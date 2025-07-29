@@ -137,6 +137,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
+- July 29, 2025:
+  - **Fixed Chrome Extension Authentication Issues**: Resolved 404 errors and authentication detection problems
+  - **Enhanced Extension Authentication Flow**: Extension now properly detects existing web app login sessions
+  - **Improved Extension UI Design**: Implemented official Google sign-in styling and "Ways to Create Events" organization
+  - **Removed Chrome Notification Dependencies**: Eliminated notification permission errors by using console logging
+  - **Added Cross-Origin Support**: Enhanced manifest with proper host permissions for web app integration
+  - **Streamlined Authentication Routes**: Extension now uses existing `/google_login` route instead of creating duplicate endpoints
 - July 21, 2025:
   - **Unified Attachment Processing Workflow**: Updated attachment processing to use the same workflow as email text processing
   - **Automatic Calendar Sync for Attachments**: Attachment events now auto-sync to Google Calendar when user authentication is available
