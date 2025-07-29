@@ -150,6 +150,15 @@ with app.app_context():
     app.register_blueprint(google_auth)
     app.register_blueprint(mailgun_webhook)
 
+    # Add alias route for Chrome extension compatibility
+    @app.route('/auth/google')
+    def auth_google_alias():
+        """Alias for /google_login to support Chrome extension"""
+        from flask import request, redirect, url_for
+        # Pass through any query parameters (like timezone)
+        args = request.args.to_dict()
+        return redirect(url_for('google_auth.login', **args))
+
     # Create all tables including the new UserEmail table
     db.create_all()
 
