@@ -1,8 +1,7 @@
 // Calendar AI Chrome Extension - Popup Script
 class CalendarAIPopup {
   constructor() {
-    // Use development URL for testing since production may not have latest changes
-    this.apiBaseUrl = 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev';
+    this.apiBaseUrl = 'https://calautobot.com';
     this.user = null;
     this.init();
   }
