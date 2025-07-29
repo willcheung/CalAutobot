@@ -85,7 +85,7 @@ class CalendarAIPopup {
       this.showStatus('Signing in...', 'processing');
       
       // Open Calendar AI web app for proper Google OAuth
-      const authUrl = `${this.apiBaseUrl}/auth/google`;
+      const authUrl = `${this.apiBaseUrl}/google_login`;
       
       // Open auth in new tab and wait for user to complete
       chrome.tabs.create({ url: authUrl }, async (tab) => {
