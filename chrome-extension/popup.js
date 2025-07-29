@@ -14,14 +14,38 @@ class CalendarAIPopup {
 
   async checkAuthStatus() {
     try {
-      // Check if user is stored in extension storage
+      // Method 1: Check if user is stored in extension storage
       const result = await chrome.storage.local.get(['user', 'authToken']);
       if (result.user && result.authToken) {
         this.user = result.user;
         this.authToken = result.authToken;
+        return;
+      }
+
+      // Method 2: Check if user is signed in on the web app
+      const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
+        credentials: 'include',
+        mode: 'cors'
+      });
+      
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData.authenticated) {
+          // Store user data locally for future use
+          this.user = userData;
+          this.authToken = 'web-session';
+          
+          await chrome.storage.local.set({
+            user: userData,
+            authToken: 'web-session'
+          });
+          
+          console.log('Found existing web authentication:', userData.email);
+        }
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      console.log('Auth check completed - no existing session found');
+      // This is normal for users who haven't signed in yet
     }
   }
 
@@ -96,24 +120,26 @@ class CalendarAIPopup {
           try {
             // Try to get user info from Calendar AI backend
             const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
-              credentials: 'include'
+              credentials: 'include',
+              mode: 'cors'
             });
             
             if (response.ok) {
               const userData = await response.json();
-              
-              // Store user data
-              this.user = userData;
-              this.authToken = 'web-session'; // Use session-based auth
-              
-              await chrome.storage.local.set({
-                user: userData,
-                authToken: 'web-session'
-              });
-              
-              clearInterval(authCheckInterval);
-              this.updateUI();
-              this.showStatus('Successfully signed in!', 'success');
+              if (userData.authenticated) {
+                // Store user data
+                this.user = userData;
+                this.authToken = 'web-session';
+                
+                await chrome.storage.local.set({
+                  user: userData,
+                  authToken: 'web-session'
+                });
+                
+                clearInterval(authCheckInterval);
+                this.updateUI();
+                this.showStatus('Successfully signed in!', 'success');
+              }
             }
           } catch (error) {
             // Continue checking
