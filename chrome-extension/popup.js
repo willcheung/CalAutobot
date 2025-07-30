@@ -67,6 +67,9 @@ class CalendarAIPopup {
     
     // Quick actions
     document.getElementById('dashboardBtn').addEventListener('click', () => this.openDashboard());
+    
+    // Copy email button
+    document.getElementById('copyEmailBtn').addEventListener('click', () => this.copyEmail());
   }
 
   updateUI() {
@@ -305,6 +308,31 @@ class CalendarAIPopup {
 
   openDashboard() {
     chrome.tabs.create({ url: `${this.apiBaseUrl}/dashboard` });
+  }
+
+  async copyEmail() {
+    const emailAddress = 'go@CalAutobot.com';
+    const copyBtn = document.getElementById('copyEmailBtn');
+    
+    try {
+      await navigator.clipboard.writeText(emailAddress);
+      
+      // Update button to show success
+      const originalText = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      copyBtn.classList.add('copied');
+      
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+        copyBtn.classList.remove('copied');
+      }, 2000);
+      
+      this.showStatus('Email address copied to clipboard!', 'success');
+    } catch (error) {
+      console.error('Failed to copy email:', error);
+      this.showStatus('Failed to copy email. Please copy manually.', 'error');
+    }
   }
 
   setButtonLoading(buttonId, loading) {

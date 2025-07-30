@@ -96,6 +96,13 @@
       margin: 5px 0 10px 0;
     }
     
+    .email-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 10px 0;
+    }
+    
     .email-address {
       background: #f3f4f6;
       border: 1px solid #d1d5db;
@@ -103,10 +110,29 @@
       padding: 10px;
       font-family: monospace;
       font-size: 13px;
-      text-align: center;
       color: #374151;
-      margin: 10px 0;
       user-select: all;
+      flex: 1;
+    }
+    
+    .copy-btn {
+      background: #667eea;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .copy-btn:hover {
+      background: #5a67d8;
+    }
+    
+    .copy-btn.copied {
+      background: #10b981;
     }
     
     .section {
@@ -230,14 +256,14 @@
 </head>
 <body>
   <div class="header">
-    <h1>Calendar AI</h1>
+    <h1>Calendar Autobot AI</h1>
   </div>
   
   <div class="content">
     <!-- Authentication Section -->
     <div class="auth-section">
       <div id="authStatus" class="auth-status unauthenticated">
-        Not signed in
+        Get started by signing in with Google
       </div>
       <button id="authBtn" class="google-signin-btn" style="display: none;">
         <svg width="18" height="18" viewBox="0 0 18 18">
@@ -251,7 +277,7 @@
     </div>
     
     <div class="main-section">
-      <h2>Ways to Create Events</h2>
+      <h2>Ways to create events in your Google Calendar</h2>
       
       <!-- Copy & Paste Text -->
       <div class="section">
@@ -266,7 +292,7 @@
       <div class="section">
         <h3>📷 Take Screenshot</h3>
         <p class="description">Capture and analyze calendars, flyers, or schedules from any webpage</p>
-        <button id="screenshotBtn" class="button secondary" disabled>
+        <button id="processTextBtn" class="button secondary" disabled>
           <span class="button-text">Take Screenshot</span>
         </button>
       </div>
@@ -275,7 +301,10 @@
       <div class="section">
         <h3>📧 Forward Email</h3>
         <p class="description">Forward emails with event information to:</p>
-        <div class="email-address">calautobot@calautobot.com</div>
+        <div class="email-container">
+          <div class="email-address">go@CalAutobot.com</div>
+          <button id="copyEmailBtn" class="copy-btn">Copy</button>
+        </div>
       </div>
       
       <!-- Dashboard Access -->
