@@ -70,11 +70,6 @@ class CalendarAIPopup {
     
     // Copy email button
     document.getElementById('copyEmailBtn').addEventListener('click', () => this.copyEmail());
-    
-    // Feedback popup buttons
-    document.getElementById('viewDashboardBtn').addEventListener('click', () => this.openDashboard());
-    document.getElementById('closeFeedbackBtn').addEventListener('click', () => this.closeFeedback());
-    document.getElementById('feedbackOverlay').addEventListener('click', () => this.closeFeedback());
   }
 
   updateUI() {
@@ -240,12 +235,8 @@ class CalendarAIPopup {
         const totalEvents = result.total_events_extracted || 0;
         const syncedEvents = result.total_events_synced || 0;
         
-        // Show feedback popup for successful extraction
-        this.showFeedbackPopup({
-          totalEvents,
-          syncedEvents,
-          source: 'text input'
-        });
+        // Show success toast
+        this.showToast(`Success! Extracted ${totalEvents} events, ${syncedEvents} synced to calendar`);
         
         textInput.value = ''; // Clear input
       } else {
@@ -298,12 +289,8 @@ class CalendarAIPopup {
         const totalEvents = result.total_events_extracted || 0;
         const syncedEvents = result.total_events_synced || 0;
         
-        // Show feedback popup for successful extraction
-        this.showFeedbackPopup({
-          totalEvents,
-          syncedEvents,
-          source: 'screenshot'
-        });
+        // Show success toast
+        this.showToast(`Success! Extracted ${totalEvents} events from screenshot, ${syncedEvents} synced to calendar`);
       } else {
         this.showStatus(`Error: ${result.error || 'Screenshot processing failed'}`, 'error');
       }
@@ -382,42 +369,19 @@ class CalendarAIPopup {
     }
   }
 
-  showFeedbackPopup({ totalEvents, syncedEvents, source }) {
-    const popup = document.getElementById('feedbackPopup');
-    const overlay = document.getElementById('feedbackOverlay');
-    const message = document.getElementById('feedbackMessage');
-    const summary = document.getElementById('eventsSummary');
+  showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.remove('hidden');
+    toast.classList.add('show');
     
-    // Update message based on source
-    if (source === 'screenshot') {
-      message.textContent = 'Your screenshot has been analyzed and events have been extracted!';
-    } else {
-      message.textContent = 'Your text has been processed and events have been extracted!';
-    }
-    
-    // Update summary
-    let summaryText = `${totalEvents} event${totalEvents !== 1 ? 's' : ''} extracted`;
-    if (syncedEvents > 0) {
-      summaryText += `, ${syncedEvents} synced to Google Calendar`;
-    }
-    summary.textContent = summaryText;
-    
-    // Show popup
-    overlay.classList.remove('hidden');
-    popup.classList.remove('hidden');
-    
-    // Auto-close after 8 seconds
+    // Auto-hide after 4 seconds
     setTimeout(() => {
-      this.closeFeedback();
-    }, 8000);
-  }
-
-  closeFeedback() {
-    const popup = document.getElementById('feedbackPopup');
-    const overlay = document.getElementById('feedbackOverlay');
-    
-    popup.classList.add('hidden');
-    overlay.classList.add('hidden');
+      toast.classList.remove('show');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 300); // Wait for animation to complete
+    }, 4000);
   }
 }
 

@@ -233,85 +233,24 @@
       color: #1e40af;
     }
     
-    .feedback-popup {
+    .toast {
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      z-index: 1000;
-      width: 280px;
-      text-align: center;
-      border: 2px solid #10b981;
-    }
-    
-    .feedback-popup h3 {
-      margin: 0 0 10px 0;
-      color: #065f46;
-      font-size: 16px;
-    }
-    
-    .feedback-popup p {
-      margin: 0 0 15px 0;
-      color: #374151;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-    
-    .feedback-popup .events-summary {
-      background: #d1fae5;
-      padding: 8px 12px;
-      border-radius: 6px;
-      margin: 10px 0;
-      font-size: 13px;
-      color: #065f46;
-    }
-    
-    .feedback-buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-    
-    .feedback-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .feedback-btn.primary {
-      background: #667eea;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
       color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      max-width: 280px;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
     }
     
-    .feedback-btn.primary:hover {
-      background: #5a67d8;
-    }
-    
-    .feedback-btn.secondary {
-      background: #f3f4f6;
-      color: #374151;
-      border: 1px solid #d1d5db;
-    }
-    
-    .feedback-btn.secondary:hover {
-      background: #e5e7eb;
-    }
-    
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
-      z-index: 999;
+    .toast.show {
+      transform: translateX(0);
     }
     
     .hidden {
@@ -400,17 +339,8 @@
     <div id="statusMessage" class="status hidden"></div>
   </div>
   
-  <!-- Feedback Popup -->
-  <div id="feedbackOverlay" class="overlay hidden"></div>
-  <div id="feedbackPopup" class="feedback-popup hidden">
-    <h3>🎉 Events Created Successfully!</h3>
-    <p id="feedbackMessage">Your events have been extracted and added to your Google Calendar.</p>
-    <div id="eventsSummary" class="events-summary"></div>
-    <div class="feedback-buttons">
-      <button id="viewDashboardBtn" class="feedback-btn primary">View Dashboard</button>
-      <button id="closeFeedbackBtn" class="feedback-btn secondary">Close</button>
-    </div>
-  </div>
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
   
   <script src="popup.js"></script>
 </body>
