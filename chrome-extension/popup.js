@@ -14,15 +14,8 @@ class CalendarAIPopup {
 
   async checkAuthStatus() {
     try {
-      // Method 1: Check if user is stored in extension storage
-      const result = await chrome.storage.local.get(['user', 'authToken']);
-      if (result.user && result.authToken) {
-        this.user = result.user;
-        this.authToken = result.authToken;
-        return;
-      }
-
-      // Method 2: Check if user is signed in on the web app
+      // Always check web app authentication status first to detect logout
+      let webAuthValid = false;
       try {
         const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
           credentials: 'include',
@@ -32,7 +25,7 @@ class CalendarAIPopup {
         if (response.ok) {
           const userData = await response.json();
           if (userData.authenticated) {
-            // Store user data locally for future use
+            // User is authenticated on web app
             this.user = userData;
             this.authToken = 'web-session';
             
@@ -42,12 +35,34 @@ class CalendarAIPopup {
             });
             
             console.log('Found existing web authentication:', userData.email);
+            webAuthValid = true;
+          } else {
+            // User is not authenticated (authenticated: false), clear local storage
+            console.log('User not authenticated on web app, clearing extension storage');
+            await chrome.storage.local.clear();
+            this.user = null;
+            this.authToken = null;
+            return;
           }
-        } else if (response.status === 404) {
-          console.log('Authentication endpoint not available yet - using local storage only');
+        } else if (response.status === 401 || response.status === 403) {
+          // User is not authenticated on web app, clear local storage
+          console.log('User logged out from web app (401/403), clearing extension storage');
+          await chrome.storage.local.clear();
+          this.user = null;
+          this.authToken = null;
+          return;
         }
       } catch (fetchError) {
-        console.log('Web authentication check failed - using local storage only');
+        console.log('Web authentication check failed - checking local storage');
+      }
+
+      // Only use local storage if web auth check failed due to network issues
+      if (!webAuthValid) {
+        const result = await chrome.storage.local.get(['user', 'authToken']);
+        if (result.user && result.authToken) {
+          this.user = result.user;
+          this.authToken = result.authToken;
+        }
       }
     } catch (error) {
       console.log('Auth check completed - no existing session found');
@@ -310,6 +325,7 @@ class CalendarAIPopup {
   // Removed showForwardEmailInfo - now displayed directly in UI
 
   openDashboard() {
+    // Always open dashboard directly without checking authentication
     chrome.tabs.create({ url: `${this.apiBaseUrl}/dashboard` });
   }
 
