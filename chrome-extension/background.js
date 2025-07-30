@@ -103,11 +103,14 @@ class CalendarAIBackground {
   }
 
   setupContextMenu() {
-    // Create context menu for selected text
-    chrome.contextMenus.create({
-      id: 'extract-events-text',
-      title: 'Extract Calendar Events',
-      contexts: ['selection']
+    // Remove any existing context menus first to prevent duplicates
+    chrome.contextMenus.removeAll(() => {
+      // Create context menu for selected text
+      chrome.contextMenus.create({
+        id: 'extract-events-text',
+        title: 'Extract Calendar Events',
+        contexts: ['selection']
+      });
     });
 
     // Handle context menu clicks
