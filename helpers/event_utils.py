@@ -1,6 +1,10 @@
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from helpers.text_processing import sanitize_text_for_db
+import dateutil.parser
+import logging
+
+logger = logging.getLogger(__name__)
 
 def prepare_event_data_for_calendar(event):
     """
@@ -34,6 +38,56 @@ def prepare_event_data_for_calendar(event):
             event_data['end_time'] = event.end_time.strftime('%H:%M')
 
     return event_data
+
+def calculate_event_duration_minutes(event):
+    """
+    Calculate event duration in minutes from start and end times.
+    
+    Args:
+        event (Event): Event object with start/end datetime or date/time fields
+        
+    Returns:
+        int or None: Duration in minutes, or None if cannot be calculated
+    """
+    try:
+        # Method 1: Use RFC3339 datetime strings if available
+        if event.start_datetime and event.end_datetime:
+            start_dt = dateutil.parser.parse(event.start_datetime)
+            end_dt = dateutil.parser.parse(event.end_datetime)
+            duration = end_dt - start_dt
+            return int(duration.total_seconds() / 60)
+        
+        # Method 2: Use separate date/time fields
+        if event.start_date and event.end_date:
+            # Create datetime objects from date and time
+            start_dt = datetime.combine(event.start_date, event.start_time or datetime.min.time())
+            
+            # For end datetime, use end_date and end_time if available
+            if event.end_time:
+                end_dt = datetime.combine(event.end_date, event.end_time)
+            else:
+                # If no end time specified, assume same day event with 1 hour duration
+                if event.start_time:
+                    # Add 1 hour to start time
+                    end_dt = start_dt + timedelta(hours=1)
+                else:
+                    # If no start time either, assume all-day event (return None or 0)
+                    if event.end_date != event.start_date:
+                        # Multi-day event - calculate days * 24 hours
+                        duration = event.end_date - event.start_date
+                        return int(duration.days * 24 * 60)  # Convert days to minutes
+                    else:
+                        # Single all-day event, return None (cannot calculate meaningful minutes)
+                        return None
+            
+            duration = end_dt - start_dt
+            return int(duration.total_seconds() / 60)
+            
+    except Exception as e:
+        logger.warning(f"Could not calculate duration for event {event.id}: {str(e)}")
+        return None
+    
+    return None
 
 def update_event_from_form(event, form_data):
     """
@@ -76,6 +130,9 @@ def update_event_from_form(event, form_data):
         event.end_time = None
 
     event.updated_at = datetime.utcnow()
+    
+    # Calculate and update duration in minutes
+    event.duration_minutes = calculate_event_duration_minutes(event)
 
 def format_event_for_api(event):
     """
@@ -98,6 +155,7 @@ def format_event_for_api(event):
         'start_datetime': event.start_datetime,
         'end_datetime': event.end_datetime,
         'location': event.location,
+        'duration_minutes': event.duration_minutes,
         'is_synced': event.is_synced,
         'google_event_id': event.google_event_id
     }

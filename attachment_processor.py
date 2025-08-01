@@ -277,6 +277,10 @@ class AttachmentProcessor:
                     event.start_datetime = cleaned_event.get('start_datetime')
                     event.end_datetime = cleaned_event.get('end_datetime')
                     event.location = sanitize_text_for_db(cleaned_event['location'])
+                    
+                    # Calculate and store duration in minutes
+                    from helpers.event_utils import calculate_event_duration_minutes
+                    event.duration_minutes = calculate_event_duration_minutes(event)
 
                     created_events.append(event)
                     logger.info(f"✅ Attachment event {i} successfully prepared for database: '{event.event_name}'")

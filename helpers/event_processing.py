@@ -7,6 +7,7 @@ from models import User, Event, TextInput
 from event_extractor import extract_events_from_text, validate_and_clean_event
 from google_calendar import create_calendar_event
 from helpers.text_processing import sanitize_text_for_db
+from helpers.event_utils import calculate_event_duration_minutes
 import sentry_sdk
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,9 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
             event.start_datetime = cleaned_event.get('start_datetime')
             event.end_datetime = cleaned_event.get('end_datetime')
             event.location = sanitize_text_for_db(cleaned_event['location'])
+            
+            # Calculate and store duration in minutes
+            event.duration_minutes = calculate_event_duration_minutes(event)
 
             created_events.append(event)
             logger.info(f"✅ Event {i} successfully prepared for database: '{event.event_name}'")

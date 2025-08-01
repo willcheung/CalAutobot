@@ -38,6 +38,9 @@ class Event(db.Model):
     google_event_id = db.Column(db.String(100))
     is_synced = db.Column(db.Boolean, default=False)
     
+    # Event duration
+    duration_minutes = db.Column(db.Integer)  # Duration in minutes calculated from start/end times
+    
     # Metadata
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
