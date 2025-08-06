@@ -165,12 +165,33 @@
     padding: 0.75rem 1.25rem;
     color: rgba(255, 255, 255, 0.9);
     margin-top: 0;
+    justify-content: center;
+    text-align: center;
 }
 
 .navbar .chrome-extension-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
     color: white;
+}
+
+/* Mobile responsive fixes for navbar Chrome extension button */
+@media (max-width: 991px) {
+    .navbar .chrome-extension-btn {
+        width: 100%;
+        margin: 0.5rem 0;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .navbar-nav .chrome-extension-btn {
+        align-self: center;
+    }
 }
 
 /* CTA section Chrome extension button styling */
