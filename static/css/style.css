@@ -178,10 +178,23 @@
     background-color: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.2);
     color: #6c757d;
-    margin-top: 0;
+    margin-top: 15px;
 }
 
 .cta-section .chrome-extension-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.3);
+    color: #495057;
+}
+
+/* Features section Chrome extension button styling (white background sections) */
+.features-section .chrome-extension-btn {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #6c757d;
+}
+
+.features-section .chrome-extension-btn:hover {
     background-color: rgba(0, 0, 0, 0.1);
     border-color: rgba(0, 0, 0, 0.3);
     color: #495057;
