@@ -98,6 +98,95 @@
     margin-right: 12px;
 }
 
+/* Chrome Extension Button Styles */
+.chrome-extension-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.chrome-extension-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.chrome-extension-btn:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
+    outline: none;
+    color: white;
+    text-decoration: none;
+}
+
+.chrome-extension-btn:active {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(0);
+}
+
+.chrome-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.chrome-extension-btn-large {
+    padding: 12px 24px;
+    font-size: 16px;
+    min-height: 44px;
+}
+
+.chrome-extension-btn-large .chrome-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+}
+
+/* Navbar specific Chrome extension button styling */
+.navbar .chrome-extension-btn {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.75rem 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 0;
+}
+
+.navbar .chrome-extension-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* CTA section Chrome extension button styling */
+.cta-section .chrome-extension-btn {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #6c757d;
+    margin-top: 0;
+}
+
+.cta-section .chrome-extension-btn:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.3);
+    color: #495057;
+}
+
 /* Email forwarding card styles */
 .email-forwarding-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
