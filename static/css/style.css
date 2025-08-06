@@ -143,32 +143,6 @@
     height: 16px;
     margin-right: 8px;
     flex-shrink: 0;
-    border-radius: 50%;
-    background: conic-gradient(from 45deg, #EA4335 0deg 90deg, #FBBC04 90deg 180deg, #34A853 180deg 270deg, #4285F4 270deg 360deg);
-    position: relative;
-}
-
-.chrome-icon:after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 10px;
-    height: 10px;
-    background: #4285F4;
-    border-radius: 50%;
-}
-
-.chrome-icon:before {
-    content: '';
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 6px;
-    height: 6px;
-    background: white;
-    border-radius: 50%;
-    z-index: 1;
 }
 
 .chrome-extension-btn-large {

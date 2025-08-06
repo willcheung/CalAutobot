@@ -1,0 +1,18 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Chrome Extension Official Icon Design -->
+  <!-- Based on Chrome Developer documentation design -->
+  
+  <!-- Background circle -->
+  <circle cx="24" cy="24" r="22" fill="#f8f9fa" stroke="#e8eaed" stroke-width="2"/>
+  
+  <!-- Extension puzzle piece shape -->
+  <path d="M14 14 h8 v6 h6 v8 h-6 v6 h-8 v-6 h-6 v-8 h6 z" fill="#4285f4"/>
+  
+  <!-- Inner detail -->
+  <path d="M18 18 h4 v2 h2 v4 h-2 v2 h-4 v-2 h-2 v-4 h2 z" fill="white"/>
+  
+  <!-- Chrome-style accent -->
+  <circle cx="35" cy="13" r="3" fill="#ea4335"/>
+  <circle cx="35" cy="35" r="3" fill="#34a853"/>
+  <circle cx="13" cy="35" r="3" fill="#fbbc04"/>
+</svg>
