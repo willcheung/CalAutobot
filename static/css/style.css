@@ -224,6 +224,11 @@
     .navbar-nav {
         display: none !important;
     }
+    
+    /* Hide Chrome extension section on dashboard mobile view */
+    .chrome-extension-card {
+        display: none !important;
+    }
 }
 
 /* CTA section Chrome extension button styling - Secondary light style */
