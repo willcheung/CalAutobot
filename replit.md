@@ -137,6 +137,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
+- August 7, 2025:
+  - **Updated Homepage "How It Works" Section**: Changed flow to "Forward Email or Take Screenshot" → "AI Processes Your Content" → "Auto-Sync to Google Calendar" for clearer user journey
+  - **Enhanced Dashboard Layout**: Updated text input section width to match email forwarding CTA, added Chrome extension promotion card with consistent styling
+  - **Improved Chrome Extension Branding**: Standardized all Chrome extension buttons to use official Google Chrome icon across homepage, dashboard, and header
+  - **Refined Button Styling**: Changed Chrome extension buttons to secondary light styling to not compete with primary Google sign-up buttons, updated extract events button to blue primary styling
+  - **Enhanced Mobile Responsiveness**: Hidden navbar buttons on mobile (≤768px) for logo-only header, fixed Google sign-in button deformation in tablet view (769px-991px)
 - July 29, 2025:
   - **Fixed Chrome Extension Authentication Issues**: Resolved 404 errors and authentication detection problems
   - **Enhanced Extension Authentication Flow**: Extension now properly detects existing web app login sessions
