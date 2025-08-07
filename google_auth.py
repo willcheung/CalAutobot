@@ -42,7 +42,7 @@ def login():
         authorization_endpoint,
         redirect_uri=request.url_root.rstrip('/') + REDIRECT_URL,
         scope=[
-            "openid", "email", "profile",
+            "email", "profile",
             "https://www.googleapis.com/auth/calendar.app.created"
         ],
         access_type="offline",  # Request offline access to get refresh token
