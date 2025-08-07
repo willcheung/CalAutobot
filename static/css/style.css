@@ -175,7 +175,7 @@
     color: white;
 }
 
-/* Mobile responsive fixes for navbar Chrome extension button */
+/* Tablet responsive fixes for navbar buttons */
 @media (max-width: 991px) {
     .navbar .chrome-extension-btn {
         width: 100%;
@@ -185,12 +185,32 @@
         text-align: center;
     }
     
-    .navbar-nav {
+    .navbar .google-signin-btn {
+        width: 100%;
+        margin: 0.5rem 0;
+        justify-content: center;
+        align-items: center;
         text-align: center;
+        white-space: nowrap;
+        padding: 0.75rem 1rem;
     }
     
-    .navbar-nav .chrome-extension-btn {
+    .navbar-nav {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .navbar-nav .chrome-extension-btn,
+    .navbar-nav .google-signin-btn {
         align-self: center;
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+    
+    .navbar-nav .d-flex.flex-row {
+        flex-direction: column !important;
+        width: 100%;
+        gap: 0.5rem;
     }
 }
 
