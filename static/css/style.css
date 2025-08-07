@@ -194,6 +194,18 @@
     }
 }
 
+/* Hide navbar buttons on mobile - logo only header */
+@media (max-width: 768px) {
+    .navbar .google-signin-btn,
+    .navbar .chrome-extension-btn {
+        display: none !important;
+    }
+    
+    .navbar-nav {
+        display: none !important;
+    }
+}
+
 /* CTA section Chrome extension button styling - Secondary light style */
 .cta-section .chrome-extension-btn {
     background: #f8f9fa !important;
