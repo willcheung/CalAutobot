@@ -144,6 +144,7 @@ Preferred communication style: Simple, everyday language.
   - **Refined Button Styling**: Changed Chrome extension buttons to secondary light styling to not compete with primary Google sign-up buttons, updated extract events button to blue primary styling
   - **Enhanced Mobile Responsiveness**: Hidden navbar buttons on mobile (≤768px) for logo-only header, fixed Google sign-in button deformation in tablet view (769px-991px)
   - **Optimized Dashboard Section Layout**: Swapped Chrome extension and additional emails sections - Chrome extension now appears next to email forwarding CTA, additional emails moved to text input area for better user flow
+  - **Enhanced Mobile Dashboard**: Hidden Chrome extension section on mobile devices (≤768px) for cleaner, more focused mobile experience
 - July 29, 2025:
   - **Fixed Chrome Extension Authentication Issues**: Resolved 404 errors and authentication detection problems
   - **Enhanced Extension Authentication Flow**: Extension now properly detects existing web app login sessions
