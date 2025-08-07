@@ -204,19 +204,19 @@
 
 /* Examples section Chrome extension button styling */
 .examples-section .chrome-extension-btn {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    border: 2px solid #4CAF50;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border: 2px solid #2c3e50;
     color: white;
     margin-top: 0;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.30), 0 1px 3px 1px rgba(76, 175, 80, 0.20);
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.30), 0 1px 3px 1px rgba(44, 62, 80, 0.20);
 }
 
 .examples-section .chrome-extension-btn:hover {
-    background: linear-gradient(135deg, #45a049, #3d8b40);
-    border-color: #45a049;
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    border-color: #34495e;
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.40), 0 2px 8px rgba(76, 175, 80, 0.30);
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.40), 0 2px 8px rgba(44, 62, 80, 0.30);
 }
 
 .cta-section .chrome-extension-btn:hover {
