@@ -204,19 +204,34 @@
 
 /* Examples section Chrome extension button styling */
 .examples-section .chrome-extension-btn {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    border: 2px solid #2c3e50;
-    color: white;
+    background: #343a40 !important;
+    border: 2px solid #343a40 !important;
+    color: #ffffff !important;
     margin-top: 0;
-    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.30), 0 1px 3px 1px rgba(44, 62, 80, 0.20);
+    box-shadow: 0 2px 8px rgba(52, 58, 64, 0.30), 0 1px 3px 1px rgba(52, 58, 64, 0.20);
 }
 
 .examples-section .chrome-extension-btn:hover {
-    background: linear-gradient(135deg, #34495e, #2c3e50);
-    border-color: #34495e;
-    color: white;
+    background: #495057 !important;
+    border-color: #495057 !important;
+    color: #ffffff !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.40), 0 2px 8px rgba(44, 62, 80, 0.30);
+    box-shadow: 0 4px 16px rgba(52, 58, 64, 0.40), 0 2px 8px rgba(52, 58, 64, 0.30);
+    text-decoration: none !important;
+}
+
+.examples-section .chrome-extension-btn:focus {
+    background: #495057 !important;
+    border-color: #495057 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+.examples-section .chrome-extension-btn:active {
+    background: #343a40 !important;
+    border-color: #343a40 !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
 }
 
 .cta-section .chrome-extension-btn:hover {
