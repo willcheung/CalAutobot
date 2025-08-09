@@ -21,7 +21,7 @@ Preferred communication style: Simple, everyday language.
     - **Database Models**: Defines `User`, `Event`, and `TextInput` models for data storage.
     - **Web Routes**: Manages dashboard operations, text processing, event editing, and RESTful API endpoints.
     - **Data Flow**: Users authenticate, input text, AI processes it, events are stored, reviewed, and then synced to Google Calendar.
-    - **Webhook System**: Implemented for real-time Google Calendar push notifications, including automatic event deletion sync, with token-based validation.
+    - **Webhook System**: Implemented for real-time Google Calendar push notifications, including automatic event deletion sync, with token-based validation. Updated to use production domain (calautobot.com) for webhook endpoints with asynchronous processing to prevent worker timeouts.
 
 ### Frontend
 - **Templates**: Jinja2 with Bootstrap 5.
