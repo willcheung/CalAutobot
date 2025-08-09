@@ -135,8 +135,47 @@ Preferred communication style: Simple, everyday language.
 - **Database Rollbacks**: Automatic transaction rollback on failures
 - **User Feedback**: Clear error messages without exposing technical details
 
+## Google Calendar Webhook Implementation
+
+### Webhook System Overview
+- **Google Calendar Push Notifications**: Implemented comprehensive webhook handler for real-time calendar event synchronization
+- **Automatic Event Deletion Sync**: When users delete events from Google Calendar, they are automatically removed from our database
+- **Webhook Security**: Token-based validation system to ensure authentic Google notifications
+- **Database Schema**: Added webhook tracking fields to User model (webhook_channel_id, webhook_resource_id, webhook_expiration)
+
+### Webhook Architecture
+- **Endpoint**: `/webhook/google-calendar` - Main webhook handler for Google Calendar push notifications
+- **Setup Endpoint**: `/webhook/google-calendar/setup` - API endpoint for creating webhook subscriptions
+- **Test Endpoint**: `/webhook/google-calendar/test` - Development testing endpoint
+- **Auto-Setup**: Webhooks automatically created when Calendar Autobot calendars are generated
+- **Webhook Lifecycle**: 7-day expiration with automatic renewal logic
+
+### Webhook Flow
+1. **Webhook Registration**: When creating Calendar Autobot calendar, system automatically registers webhook with Google
+2. **Change Notifications**: Google sends POST requests to webhook endpoint when calendar events change
+3. **Event Sync Detection**: System compares Google Calendar events with database to detect deletions
+4. **Automatic Cleanup**: Deleted events are removed from local database to maintain sync
+
+### Security Features
+- **Token Validation**: All webhook requests validated using channel tokens with `cal-autobot-` prefix
+- **Signature Verification**: Basic token-based authentication to prevent spoofed requests
+- **Error Handling**: Comprehensive logging and error tracking for webhook processing
+
+### Technical Components
+- **google_webhook.py**: Main webhook handler blueprint with notification processing
+- **google_calendar.py**: Enhanced with webhook setup/teardown functions
+- **webhook_test.py**: Testing script for webhook functionality verification
+- **webhook_admin.py**: Administrative tools for webhook management and testing
+
 ## Changelog
 
+- August 9, 2025:
+  - **Implemented Google Calendar Webhook System**: Complete push notification handler for real-time event synchronization
+  - **Added Automatic Event Deletion Sync**: Events deleted from Google Calendar are now automatically removed from our database
+  - **Enhanced Database Schema**: Added webhook tracking fields to User model for channel management
+  - **Created Webhook Security Layer**: Token-based validation to ensure authentic Google notifications
+  - **Built Webhook Testing Infrastructure**: Comprehensive testing tools for webhook development and verification
+  - **Integrated Auto-Webhook Setup**: Webhooks automatically created when Calendar Autobot calendars are generated
 - August 7, 2025:
   - **Updated Homepage "How It Works" Section**: Changed flow to "Forward Email or Take Screenshot" → "AI Processes Your Content" → "Auto-Sync to Google Calendar" for clearer user journey
   - **Enhanced Dashboard Layout**: Updated text input section width to match email forwarding CTA, added Chrome extension promotion card with consistent styling

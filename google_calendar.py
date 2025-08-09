@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import uuid
 from datetime import datetime, timedelta
 import requests
 from flask import current_app
@@ -211,6 +212,14 @@ def get_or_create_textbot_calendar(user, access_token):
             db.session.commit()
 
             logger.info(f"Successfully created and stored Calendar Autobot calendar with ID: {calendar_id}")
+            
+            # Set up webhook for this calendar
+            try:
+                setup_calendar_webhook_for_user(user, access_token, calendar_id)
+            except Exception as webhook_error:
+                logger.warning(f"Failed to set up webhook for calendar {calendar_id}: {str(webhook_error)}")
+                # Don't fail calendar creation if webhook setup fails
+            
             return calendar_id
         else:
             logger.error(f"Failed to create Calendar Autobot calendar: {response.status_code} - {response.text}")
@@ -440,4 +449,127 @@ def delete_calendar_event(user, google_event_id):
 
     except Exception as e:
         current_app.logger.error(f"Error deleting calendar event: {str(e)}")
+        return False
+
+def setup_calendar_webhook_for_user(user, access_token, calendar_id):
+    """
+    Set up a Google Calendar webhook for event change notifications.
+    
+    Args:
+        user: User object to set up webhook for
+        access_token: Valid Google access token
+        calendar_id: Calendar ID to watch for changes
+    
+    Returns:
+        dict: Webhook response data if successful
+    """
+    try:
+        from app import db
+        
+        # Check if user already has an active webhook
+        if user.webhook_channel_id and user.webhook_expiration:
+            # Check if webhook is still valid (not expired)
+            if user.webhook_expiration > datetime.utcnow():
+                logger.info(f"User {user.email} already has active webhook, skipping setup")
+                return None
+        
+        # Generate unique channel ID
+        channel_id = f"cal-autobot-{user.id}-{uuid.uuid4().hex[:8]}"
+        
+        # Get the webhook URL from environment or current app context
+        webhook_url = os.environ.get('WEBHOOK_BASE_URL')
+        if not webhook_url:
+            from flask import request
+            webhook_url = request.url_root.rstrip('/') if request else "https://your-domain.replit.app"
+        
+        webhook_endpoint = f"{webhook_url}/webhook/google-calendar"
+        
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Set expiration to 7 days (max allowed by Google)
+        expiration_time = datetime.utcnow() + timedelta(days=7)
+        expiration_timestamp = int(expiration_time.timestamp() * 1000)
+        
+        watch_request = {
+            "id": channel_id,
+            "type": "web_hook",
+            "address": webhook_endpoint,
+            "token": f"cal-autobot-{user.id}",
+            "expiration": expiration_timestamp
+        }
+        
+        url = f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/watch'
+        response = requests.post(url, headers=headers, json=watch_request, timeout=30)
+        
+        if response.status_code == 200:
+            webhook_data = response.json()
+            
+            # Store webhook info in user record
+            user.webhook_channel_id = webhook_data.get('id')
+            user.webhook_resource_id = webhook_data.get('resourceId')
+            user.webhook_expiration = expiration_time
+            
+            db.session.commit()
+            
+            logger.info(f"Successfully set up webhook for user {user.email}: channel_id={channel_id}")
+            return webhook_data
+        else:
+            logger.error(f"Failed to set up webhook for user {user.email}: {response.status_code} - {response.text}")
+            raise Exception(f"Failed to create webhook subscription: {response.status_code}")
+        
+    except Exception as e:
+        logger.error(f"Error setting up calendar webhook for user {user.email}: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        raise e
+
+def stop_calendar_webhook_for_user(user):
+    """
+    Stop an existing Google Calendar webhook for a user.
+    
+    Args:
+        user: User object with webhook details
+    
+    Returns:
+        bool: True if successful or no webhook to stop
+    """
+    try:
+        if not user.webhook_channel_id or not user.webhook_resource_id:
+            logger.info(f"No webhook to stop for user {user.email}")
+            return True
+        
+        access_token = refresh_google_token(user)
+        
+        headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        
+        stop_request = {
+            "id": user.webhook_channel_id,
+            "resourceId": user.webhook_resource_id
+        }
+        
+        url = 'https://www.googleapis.com/calendar/v3/channels/stop'
+        response = requests.post(url, headers=headers, json=stop_request, timeout=30)
+        
+        if response.status_code == 200 or response.status_code == 404:
+            # Clear webhook info from user record
+            user.webhook_channel_id = None
+            user.webhook_resource_id = None
+            user.webhook_expiration = None
+            
+            from app import db
+            db.session.commit()
+            
+            logger.info(f"Successfully stopped webhook for user {user.email}")
+            return True
+        else:
+            logger.warning(f"Failed to stop webhook for user {user.email}: {response.status_code} - {response.text}")
+            return False
+        
+    except Exception as e:
+        logger.error(f"Error stopping calendar webhook for user {user.email}: {str(e)}")
         return False

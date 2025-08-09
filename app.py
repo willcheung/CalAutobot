@@ -144,11 +144,13 @@ with app.app_context():
     from routes import main_routes
     from google_auth import google_auth
     from mailgun_webhook import mailgun_webhook
+    from google_webhook import google_webhook
 
     # Register blueprints
     app.register_blueprint(main_routes)
     app.register_blueprint(google_auth)
     app.register_blueprint(mailgun_webhook)
+    app.register_blueprint(google_webhook)
 
     # Create all tables including the new UserEmail table
     db.create_all()

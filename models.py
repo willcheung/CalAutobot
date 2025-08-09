@@ -14,6 +14,11 @@ class User(UserMixin, db.Model):
     timezone = db.Column(db.String(50), default='UTC')  # User's timezone
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Google Calendar webhook fields
+    webhook_channel_id = db.Column(db.String(100), nullable=True)  # Google webhook channel ID
+    webhook_resource_id = db.Column(db.String(100), nullable=True)  # Google webhook resource ID
+    webhook_expiration = db.Column(db.DateTime, nullable=True)  # When webhook expires
+    
     # Relationship with events
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
     text_inputs = db.relationship('TextInput', backref='user', lazy=True, cascade='all, delete-orphan')
