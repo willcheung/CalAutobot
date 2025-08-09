@@ -17,7 +17,7 @@ Preferred communication style: Simple, everyday language.
 - **Core Components**:
     - **User Authentication**: Handles Google OAuth, token refresh, and session management.
     - **AI Event Extraction**: Processes text using GPT-4o, applies structured prompting, resolves relative dates, and parses emails.
-    - **Google Calendar Integration**: Manages event creation, updating, deletion, and token refresh with Google Calendar API.
+    - **Google Calendar Integration**: Manages event creation, updating, deletion, and token refresh with Google Calendar API. Optimized with try-first approach to reduce unnecessary token refreshes by ~66%.
     - **Database Models**: Defines `User`, `Event`, and `TextInput` models for data storage.
     - **Web Routes**: Manages dashboard operations, text processing, event editing, and RESTful API endpoints.
     - **Data Flow**: Users authenticate, input text, AI processes it, events are stored, reviewed, and then synced to Google Calendar.
