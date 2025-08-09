@@ -80,12 +80,12 @@ def handle_google_calendar_webhook():
             # For exists notifications, we need to check what actually changed
             # Since Google doesn't tell us exactly what changed, we need to:
             # 1. Find the user who owns this calendar resource
-            # 2. Sync their events to detect deletions
+            # 2. Check for deleted events and clean up our database
             
             user = find_user_by_calendar_resource(resource_id, resource_uri)
             if user:
                 logger.info(f"Processing calendar changes for user: {user.email}")
-                sync_calendar_events_for_deletion(user)
+                process_calendar_deletions_for_user(user)
             else:
                 logger.warning(f"Could not find user for calendar resource: {resource_id}")
         
@@ -124,10 +124,10 @@ def find_user_by_calendar_resource(resource_id, resource_uri):
         logger.error(f"Error finding user by calendar resource: {str(e)}")
         return None
 
-def sync_calendar_events_for_deletion(user):
+def process_calendar_deletions_for_user(user):
     """
     Check for deleted events in the user's Google Calendar and remove them
-    from our database.
+    from our database using the existing delete function.
     
     Args:
         user: User object whose calendar to sync
@@ -182,22 +182,30 @@ def sync_calendar_events_for_deletion(user):
             is_synced=True
         ).filter(Event.google_event_id.isnot(None)).all()
         
+        # Import the reusable delete function
+        from routes import delete_event_internal
+        
         deleted_count = 0
         for event in synced_events:
             if event.google_event_id not in google_event_ids:
                 logger.info(f"Event '{event.event_name}' (ID: {event.google_event_id}) was deleted from Google Calendar, removing from database")
-                db.session.delete(event)
-                deleted_count += 1
+                
+                # Use the existing delete function with skip_google_calendar=True
+                # since the event was already deleted from Google Calendar
+                success, error_message = delete_event_internal(event, user, skip_google_calendar=True)
+                
+                if success:
+                    deleted_count += 1
+                else:
+                    logger.error(f"Failed to delete event {event.id} from database: {error_message}")
         
         if deleted_count > 0:
-            db.session.commit()
-            logger.info(f"Removed {deleted_count} deleted events for user {user.email}")
+            logger.info(f"Successfully removed {deleted_count} deleted events for user {user.email}")
         else:
             logger.info(f"No deleted events found for user {user.email}")
         
     except Exception as e:
         logger.error(f"Error syncing calendar events for deletion for user {user.email}: {str(e)}")
-        db.session.rollback()
         sentry_sdk.capture_exception(e)
 
 @google_webhook.route("/webhook/google-calendar/setup", methods=["POST"])

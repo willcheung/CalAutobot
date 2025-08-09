@@ -195,30 +195,51 @@ def sync_to_calendar(event_id):
 
     return redirect(url_for("main_routes.dashboard"))
 
+def delete_event_internal(event, user, skip_google_calendar=False):
+    """
+    Internal function to delete an event from database and optionally Google Calendar.
+    
+    Args:
+        event: Event object to delete
+        user: User object who owns the event
+        skip_google_calendar: If True, skip Google Calendar deletion (used for webhook deletions)
+    
+    Returns:
+        tuple: (success: bool, error_message: str or None)
+    """
+    try:
+        # Delete from Google Calendar if synced and not skipping
+        if not skip_google_calendar and event.is_synced and event.google_event_id:
+            try:
+                delete_calendar_event(user, event.google_event_id)
+            except Exception as e:
+                logger.warning(f"Failed to delete event {event.id} from Google Calendar: {str(e)}")
+                # Continue with database deletion even if Google Calendar deletion fails
+
+        # Delete from database
+        db.session.delete(event)
+        db.session.commit()
+        
+        logger.info(f"Successfully deleted event {event.id} ({event.event_name}) for user {user.id}")
+        return True, None
+
+    except Exception as e:
+        logger.error(f"Error deleting event {event.id} for user {user.id}: {str(e)}", exc_info=True)
+        sentry_sdk.capture_exception(e)
+        db.session.rollback()
+        return False, str(e)
+
 @main_routes.route("/delete_event/<int:event_id>", methods=["POST"])
 @login_required
 def delete_event(event_id):
     event = Event.query.filter_by(id=event_id, user_id=current_user.id).first_or_404()
 
-    try:
-        # Delete from Google Calendar if synced
-        if event.is_synced and event.google_event_id:
-            try:
-                delete_calendar_event(current_user, event.google_event_id)
-            except Exception as e:
-                flash(f"Warning: Failed to delete from Google Calendar: {str(e)}", "warning")
-
-        # Delete from database
-        db.session.delete(event)
-        db.session.commit()
-
+    success, error_message = delete_event_internal(event, current_user, skip_google_calendar=False)
+    
+    if success:
         flash("Event deleted successfully!", "success")
-
-    except Exception as e:
-        logger.error(f"Error deleting event {event_id} for user {current_user.id}: {str(e)}", exc_info=True)
-        sentry_sdk.capture_exception(e)
-        db.session.rollback()
-        flash(f"Error deleting event: {str(e)}", "error")
+    else:
+        flash(f"Error deleting event: {error_message}", "error")
 
     return redirect(url_for("main_routes.dashboard"))
 
