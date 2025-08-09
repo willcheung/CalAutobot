@@ -80,12 +80,13 @@ def handle_google_calendar_webhook():
             # For exists notifications, we need to check what actually changed
             # Since Google doesn't tell us exactly what changed, we need to:
             # 1. Find the user who owns this calendar resource
-            # 2. Check for deleted events and clean up our database
+            # 2. Queue the deletion processing to avoid worker timeouts
             
             user = find_user_by_calendar_resource(resource_id, resource_uri)
             if user:
-                logger.info(f"Processing calendar changes for user: {user.email}")
-                process_calendar_deletions_for_user(user)
+                logger.info(f"Queuing calendar deletion processing for user: {user.email}")
+                # Process deletions in background to avoid timeout
+                process_calendar_deletions_async(user)
             else:
                 logger.warning(f"Could not find user for calendar resource: {resource_id}")
         
@@ -124,6 +125,30 @@ def find_user_by_calendar_resource(resource_id, resource_uri):
         logger.error(f"Error finding user by calendar resource: {str(e)}")
         return None
 
+def process_calendar_deletions_async(user):
+    """
+    Process calendar deletions asynchronously to avoid webhook timeouts.
+    
+    Args:
+        user: User object whose calendar to sync
+    """
+    import threading
+    from app import app
+    
+    def deletion_worker():
+        """Background worker to process deletions"""
+        try:
+            with app.app_context():
+                process_calendar_deletions_for_user(user)
+        except Exception as e:
+            logger.error(f"Error in deletion worker for user {user.email}: {str(e)}")
+    
+    # Start background thread for deletion processing
+    thread = threading.Thread(target=deletion_worker)
+    thread.daemon = True  # Dies when main thread dies
+    thread.start()
+    logger.info(f"Started background deletion processing for user {user.email}")
+
 def process_calendar_deletions_for_user(user):
     """
     Check for deleted events in the user's Google Calendar and remove them
@@ -153,7 +178,7 @@ def process_calendar_deletions_for_user(user):
             logger.warning(f"User {user.email} has no Calendar Autobot calendar ID")
             return
         
-        # Fetch current events from Google Calendar
+        # Fetch current events from Google Calendar with timeout
         url = f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events'
         params = {
             'showDeleted': 'false',  # Only get non-deleted events
@@ -161,7 +186,7 @@ def process_calendar_deletions_for_user(user):
             'maxResults': 2500  # Max allowed by API
         }
         
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        response = requests.get(url, headers=headers, params=params, timeout=10)
         
         if response.status_code != 200:
             logger.error(f"Failed to fetch calendar events for user {user.email}: {response.status_code}")
@@ -186,8 +211,21 @@ def process_calendar_deletions_for_user(user):
         from routes import delete_event_internal
         
         deleted_count = 0
+        events_to_delete = []
+        
+        # First, identify events to delete without processing them yet
         for event in synced_events:
             if event.google_event_id not in google_event_ids:
+                events_to_delete.append(event)
+        
+        logger.info(f"Found {len(events_to_delete)} events to delete for user {user.email}")
+        
+        # Process deletions in smaller batches to avoid timeout
+        batch_size = 10
+        for i in range(0, len(events_to_delete), batch_size):
+            batch = events_to_delete[i:i + batch_size]
+            
+            for event in batch:
                 logger.info(f"Event '{event.event_name}' (ID: {event.google_event_id}) was deleted from Google Calendar, removing from database")
                 
                 # Use the existing delete function with skip_google_calendar=True
@@ -198,6 +236,11 @@ def process_calendar_deletions_for_user(user):
                     deleted_count += 1
                 else:
                     logger.error(f"Failed to delete event {event.id} from database: {error_message}")
+            
+            # Small delay between batches to prevent overwhelming the system
+            if i + batch_size < len(events_to_delete):
+                import time
+                time.sleep(0.1)
         
         if deleted_count > 0:
             logger.info(f"Successfully removed {deleted_count} deleted events for user {user.email}")
