@@ -143,13 +143,13 @@ with app.app_context():
     # Import and register blueprints
     from routes import main_routes
     from google_auth import google_auth
-    from mailgun_webhook import mailgun_webhook
+    # Removed mailgun_webhook import - migrated to Gmail API
     from google_webhook import google_webhook
 
     # Register blueprints
     app.register_blueprint(main_routes)
     app.register_blueprint(google_auth)
-    app.register_blueprint(mailgun_webhook)
+    # Removed mailgun_webhook blueprint - migrated to Gmail API
     app.register_blueprint(google_webhook)
 
     # Create all tables including the new UserEmail table
