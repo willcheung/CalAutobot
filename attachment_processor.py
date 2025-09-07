@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 class AttachmentProcessor:
     """
-    Process email attachments from Mailgun for event extraction.
-    Uses Mailgun Email API to fetch stored emails and attachments.
+    Process email attachments from Gmail for event extraction.
+    Works with Gmail API to process downloaded attachments.
     """
     
     SUPPORTED_FORMATS = {
@@ -27,9 +27,8 @@ class AttachmentProcessor:
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB limit
     
     def __init__(self):
-        self.mailgun_api_key = os.environ.get('MAILGUN_API_KEY')
-        self.mailgun_domain = os.environ.get('MAILGUN_DOMAIN')
-        self.mailgun_base_url = f"https://api.mailgun.net/v3/{self.mailgun_domain}"
+        # No longer need Mailgun credentials - Gmail service handles download
+        pass
     
     def process_email_attachments(self, text_input: TextInput, attachments_data: List[Dict]) -> List[EmailAttachment]:
         """
@@ -37,7 +36,7 @@ class AttachmentProcessor:
         
         Args:
             text_input (TextInput): The parent text input record
-            attachments_data (List[Dict]): List of attachment metadata from Mailgun
+            attachments_data (List[Dict]): List of attachment data with content already downloaded from Gmail
         
         Returns:
             List[EmailAttachment]: List of processed attachment records
