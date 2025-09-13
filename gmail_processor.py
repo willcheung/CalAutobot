@@ -6,6 +6,7 @@ from models import User, Event, UserEmail, TextInput
 from helpers.event_processing import process_text_to_events
 from helpers.event_utils import format_event_for_api
 from helpers.domain_utils import get_base_url
+from helpers.event_deduplication import deduplicate_events, should_skip_attachment
 from app import db
 from gmail_service import gmail_service
 import sentry_sdk
@@ -83,13 +84,13 @@ def process_single_email(email_data: Dict) -> bool:
         
         logger.info(f"Processing email from {sender_email}, subject: {subject}")
         
-        # Download attachment content (similar to Mailgun webhook logic)
+        # Download attachment content with filtering for signature images
         attachments_data = []
         
         if attachments_info:
             logger.info(f"🔍 DETECTED {len(attachments_info)} attachments from Gmail from {sender_email}")
             
-            # Download each attachment from Gmail
+            # Download each attachment from Gmail (with filtering)
             for attachment_info in attachments_info:
                 try:
                     attachment_id = attachment_info.get('attachment_id')
@@ -97,6 +98,13 @@ def process_single_email(email_data: Dict) -> bool:
                     filename = attachment_info.get('name', 'unknown')
                     
                     if attachment_id and message_id:
+                        # Check if we should skip this attachment (signature/logo images)
+                        content_type = attachment_info.get('content-type', 'application/octet-stream')
+                        estimated_size = attachment_info.get('size', 0)
+                        
+                        if should_skip_attachment(filename, content_type, estimated_size):
+                            continue
+                        
                         logger.info(f"🔗 Attempting to download attachment: {filename}")
                         
                         # Download attachment content from Gmail
@@ -166,9 +174,10 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
                                user: User, sender_email: str, subject: str) -> bool:
     """Process email for existing user with Google authentication"""
     try:
-        # Auto-sync only if user has google_id
-        auto_sync = user.google_id is not None
+        # Disable auto-sync for now - we'll sync all events together after deduplication
+        auto_sync = False
         
+        # Process email body text (no auto-sync)
         result = process_text_to_events(
             formatted_text, 
             user, 
@@ -176,54 +185,77 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
             auto_sync=auto_sync
         )
         
-        # Process attachments if present and include events in totals
-        total_attachment_events = 0
-        total_attachment_synced = 0
+        email_events = result.get('events', [])
+        text_input = result.get('text_input')
         
-        if attachments_data:
+        # Collect all events from email body and attachments
+        all_events = list(email_events)  # Start with email events
+        
+        # Process attachments if present (no auto-sync)
+        if attachments_data and text_input:
             # Import here to avoid circular dependency
             from attachment_processor import attachment_processor
             
-            text_input = result.get('text_input')
-            if text_input:
-                logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for existing user {user.id}")
-                processed_attachments = attachment_processor.process_email_attachments(
-                    text_input, attachments_data
-                )
-                logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for user {user.id}")
-                
-                # Count events from attachments
-                for attachment in processed_attachments:
-                    if attachment and hasattr(attachment, 'extracted_events_count'):
-                        attachment_events = attachment.extracted_events_count or 0
-                        total_attachment_events += attachment_events
+            logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for existing user {user.id} (no auto-sync)")
+            processed_attachments = attachment_processor.process_email_attachments(
+                text_input, attachments_data
+            )
+            logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for user {user.id}")
+            
+            # Collect events from all attachments
+            for attachment in processed_attachments:
+                if attachment and hasattr(attachment, 'id'):
+                    # Get events created from this attachment
+                    attachment_events = Event.query.filter_by(
+                        user_id=user.id,
+                        text_input_id=text_input.id
+                    ).filter(
+                        Event.extracted_at >= attachment.created_at
+                    ).all()
+                    all_events.extend(attachment_events)
+        
+        # Now deduplicate all events (email + attachments)
+        logger.info(f"🔄 Starting deduplication: {len(all_events)} total events found")
+        unique_events = deduplicate_events(all_events, user.id, text_input.id if text_input else 0)
+        
+        # Now sync all unique events if user has Google authentication
+        synced_count = 0
+        if user.google_id and unique_events:
+            from google_calendar import create_calendar_event
+            from helpers.event_utils import prepare_event_data_for_calendar
+            
+            logger.info(f"🔄 Starting centralized sync for {len(unique_events)} unique events")
+            
+            for event in unique_events:
+                try:
+                    if event.is_synced and event.google_event_id:
+                        synced_count += 1
+                        continue
+                    
+                    # Prepare and sync event
+                    event_data = prepare_event_data_for_calendar(event)
+                    google_event_id = create_calendar_event(user, event_data)
+                    
+                    if google_event_id:
+                        event.google_event_id = google_event_id
+                        event.is_synced = True
+                        synced_count += 1
+                        logger.info(f"✅ Synced unique event: {event.event_name}")
                         
-                        # Count synced events from this attachment
-                        attachment_synced_events = Event.query.filter_by(
-                            user_id=user.id,
-                            text_input_id=text_input.id,
-                            is_synced=True
-                        ).filter(
-                            Event.extracted_at >= attachment.created_at
-                        ).count()
-                        total_attachment_synced += attachment_synced_events
-                
-                if total_attachment_events > 0:
-                    logger.info(f"📅 EXTRACTED {total_attachment_events} events from attachments, {total_attachment_synced} synced")
-            else:
-                logger.error("❌ No text_input found for attachment processing")
+                except Exception as sync_error:
+                    logger.error(f"❌ Error syncing event '{event.event_name}': {str(sync_error)}")
+                    continue
+            
+            # Commit sync updates
+            db.session.commit()
         
-        # Calculate total events and synced counts
-        email_events_count = len(result['events'])
-        email_synced_count = result['synced_count']
+        # Calculate final counts
+        total_events_count = len(unique_events)
         
-        total_events_count = email_events_count + total_attachment_events
-        total_synced_count = email_synced_count + total_attachment_synced
-        
-        logger.info(f"📊 TOTAL PROCESSING SUMMARY for user {user.id}: {email_events_count} email events + {total_attachment_events} attachment events = {total_events_count} total events, {total_synced_count} synced")
+        logger.info(f"📊 FINAL PROCESSING SUMMARY for user {user.id}: {total_events_count} unique events extracted, {synced_count} synced")
         
         # Send confirmation email with total counts (reuse existing function)
-        send_confirmation_email(sender_email, total_events_count, total_synced_count)
+        send_confirmation_email(sender_email, total_events_count, synced_count)
         
         return True
         
