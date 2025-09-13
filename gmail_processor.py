@@ -146,10 +146,9 @@ def process_single_email(email_data: Dict) -> bool:
                     formatted_text, attachments_data, user, sender_email, subject
                 )
         else:
-            # New user - create temp user and send signup email
-            return process_new_user_email(
-                formatted_text, attachments_data, sender_email, subject
-            )
+            # SECURITY: Ignore emails from non-users to prevent unauthorized usage
+            logger.info(f"🚫 Ignoring email from non-user: {sender_email} (not in user database)")
+            return True  # Mark as "processed" but don't actually process
             
     except Exception as e:
         logger.error(f"Error processing single email: {str(e)}")
