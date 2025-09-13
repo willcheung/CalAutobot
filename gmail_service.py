@@ -73,7 +73,7 @@ class GmailService:
     
     def get_unread_emails(self, max_results: int = 50) -> List[Dict]:
         """
-        Get unread emails from Gmail inbox.
+        Get unread emails sent to go@calautobot.com only.
         
         Args:
             max_results (int): Maximum number of emails to fetch
@@ -87,20 +87,20 @@ class GmailService:
                 logger.error("Failed to get Gmail service")
                 return []
             
-            # Search for unread emails
+            # Search for unread emails sent to go@calautobot.com only
             results = service.users().messages().list(
                 userId='me',
-                q='is:unread',
+                q='is:unread to:go@calautobot.com',
                 maxResults=max_results
             ).execute()
             
             messages = results.get('messages', [])
             
             if not messages:
-                logger.info("No unread emails found")
+                logger.info("No unread emails found for go@calautobot.com")
                 return []
             
-            logger.info(f"Found {len(messages)} unread emails")
+            logger.info(f"Found {len(messages)} unread emails for go@calautobot.com")
             
             # Get full message details for each email
             emails = []
