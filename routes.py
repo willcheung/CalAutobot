@@ -60,6 +60,34 @@ def db_health_check():
             "timestamp": datetime.utcnow().isoformat()
         }, 500
 
+@main_routes.route("/webhook/check-emails", methods=["GET", "POST"])
+def webhook_check_emails():
+    """Webhook endpoint for automated email checking via external cron services"""
+    try:
+        logger.info("🔄 Email check webhook triggered")
+        
+        # Import here to avoid circular dependencies
+        from gmail_processor import check_new_emails
+        
+        # Run the email check
+        check_new_emails()
+        
+        logger.info("✅ Email check webhook completed successfully")
+        return {
+            "status": "success",
+            "message": "Email check completed",
+            "timestamp": datetime.utcnow().isoformat()
+        }, 200
+        
+    except Exception as e:
+        logger.error(f"❌ Email check webhook failed: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        return {
+            "status": "error",
+            "message": f"Email check failed: {str(e)}",
+            "timestamp": datetime.utcnow().isoformat()
+        }, 500
+
 @main_routes.route("/")
 def index():
     if current_user.is_authenticated:
