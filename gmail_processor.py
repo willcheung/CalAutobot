@@ -16,15 +16,16 @@ logger = logging.getLogger(__name__)
 def check_new_emails():
     """
     Main function to check for new emails from Gmail.
-    Replaces the Mailgun webhook functionality.
+    Optimized for 5-minute polling intervals.
     """
+    start_time = datetime.utcnow()
     try:
         logger.info("=" * 80)
         logger.info("GMAIL EMAIL CHECK - Starting email polling")
         logger.info("=" * 80)
         
-        # Get unread emails from Gmail
-        emails = gmail_service.get_unread_emails(max_results=50)
+        # Limit to 10 emails max for 5-minute intervals (prevents timeouts)
+        emails = gmail_service.get_unread_emails(max_results=10)
         
         if not emails:
             logger.info("No new emails to process")
@@ -50,8 +51,19 @@ def check_new_emails():
         
         logger.info(f"Successfully processed {processed_count}/{len(emails)} emails")
         
+        # Performance monitoring for 5-minute intervals
+        end_time = datetime.utcnow()
+        duration = (end_time - start_time).total_seconds()
+        logger.info(f"⏱️ Email check completed in {duration:.2f} seconds")
+        
+        # Warn if taking too long for 5-minute intervals
+        if duration > 120:  # 2 minutes
+            logger.warning(f"⚠️ Email check took {duration:.2f}s - consider optimization for 5-min intervals")
+        
     except Exception as e:
-        logger.error(f"Error in Gmail email check: {str(e)}")
+        end_time = datetime.utcnow()
+        duration = (end_time - start_time).total_seconds()
+        logger.error(f"Error in Gmail email check after {duration:.2f}s: {str(e)}")
         sentry_sdk.capture_exception(e)
 
 def process_single_email(email_data: Dict) -> bool:
@@ -135,14 +147,11 @@ def process_single_email(email_data: Dict) -> bool:
         email_content = body_text if body_text.strip() else f"Email subject: {subject}"
         formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{email_content}"
         
-        # Check if sender is an existing user (reuse existing logic)
-        user = User.query.filter_by(email=sender_email).first()
-        
-        # If not found, check additional emails
+        # Optimized user lookup with join (single query instead of two)
+        user = db.session.query(User).filter_by(email=sender_email).first()
         if not user:
-            user_email = UserEmail.query.filter_by(email=sender_email).first()
-            if user_email:
-                user = user_email.user
+            # Check additional emails with join to avoid multiple queries
+            user = db.session.query(User).join(UserEmail).filter(UserEmail.email == sender_email).first()
         
         if user:
             # Check if email was found via UserEmail lookup
