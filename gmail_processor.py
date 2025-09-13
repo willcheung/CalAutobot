@@ -72,8 +72,13 @@ def process_single_email(email_data: Dict) -> bool:
         body_text = email_data.get('stripped-text', '')
         attachments_info = email_data.get('attachments', [])
         
-        if not sender_email or not body_text.strip():
-            logger.warning(f"Missing sender or email content: sender={sender_email}")
+        if not sender_email:
+            logger.warning(f"Missing sender email")
+            return False
+        
+        # Allow processing even without body text if there are attachments or subject
+        if not body_text.strip() and not attachments_info and not subject.strip():
+            logger.warning(f"Email has no content (no body, subject, or attachments): sender={sender_email}")
             return False
         
         logger.info(f"Processing email from {sender_email}, subject: {subject}")
@@ -118,7 +123,9 @@ def process_single_email(email_data: Dict) -> bool:
             logger.info(f"📧 No attachments found in Gmail email from {sender_email}")
         
         # Process text to events using existing helper function
-        formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{body_text}"
+        # Use subject as content if no body text available
+        email_content = body_text if body_text.strip() else f"Email subject: {subject}"
+        formatted_text = f"From: {sender_email}\nSubject: {subject}\n\n{email_content}"
         
         # Check if sender is an existing user (reuse existing logic)
         user = User.query.filter_by(email=sender_email).first()
