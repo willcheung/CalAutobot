@@ -43,7 +43,7 @@ class GmailService:
             
             self.credentials = Credentials.from_authorized_user_info(
                 token_data,
-                scopes=['https://www.googleapis.com/auth/gmail.readonly']
+                scopes=['https://www.googleapis.com/auth/gmail.modify']
             )
             
             logger.info("Gmail credentials initialized successfully")
