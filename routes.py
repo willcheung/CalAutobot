@@ -64,6 +64,17 @@ def db_health_check():
 def webhook_check_emails():
     """Webhook endpoint for automated email checking via external cron services"""
     try:
+        # Basic security: check for API key
+        api_key = request.args.get('key') or request.headers.get('X-API-Key')
+        expected_key = os.environ.get('WEBHOOK_API_KEY', 'calendar-ai-webhook-2024')
+        
+        if api_key != expected_key:
+            logger.warning(f"❌ Unauthorized webhook access attempt from {request.remote_addr}")
+            return {
+                "status": "error",
+                "message": "Unauthorized access"
+            }, 401
+        
         logger.info("🔄 Email check webhook triggered")
         
         # Import here to avoid circular dependencies
