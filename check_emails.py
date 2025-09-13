@@ -17,8 +17,7 @@ from datetime import datetime
 # Add current directory to Python path
 sys.path.append('.')
 
-# Import our Gmail processor
-from gmail_processor import check_new_emails
+# Import Flask app first to initialize database
 from app import app
 
 # Set up logging for scheduled execution
@@ -56,6 +55,9 @@ def main():
         
         # Initialize Flask app context for database operations
         with app.app_context():
+            # Import within app context to avoid circular imports
+            from gmail_processor import check_new_emails
+            
             logger.info("🔄 Starting Gmail email check...")
             
             # Check for new emails and process them
