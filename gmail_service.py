@@ -209,6 +209,7 @@ class GmailService:
     def _extract_body_text(self, payload: Dict) -> str:
         """
         Extract plain text body from Gmail message payload.
+        Handles complex nested structures and HTML-only emails.
         
         Args:
             payload (Dict): Gmail message payload
@@ -217,21 +218,51 @@ class GmailService:
             str: Email body text
         """
         try:
+            # Recursive function to find body text in nested parts
+            def extract_from_parts(parts):
+                text_content = ""
+                html_content = ""
+                
+                for part in parts:
+                    mime_type = part.get('mimeType', '')
+                    
+                    # Handle nested multipart (recursive)
+                    if 'parts' in part:
+                        nested_text, nested_html = extract_from_parts(part['parts'])
+                        if nested_text:
+                            text_content += nested_text + "\n"
+                        if nested_html:
+                            html_content += nested_html + "\n"
+                    
+                    # Extract plain text
+                    elif mime_type == 'text/plain':
+                        body_data = part.get('body', {}).get('data')
+                        if body_data:
+                            text_content += base64.urlsafe_b64decode(body_data).decode('utf-8', errors='ignore') + "\n"
+                    
+                    # Extract HTML (as fallback)
+                    elif mime_type == 'text/html':
+                        body_data = part.get('body', {}).get('data')
+                        if body_data:
+                            html_content += base64.urlsafe_b64decode(body_data).decode('utf-8', errors='ignore') + "\n"
+                
+                return text_content.strip(), html_content.strip()
+            
             # Handle different payload structures
             if 'parts' in payload:
-                # Multipart message
-                for part in payload['parts']:
-                    if part.get('mimeType') == 'text/plain':
-                        body_data = part.get('body', {}).get('data')
-                        if body_data:
-                            return base64.urlsafe_b64decode(body_data).decode('utf-8', errors='ignore')
+                # Multipart message (most common for forwarded emails)
+                text_content, html_content = extract_from_parts(payload['parts'])
                 
-                # Fallback to HTML if plain text not found
-                for part in payload['parts']:
-                    if part.get('mimeType') == 'text/html':
-                        body_data = part.get('body', {}).get('data')
-                        if body_data:
-                            return base64.urlsafe_b64decode(body_data).decode('utf-8', errors='ignore')
+                # Return plain text if available, otherwise HTML
+                if text_content:
+                    return text_content
+                elif html_content:
+                    # Simple HTML tag removal for basic text extraction
+                    import re
+                    # Remove HTML tags and decode entities
+                    clean_text = re.sub(r'<[^>]+>', '', html_content)
+                    clean_text = clean_text.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+                    return clean_text.strip()
             
             elif payload.get('mimeType') == 'text/plain':
                 # Simple text message
@@ -239,11 +270,24 @@ class GmailService:
                 if body_data:
                     return base64.urlsafe_b64decode(body_data).decode('utf-8', errors='ignore')
             
-            return ''
+            elif payload.get('mimeType') == 'text/html':
+                # HTML-only message
+                body_data = payload.get('body', {}).get('data')
+                if body_data:
+                    html_content = base64.urlsafe_b64decode(body_data).decode('utf-8', errors='ignore')
+                    # Simple HTML tag removal
+                    import re
+                    clean_text = re.sub(r'<[^>]+>', '', html_content)
+                    clean_text = clean_text.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+                    return clean_text.strip()
+            
+            # If no content found, return the subject as fallback
+            logger.warning("No body content found in email, this might be an empty or attachment-only email")
+            return ""
             
         except Exception as e:
             logger.error(f"Error extracting body text: {str(e)}")
-            return ''
+            return ""
     
     def _extract_attachments(self, service, message_id: str, payload: Dict) -> List[Dict]:
         """
