@@ -630,8 +630,10 @@ code, pre {
 /* FAQ section */
 .why-section {
     padding: 4rem 0;
-    background: linear-gradient(135deg, #fafbfc 0%, #f4f6f8 100%);
+    background-color: #ffffff;
     margin: 0;
+    border-top: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
 }
 
 .why-section h2 {
