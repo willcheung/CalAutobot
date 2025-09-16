@@ -13,10 +13,9 @@ def get_user_info():
     # Handle CORS preflight
     if request.method == 'OPTIONS':
         response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         response.headers.add('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
         return response
     
     try:
@@ -32,12 +31,10 @@ def get_user_info():
             }
         
         response = jsonify(response_data)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
         return response, status_code
         
     except Exception as e:
         response = jsonify({'error': 'Failed to get user info', 'authenticated': False})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
         return response, 500
