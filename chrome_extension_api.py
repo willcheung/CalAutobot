@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 def setup_chrome_extension_routes(app):
     """Setup Chrome extension API routes"""
     
+    logger.info("🔧 Setting up Chrome extension API routes...")
+    
     @app.route('/api/extension/process', methods=['POST', 'OPTIONS'])
     def extension_process_events():
         """
@@ -34,6 +36,11 @@ def setup_chrome_extension_routes(app):
             response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
             response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
             return response
+
+        # Log incoming request details
+        logger.info(f"📨 Chrome extension API request: {request.method} {request.path}")
+        logger.info(f"📨 Headers: {dict(request.headers)}")
+        logger.info(f"📨 Content-Type: {request.content_type}")
 
         try:
 
