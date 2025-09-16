@@ -25,8 +25,8 @@ class CalendarAIBackground {
       return true; // Keep message channel open for async response
     });
 
-    // Handle context menu (future feature)
-    this.setupContextMenu();
+    // Handle context menu (future feature) - temporarily disabled
+    // this.setupContextMenu();
   }
 
   async handleMessage(request, sender, sendResponse) {
@@ -150,13 +150,11 @@ class CalendarAIBackground {
       const result = await chrome.storage.local.get(['authToken']);
       const authToken = result.authToken;
 
-      // Send to webhook endpoint
-      const formData = new FormData();
-      formData.append('stripped-text', text);
-      formData.append('From', user.email);
-      formData.append('Subject', 'Chrome Extension Context Menu');
+      // Use same API base URL logic as popup.js
+      const apiBaseUrl = 'https://calautobot.com';
 
-      const response = await fetch('https://calautobot.com/api/extension/process', {
+      // Send to API endpoint with correct format
+      const response = await fetch(`${apiBaseUrl}/api/extension/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
