@@ -109,6 +109,17 @@ def not_found_error(error):
                          error_code=404, 
                          error_message="Page not found"), 404
 
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    logger.error(f"❌ 405 Method Not Allowed: {request.method} {request.path}")
+    logger.error(f"❌ Available methods: {list(error.valid_methods) if hasattr(error, 'valid_methods') else 'Unknown'}")
+    return jsonify({
+        'error': 'Method Not Allowed',
+        'method': request.method,
+        'path': request.path,
+        'valid_methods': list(error.valid_methods) if hasattr(error, 'valid_methods') else []
+    }), 405
+
 @app.errorhandler(500)
 def internal_error(error):
     logger.error(f"500 error: {str(error)}")
