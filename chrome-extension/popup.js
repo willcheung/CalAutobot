@@ -277,16 +277,18 @@ class CalendarAIPopup {
         quality: 90
       });
 
-      // Convert data URL to blob
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
+      this.showStatus('Optimizing image...', 'processing');
+
+      // Resize image for faster upload
+      const optimizedBlob = await this.resizeImage(dataUrl, 1920);
+      const blob = optimizedBlob;
 
       // Send to webhook endpoint with screenshot
       const formData = new FormData();
       formData.append('stripped-text', 'Screenshot taken from Chrome extension');
       formData.append('From', this.user.email);
       formData.append('Subject', 'Chrome Extension Screenshot');
-      formData.append('attachment-1', blob, 'screenshot.png');
+      formData.append('attachment-1', blob, 'screenshot.jpg');
 
       this.showStatus('Processing screenshot and extracting events...', 'processing');
 
@@ -320,6 +322,62 @@ class CalendarAIPopup {
   async getCurrentTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     return tab;
+  }
+
+  async resizeImage(dataUrl, maxWidth = 1920) {
+    return new Promise((resolve, reject) => {
+      try {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            // Calculate new dimensions maintaining aspect ratio
+            let { width, height } = img;
+            
+            if (width <= maxWidth) {
+              // Image is already small enough, convert to JPEG for better compression
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              canvas.width = width;
+              canvas.height = height;
+              ctx.drawImage(img, 0, 0);
+              
+              canvas.toBlob(resolve, 'image/jpeg', 0.85);
+              return;
+            }
+            
+            // Resize maintaining aspect ratio
+            const ratio = maxWidth / width;
+            const newWidth = maxWidth;
+            const newHeight = Math.round(height * ratio);
+            
+            // Create canvas and resize
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Use high-quality image rendering
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Draw resized image
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+            
+            // Convert to JPEG blob with good quality
+            canvas.toBlob(resolve, 'image/jpeg', 0.85);
+            
+          } catch (error) {
+            reject(error);
+          }
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = dataUrl;
+        
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 
   // Removed showForwardEmailInfo - now displayed directly in UI
