@@ -155,9 +155,9 @@ with app.app_context():
     # Create all tables including the new UserEmail table
     db.create_all()
 
-# Setup Chrome extension API routes
-from chrome_extension_api import setup_chrome_extension_routes
-setup_chrome_extension_routes(app)
+    # Setup Chrome extension API routes  
+    from chrome_extension_api import setup_chrome_extension_routes
+    setup_chrome_extension_routes(app)
 
-# Import extension support routes
-import routes_extension_support
+    # Import extension support routes
+    import routes_extension_support
