@@ -51,7 +51,10 @@ Provide the output as a JSON object with a "events" key containing a list, where
 Text: '''{text}'''"""
 
 
-def extract_events_from_text(text, current_date=None, user_timezone="UTC", image_data=None):
+def extract_events_from_text(text,
+                             current_date=None,
+                             user_timezone="UTC",
+                             image_data=None):
     """
     Extract events from text using OpenAI API synchronously.
 
@@ -87,40 +90,32 @@ def extract_events_from_text(text, current_date=None, user_timezone="UTC", image
         #logger.info(prompt)
 
         # Prepare messages for OpenAI API call
-        messages = [{
-            "role": "system",
-            "content": sys_prompt
-        }]
-        
+        messages = [{"role": "system", "content": sys_prompt}]
+
         # Add user message with optional image
         if image_data:
             # For multimodal processing with image
             user_message = {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_data}"
-                        }
+                "role":
+                "user",
+                "content": [{
+                    "type": "text",
+                    "text": prompt
+                }, {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{image_data}"
                     }
-                ]
+                }]
             }
             model = "gpt-4.1"  # Use vision model for images, latest model
         else:
             # For text-only processing
-            user_message = {
-                "role": "user",
-                "content": prompt
-            }
-            model = "gpt-4.1"  # Use text model for text-only, latest model
-        
+            user_message = {"role": "user", "content": prompt}
+            model = "gpt-5-mini"  # Use text model for text-only, latest model
+
         messages.append(user_message)
-        
+
         # Make synchronous OpenAI API call
         response = openai.chat.completions.create(
             model=model,
@@ -140,17 +135,17 @@ def extract_events_from_text(text, current_date=None, user_timezone="UTC", image
         if from_email:
             for event in events:
                 if event.get("event_description"):
-                    event["event_description"] = f"{event['event_description']} \n\n(from {from_email})"
+                    event[
+                        "event_description"] = f"{event['event_description']} \n\n(from {from_email})"
 
         # Add emojis to event names using OpenAI-generated emoji
         for event in events:
             if event.get("event_name"):
                 event["event_name"] = add_emoji_to_event_name(
-                    event["event_name"],
-                    event.get("emoji")
-                )
+                    event["event_name"], event.get("emoji"))
 
-        logger.info(f"Successfully extracted {len(events)} events via OpenAI API")
+        logger.info(
+            f"Successfully extracted {len(events)} events via OpenAI API")
         return events, from_email, False, "success", None
 
     except Exception as e:
@@ -200,7 +195,9 @@ def validate_and_clean_event(event_data):
         if cleaned['end_date']:
             datetime.strptime(cleaned['end_date'], '%Y-%m-%d')
     except ValueError as e:
-        logger.error(f"❌ Date validation failed for event '{cleaned.get('event_name', 'Unknown')}': start_date='{cleaned.get('start_date')}', end_date='{cleaned.get('end_date')}'")
+        logger.error(
+            f"❌ Date validation failed for event '{cleaned.get('event_name', 'Unknown')}': start_date='{cleaned.get('start_date')}', end_date='{cleaned.get('end_date')}'"
+        )
         raise ValueError(f"Invalid date format: {str(e)}")
 
     # Validate and normalize times
@@ -239,7 +236,9 @@ def validate_and_clean_event(event_data):
         cleaned['start_time'] = normalize_time(cleaned['start_time'])
         cleaned['end_time'] = normalize_time(cleaned['end_time'])
     except ValueError as e:
-        logger.error(f"❌ Time validation failed for event '{cleaned.get('event_name', 'Unknown')}': start_time='{event_data.get('start_time')}', end_time='{event_data.get('end_time')}'")
+        logger.error(
+            f"❌ Time validation failed for event '{cleaned.get('event_name', 'Unknown')}': start_time='{event_data.get('start_time')}', end_time='{event_data.get('end_time')}'"
+        )
         raise ValueError(f"Invalid time format: {str(e)}")
 
     # Validate RFC3339 datetime strings if present
