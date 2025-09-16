@@ -137,16 +137,6 @@ def handle_exception(e):
                          error_message="An unexpected error occurred"), 500
 
 with app.app_context():
-    # Add request logging for debugging
-    @app.before_request
-    def log_request():
-        import logging
-        from flask import request
-        logger = logging.getLogger(__name__)
-        logger.info(f"🌐 Incoming request: {request.method} {request.path} from {request.remote_addr}")
-        if request.content_type:
-            logger.info(f"🌐 Content-Type: {request.content_type}")
-    
     # Make sure to import the models here or their tables won't be created
     import models  # noqa: F401
 
