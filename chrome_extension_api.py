@@ -59,15 +59,9 @@ def setup_chrome_extension_routes(app):
                 return add_cors_headers(response), 400
 
             # Find user in database
-            logger.info(f"🔍 Chrome extension looking for user with email: '{user_email}'")
             user = User.query.filter_by(email=user_email).first()
             if not user:
-                logger.warning(f"❌ Chrome extension user not found: '{user_email}'")
-                # List all users for debugging (first few characters only for privacy)
-                all_users = User.query.all()
-                user_emails = [u.email[:10] + "..." if len(u.email) > 10 else u.email for u in all_users[:5]]
-                logger.info(f"📋 Available users in database (first 5): {user_emails}")
-                response = jsonify({'error': 'User not found', 'code': 'USER_NOT_FOUND', 'requested_email': user_email})
+                response = jsonify({'error': 'User not found', 'code': 'USER_NOT_FOUND'})
                 return add_cors_headers(response), 404
 
             # Extract text input
