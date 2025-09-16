@@ -29,12 +29,13 @@ def setup_chrome_extension_routes(app):
             response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
             return response
 
+        # Add CORS headers to all responses
+        def add_cors_headers(response):
+            response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
+            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+            return response
+
         try:
-            # Add CORS headers to all responses
-            def add_cors_headers(response):
-                response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
-                response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-                return response
 
             # Check authentication via Authorization header
             auth_header = request.headers.get('Authorization')
@@ -47,7 +48,11 @@ def setup_chrome_extension_routes(app):
             
             # In a production environment, you would validate this token properly
             # For now, we'll look up the user by email from the request
-            user_email = request.form.get('From') or request.json.get('user_email', '')
+            user_email = ''
+            if request.form:
+                user_email = request.form.get('From', '')
+            elif request.json:
+                user_email = request.json.get('user_email', '')
             
             if not user_email:
                 response = jsonify({'error': 'User email required', 'code': 'EMAIL_REQUIRED'})
