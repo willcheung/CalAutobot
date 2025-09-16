@@ -112,7 +112,7 @@ def extract_events_from_text(text,
         else:
             # For text-only processing
             user_message = {"role": "user", "content": prompt}
-            model = "gpt-5-mini"  # Use text model for text-only, latest model
+            model = "gpt-4.1"  # Use text model for text-only, latest model
 
         messages.append(user_message)
 
