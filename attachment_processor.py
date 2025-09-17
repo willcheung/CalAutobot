@@ -296,9 +296,8 @@ class AttachmentProcessor:
             db.session.commit()
             logger.info(f"📊 ATTACHMENT PROCESSING SUMMARY: Extracted {len(extracted_events)} events, Successfully processed {len(created_events)} events")
             
-            # Auto-sync disabled - now handled by centralized syncing in gmail_processor
-            # if auto_sync and created_events:
-            if False:  # Temporarily disabled for centralized syncing
+            # Auto-sync to Google Calendar if enabled
+            if auto_sync and created_events:
                 for event in created_events:
                     try:
                         # Skip if already synced
