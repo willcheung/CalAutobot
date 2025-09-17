@@ -285,8 +285,6 @@ class CalendarAIPopup {
         quality: 90
       });
 
-      this.showStatus('Optimizing image...', 'processing');
-
       // Resize image for faster upload
       const optimizedBlob = await this.resizeImage(dataUrl, 1920);
       const blob = optimizedBlob;
