@@ -15,11 +15,13 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # Centralized prompt template - single place to edit the extraction prompt
-EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible.
+EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible. Provide the output as a JSON object with a "events" key containing a list, where each object in the list represents an event with keys: "event_name", "event_description", "start_date", "start_time", "start_datetime", "end_date", "end_time", "end_datetime", "location", "emoji". If a piece of information is not found, use null for its value.
+
+If no events are found, return an empty list for the "events" key.
 
 Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction. If there's an image or document, extract events from the content of the image or document."""
 
-EVENT_EXTRACTION_PROMPT = """Given the following text or attached image/document, extract all event information. 
+EVENT_EXTRACTION_PROMPT = """Given the following text or attached image/document, extract all event information.
 
 If text, image or document is a flight itinerary, extract each event and carefully convert timezones:
 - Traveler's timezone is {user_timezone}.
@@ -45,8 +47,6 @@ If events are recurring, extract each instance of the event.
 If same events are repeated in the email or text, extract only one instance of the event and don't include the duplicates in the output.
 
 If a date is relative (e.g., "next Monday," "tomorrow"), first check the email sent date to resolve it. If there's no email sent date, then assume the current date is {current_date} for resolving it.
-
-Provide the output as a JSON object with a "events" key containing a list, where each object in the list represents an event with keys: "event_name", "event_description", "start_date", "start_time", "start_datetime", "end_date", "end_time", "end_datetime", "location", "emoji". If a piece of information is not found, use null for its value.
 
 Text: '''{text}'''"""
 
@@ -121,7 +121,7 @@ def extract_events_from_text(text,
             model=model,
             messages=messages,
             response_format={"type": "json_object"},
-            temperature=0.1,
+            temperature=0.0,
             timeout=30.0)
 
         content = response.choices[0].message.content

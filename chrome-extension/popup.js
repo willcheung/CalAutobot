@@ -290,8 +290,6 @@ class CalendarAIPopup {
       formData.append('Subject', 'Chrome Extension Screenshot');
       formData.append('attachment-1', blob, 'screenshot.jpg');
 
-      this.showStatus('Processing screenshot and extracting events...', 'processing');
-
       const apiResponse = await fetch(`${this.apiBaseUrl}/api/extension/process`, {
         method: 'POST',
         body: formData,

@@ -15,8 +15,7 @@
     "contextMenus"
   ],
   "host_permissions": [
-    "https://calautobot.com/*",
-    "https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev/*",
+    "https://calautobot.com/*"
   ],
   "oauth2": {
     "client_id": "609660480116-tnd7the9ooj8sd6rt4grjj7hcpt5frjf.apps.googleusercontent.com",
