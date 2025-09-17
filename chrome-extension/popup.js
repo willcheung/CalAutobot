@@ -230,13 +230,11 @@ class CalendarAIPopup {
     const text = textInput.value.trim();
 
     if (!text) {
-      this.showStatus('Please enter some text to process', 'error');
       return;
     }
 
     try {
       this.setButtonLoading('processTextBtn', true);
-      this.showStatus('Processing text and extracting events...', 'processing');
 
       // Send to Chrome extension API endpoint
       const response = await fetch(`${this.apiBaseUrl}/api/extension/process`, {
@@ -263,11 +261,10 @@ class CalendarAIPopup {
         
         textInput.value = ''; // Clear input
       } else {
-        this.showStatus(`Error: ${result.error || 'Processing failed'}`, 'error');
+        console.error('Text processing failed:', result.error);
       }
     } catch (error) {
       console.error('Text processing error:', error);
-      this.showStatus('Failed to process text. Please try again.', 'error');
     } finally {
       this.setButtonLoading('processTextBtn', false);
     }
@@ -276,7 +273,6 @@ class CalendarAIPopup {
   async takeScreenshot() {
     try {
       this.setButtonLoading('screenshotBtn', true);
-      this.showStatus('Taking screenshot...', 'processing');
 
       // Capture the active tab
       const tab = await this.getCurrentTab();
@@ -313,11 +309,10 @@ class CalendarAIPopup {
         // Show success toast
         this.showToast(`Success! Extracted ${totalEvents} events from screenshot, ${syncedEvents} synced to calendar`);
       } else {
-        this.showStatus(`Error: ${result.error || 'Screenshot processing failed'}`, 'error');
+        console.error('Screenshot processing failed:', result.error);
       }
     } catch (error) {
       console.error('Screenshot error:', error);
-      this.showStatus('Failed to process screenshot. Please try again.', 'error');
     } finally {
       this.setButtonLoading('screenshotBtn', false);
     }
