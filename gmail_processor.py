@@ -207,7 +207,7 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
             
             logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for existing user {user.id} (no auto-sync)")
             processed_attachments = attachment_processor.process_email_attachments(
-                text_input, attachments_data
+                text_input, attachments_data, auto_sync=False
             )
             logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for user {user.id}")
             

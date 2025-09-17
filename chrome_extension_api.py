@@ -125,7 +125,7 @@ def setup_chrome_extension_routes(app):
                 if text_input_record:
                     logger.info(f"🔄 Processing {len(attachments_data)} Chrome extension attachments")
                     processed_attachments = attachment_processor.process_email_attachments(
-                        text_input_record, attachments_data
+                        text_input_record, attachments_data, auto_sync=True
                     )
                     
                     # Count attachment events

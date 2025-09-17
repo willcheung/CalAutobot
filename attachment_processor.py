@@ -30,13 +30,14 @@ class AttachmentProcessor:
         # No longer need Mailgun credentials - Gmail service handles download
         pass
     
-    def process_email_attachments(self, text_input: TextInput, attachments_data: List[Dict]) -> List[EmailAttachment]:
+    def process_email_attachments(self, text_input: TextInput, attachments_data: List[Dict], auto_sync: bool = False) -> List[EmailAttachment]:
         """
         Process all attachments from an email.
         
         Args:
             text_input (TextInput): The parent text input record
             attachments_data (List[Dict]): List of attachment data with content already downloaded from Gmail
+            auto_sync (bool): Whether to auto-sync extracted events to Google Calendar
         
         Returns:
             List[EmailAttachment]: List of processed attachment records
@@ -49,7 +50,7 @@ class AttachmentProcessor:
         
         for attachment_data in attachments_data:
             try:
-                attachment_record = self._process_single_attachment(text_input, attachment_data)
+                attachment_record = self._process_single_attachment(text_input, attachment_data, auto_sync)
                 if attachment_record:
                     processed_attachments.append(attachment_record)
             except Exception as e:
@@ -58,13 +59,14 @@ class AttachmentProcessor:
         
         return processed_attachments
     
-    def _process_single_attachment(self, text_input: TextInput, attachment_data: Dict) -> Optional[EmailAttachment]:
+    def _process_single_attachment(self, text_input: TextInput, attachment_data: Dict, auto_sync: bool = False) -> Optional[EmailAttachment]:
         """
         Process a single attachment.
         
         Args:
             text_input (TextInput): Parent text input record
             attachment_data (Dict): Attachment metadata from Mailgun
+            auto_sync (bool): Whether to auto-sync extracted events to Google Calendar
         
         Returns:
             EmailAttachment: Processed attachment record or None if failed
@@ -106,7 +108,7 @@ class AttachmentProcessor:
                     file_content_bytes = file_content
                     
                 success = self._process_attachment_content(
-                    attachment_record, file_content_bytes, text_input
+                    attachment_record, file_content_bytes, text_input, auto_sync
                 )
             except Exception as decode_error:
                 logger.error(f"Failed to decode attachment content: {str(decode_error)}")
@@ -152,7 +154,7 @@ class AttachmentProcessor:
         return True
     
     def _process_attachment_content(self, attachment_record: EmailAttachment, 
-                                   file_content: bytes, text_input: TextInput) -> bool:
+                                   file_content: bytes, text_input: TextInput, auto_sync: bool = False) -> bool:
         """
         Process attachment content using the same workflow as email text processing.
         
@@ -160,6 +162,7 @@ class AttachmentProcessor:
             attachment_record (EmailAttachment): Database record
             file_content (bytes): Actual file content
             text_input (TextInput): Parent text input
+            auto_sync (bool): Whether to auto-sync extracted events to Google Calendar
         
         Returns:
             bool: True if successful, False otherwise
@@ -182,9 +185,7 @@ class AttachmentProcessor:
                 attachment_text += f"Size: {attachment_record.file_size} bytes\n"
                 attachment_text += f"From email: {text_input.from_email or 'Unknown'}"
                 
-                # Check if user has Google authentication for auto-sync
-                user = User.query.get(text_input.user_id)
-                auto_sync = user.google_id is not None if user else False
+                # Use the passed auto_sync parameter
                 
                 # Process events using the standard workflow - this handles:
                 # - Event validation and cleaning
