@@ -132,8 +132,16 @@ class CalendarAIPopup {
     try {
       this.showStatus('Signing in...', 'processing');
       
-      // Open Calendar AI web app for proper Google OAuth
-      const authUrl = `${this.apiBaseUrl}/google_login`;
+      // Detect user timezone
+      let timezone = 'UTC';
+      try {
+        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch (error) {
+        console.log('Timezone detection failed, using UTC');
+      }
+      
+      // Open Calendar AI web app for proper Google OAuth with timezone
+      const authUrl = `${this.apiBaseUrl}/google_login?timezone=${encodeURIComponent(timezone)}`;
       
       // Open auth in new tab and wait for user to complete
       chrome.tabs.create({ url: authUrl }, async (tab) => {

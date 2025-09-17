@@ -90,7 +90,13 @@ def callback():
     # Get timezone from session
     user_timezone = session.get('user_timezone', 'UTC')
 
+    # Initialize logging for this function
+    import logging
+    logger = logging.getLogger(__name__)
+
     user = User.query.filter_by(email=users_email).first()
+    is_temp_user_signup = False  # Initialize to avoid unbound variable
+    
     if not user:
         user = User()
         user.username = users_name
@@ -98,12 +104,16 @@ def callback():
         user.google_id = google_id
         user.timezone = user_timezone
         db.session.add(user)
+        logger.info(f"Created new user {users_email} with timezone {user_timezone}")
     else:
         # Check if this is a temp user (no google_id) converting to real user
         is_temp_user_signup = (user.google_id is None)
         
-        # Update existing user's fields
-        user.timezone = user_timezone
+        # Only update timezone if it's different (optimization)
+        if user.timezone != user_timezone:
+            old_timezone = user.timezone
+            user.timezone = user_timezone
+            logger.info(f"Updated timezone for user {users_email}: {old_timezone} -> {user_timezone}")
         
         if is_temp_user_signup:
             # Update temp user to real user
@@ -116,8 +126,6 @@ def callback():
     # Save refresh token separately for better management
     if token_data.get('refresh_token'):
         user.google_refresh_token = token_data.get('refresh_token')
-        import logging
-        logger = logging.getLogger(__name__)
         logger.info(f"Stored refresh token for user {users_email}")
 
     db.session.commit()
