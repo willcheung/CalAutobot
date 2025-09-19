@@ -200,8 +200,15 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
         # Collect all events from email body and attachments
         all_events = list(email_events)  # Start with email events
         
+        # Skip attachment processing for webhook calls to prevent timeouts
+        # Attachments can be processed separately via manual trigger
+        webhook_skip_attachments = True  # TODO: Make this configurable
+        
+        if attachments_data and webhook_skip_attachments:
+            logger.info(f"⚠️ SKIPPING {len(attachments_data)} attachments processing (webhook timeout prevention)")
+        
         # Process attachments if present (no auto-sync)
-        if attachments_data and text_input:
+        if attachments_data and text_input and not webhook_skip_attachments:
             # Import here to avoid circular dependency
             from attachment_processor import attachment_processor
             

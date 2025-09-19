@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 import re
 
-# well-rounded OpenAI model is "gpt-4.1-mini".
+# the newest OpenAI model is "gpt-4.1".
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
 import sentry_sdk
@@ -108,11 +108,11 @@ def extract_events_from_text(text,
                     }
                 }]
             }
-            model = "gpt-4.1-mini"  # Use vision model for images, latest model
+            model = "gpt-4.1"  # Use vision model for images, latest model
         else:
             # For text-only processing
             user_message = {"role": "user", "content": prompt}
-            model = "gpt-4.1-mini"  # Use text model for text-only, latest model
+            model = "gpt-4.1"  # Use text model for text-only, latest model
 
         messages.append(user_message)
 
