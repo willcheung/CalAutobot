@@ -116,13 +116,13 @@ def extract_events_from_text(text,
 
         messages.append(user_message)
 
-        # Make synchronous OpenAI API call
+        # Make synchronous OpenAI API call with shorter timeout to prevent worker timeouts
         response = openai.chat.completions.create(
             model=model,
             messages=messages,
             response_format={"type": "json_object"},
             temperature=0.0,
-            timeout=30.0)
+            timeout=20.0)
 
         content = response.choices[0].message.content
         if not content:
