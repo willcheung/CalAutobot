@@ -7,9 +7,10 @@ import re
 # the well-rounded OpenAI model is "gpt-4.1".
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 import sentry_sdk
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -24,22 +25,34 @@ openai = OpenAI(
 )
 
 
-def _make_openai_request_with_retry(model: str, messages: List[Dict[str, Any]], **kwargs) -> Any:
+def _make_openai_request_with_retry(model: str, messages: List[Any], **kwargs) -> Any:
     """
-    Make OpenAI API request with exponential backoff retry logic.
-    Implements timeout handling to prevent worker timeouts.
+    Make OpenAI API request with budget-aware retry logic.
+    Implements strict timeout handling to prevent worker timeouts (30s limit).
     """
-    max_retries = 3
-    base_delay = 1.0
+    # Set strict budget to stay well under 30s worker timeout
+    request_deadline = time.time() + 25.0  # 25s total budget for safety
+    max_retries = 2  # Reduced to 2 attempts total
+    per_attempt_timeout = 10.0  # 10s per attempt
     
     for attempt in range(max_retries):
         try:
-            logger.info(f"OpenAI API call attempt {attempt + 1}/{max_retries}")
+            # Check remaining budget
+            remaining_time = request_deadline - time.time()
+            if remaining_time <= 0:
+                logger.error("Request budget exhausted, aborting OpenAI API call")
+                raise Exception("Request timeout: budget exhausted")
             
-            # Make the API call with timeout handling
+            # Use the smaller of per-attempt timeout or remaining budget
+            actual_timeout = min(per_attempt_timeout, remaining_time)
+            
+            logger.info(f"OpenAI API call attempt {attempt + 1}/{max_retries} (timeout: {actual_timeout:.1f}s, budget: {remaining_time:.1f}s)")
+            
+            # Make the API call with strict per-attempt timeout
             response = openai.chat.completions.create(
                 model=model,
                 messages=messages,
+                timeout=actual_timeout,  # Override client default with per-call timeout
                 **kwargs
             )
             
@@ -61,15 +74,24 @@ def _make_openai_request_with_retry(model: str, messages: List[Dict[str, Any]], 
                 '503' in error_msg
             )
             
-            if attempt == max_retries - 1 or not is_retryable:
-                # Last attempt or non-retryable error
-                logger.error(f"OpenAI API call failed after {attempt + 1} attempts: {str(e)}")
+            # Check if we have budget for another attempt
+            remaining_time = request_deadline - time.time()
+            has_budget = remaining_time > 2.0  # Need at least 2s for next attempt
+            
+            if attempt == max_retries - 1 or not is_retryable or not has_budget:
+                # Last attempt, non-retryable error, or no budget left
+                reason = "last attempt" if attempt == max_retries - 1 else ("non-retryable" if not is_retryable else "budget exhausted")
+                logger.error(f"OpenAI API call failed after {attempt + 1} attempts ({reason}): {str(e)}")
                 raise e
             
-            # Calculate delay with exponential backoff
-            delay = base_delay * (2 ** attempt)
-            logger.warning(f"OpenAI API call failed (attempt {attempt + 1}), retrying in {delay}s: {str(e)}")
-            time.sleep(delay)
+            # Minimal backoff (0.5s) to stay within budget
+            delay = 0.5
+            if remaining_time > delay:
+                logger.warning(f"OpenAI API call failed (attempt {attempt + 1}), retrying in {delay}s: {str(e)}")
+                time.sleep(delay)
+            else:
+                # Skip sleep if no budget
+                logger.warning(f"OpenAI API call failed (attempt {attempt + 1}), immediate retry (no budget for delay): {str(e)}")
     
     # This should never be reached, but just in case
     raise Exception("OpenAI API call failed after all retry attempts")

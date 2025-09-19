@@ -314,7 +314,7 @@ def process_new_user_email(formatted_text: str, attachments_data: List[Dict],
         temp_user = User()
         temp_user.email = sender_email
         temp_user.username = sender_email.split('@')[0]
-        temp_user.is_temporary = True
+        # Note: is_temporary attribute not defined in User model, using email-based logic instead
         temp_user.timezone = 'UTC'
         
         db.session.add(temp_user)
