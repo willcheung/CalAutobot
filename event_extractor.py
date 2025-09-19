@@ -8,11 +8,72 @@ import re
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
 import sentry_sdk
+import time
+from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
-openai = OpenAI(api_key=OPENAI_API_KEY)
+
+# Configure OpenAI client with proper timeout settings
+# Use shorter timeouts to prevent worker timeouts (Gunicorn default is 30s)
+openai = OpenAI(
+    api_key=OPENAI_API_KEY,
+    timeout=20.0,  # Total timeout reduced to 20 seconds
+    max_retries=0  # Disable built-in retries, we'll handle them manually
+)
+
+
+def _make_openai_request_with_retry(model: str, messages: List[Dict[str, Any]], **kwargs) -> Any:
+    """
+    Make OpenAI API request with exponential backoff retry logic.
+    Implements timeout handling to prevent worker timeouts.
+    """
+    max_retries = 3
+    base_delay = 1.0
+    
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"OpenAI API call attempt {attempt + 1}/{max_retries}")
+            
+            # Make the API call with timeout handling
+            response = openai.chat.completions.create(
+                model=model,
+                messages=messages,
+                **kwargs
+            )
+            
+            logger.info(f"OpenAI API call successful on attempt {attempt + 1}")
+            return response
+            
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Check if it's a timeout or rate limit error that we should retry
+            is_retryable = (
+                'timeout' in error_msg or 
+                'rate limit' in error_msg or
+                'connection' in error_msg or
+                'server error' in error_msg or
+                '429' in error_msg or
+                '500' in error_msg or
+                '502' in error_msg or
+                '503' in error_msg
+            )
+            
+            if attempt == max_retries - 1 or not is_retryable:
+                # Last attempt or non-retryable error
+                logger.error(f"OpenAI API call failed after {attempt + 1} attempts: {str(e)}")
+                raise e
+            
+            # Calculate delay with exponential backoff
+            delay = base_delay * (2 ** attempt)
+            logger.warning(f"OpenAI API call failed (attempt {attempt + 1}), retrying in {delay}s: {str(e)}")
+            time.sleep(delay)
+    
+    # This should never be reached, but just in case
+    raise Exception("OpenAI API call failed after all retry attempts")
+
 
 # Centralized prompt template - single place to edit the extraction prompt
 EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible. Provide the output as a JSON object with a "events" key containing a list, where each object in the list represents an event with keys: "event_name", "event_description", "start_date", "start_time", "start_datetime", "end_date", "end_time", "end_datetime", "location", "emoji". If a piece of information is not found, use null for its value.
@@ -116,13 +177,13 @@ def extract_events_from_text(text,
 
         messages.append(user_message)
 
-        # Make synchronous OpenAI API call with shorter timeout to prevent worker timeouts
-        response = openai.chat.completions.create(
+        # Make synchronous OpenAI API call with retry logic and proper timeout handling
+        response = _make_openai_request_with_retry(
             model=model,
             messages=messages,
             response_format={"type": "json_object"},
-            temperature=0.0,
-            timeout=60.0)
+            temperature=0.0
+        )
 
         content = response.choices[0].message.content
         if not content:
