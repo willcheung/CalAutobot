@@ -7,95 +7,12 @@ import re
 # the well-rounded OpenAI model is "gpt-4.1".
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
 import sentry_sdk
-import time
-from typing import List, Dict, Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
-
-# Configure OpenAI client with proper timeout settings
-# Use shorter timeouts to prevent worker timeouts (Gunicorn default is 30s)
-openai = OpenAI(
-    api_key=OPENAI_API_KEY,
-    timeout=20.0,  # Total timeout reduced to 20 seconds
-    max_retries=0  # Disable built-in retries, we'll handle them manually
-)
-
-
-def _make_openai_request_with_retry(model: str, messages: List[Any], **kwargs) -> Any:
-    """
-    Make OpenAI API request with budget-aware retry logic.
-    Implements strict timeout handling to prevent worker timeouts (30s limit).
-    """
-    # Set strict budget to stay well under 30s worker timeout
-    request_deadline = time.time() + 25.0  # 25s total budget for safety
-    max_retries = 2  # Reduced to 2 attempts total
-    per_attempt_timeout = 10.0  # 10s per attempt
-    
-    for attempt in range(max_retries):
-        try:
-            # Check remaining budget
-            remaining_time = request_deadline - time.time()
-            if remaining_time <= 0:
-                logger.error("Request budget exhausted, aborting OpenAI API call")
-                raise Exception("Request timeout: budget exhausted")
-            
-            # Use the smaller of per-attempt timeout or remaining budget
-            actual_timeout = min(per_attempt_timeout, remaining_time)
-            
-            logger.info(f"OpenAI API call attempt {attempt + 1}/{max_retries} (timeout: {actual_timeout:.1f}s, budget: {remaining_time:.1f}s)")
-            
-            # Make the API call with strict per-attempt timeout
-            response = openai.chat.completions.create(
-                model=model,
-                messages=messages,
-                timeout=actual_timeout,  # Override client default with per-call timeout
-                **kwargs
-            )
-            
-            logger.info(f"OpenAI API call successful on attempt {attempt + 1}")
-            return response
-            
-        except Exception as e:
-            error_msg = str(e).lower()
-            
-            # Check if it's a timeout or rate limit error that we should retry
-            is_retryable = (
-                'timeout' in error_msg or 
-                'rate limit' in error_msg or
-                'connection' in error_msg or
-                'server error' in error_msg or
-                '429' in error_msg or
-                '500' in error_msg or
-                '502' in error_msg or
-                '503' in error_msg
-            )
-            
-            # Check if we have budget for another attempt
-            remaining_time = request_deadline - time.time()
-            has_budget = remaining_time > 2.0  # Need at least 2s for next attempt
-            
-            if attempt == max_retries - 1 or not is_retryable or not has_budget:
-                # Last attempt, non-retryable error, or no budget left
-                reason = "last attempt" if attempt == max_retries - 1 else ("non-retryable" if not is_retryable else "budget exhausted")
-                logger.error(f"OpenAI API call failed after {attempt + 1} attempts ({reason}): {str(e)}")
-                raise e
-            
-            # Minimal backoff (0.5s) to stay within budget
-            delay = 0.5
-            if remaining_time > delay:
-                logger.warning(f"OpenAI API call failed (attempt {attempt + 1}), retrying in {delay}s: {str(e)}")
-                time.sleep(delay)
-            else:
-                # Skip sleep if no budget
-                logger.warning(f"OpenAI API call failed (attempt {attempt + 1}), immediate retry (no budget for delay): {str(e)}")
-    
-    # This should never be reached, but just in case
-    raise Exception("OpenAI API call failed after all retry attempts")
-
+openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # Centralized prompt template - single place to edit the extraction prompt
 EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible. Provide the output as a JSON object with a "events" key containing a list, where each object in the list represents an event with keys: "event_name", "event_description", "start_date", "start_time", "start_datetime", "end_date", "end_time", "end_datetime", "location", "emoji". If a piece of information is not found, use null for its value.
@@ -199,13 +116,13 @@ def extract_events_from_text(text,
 
         messages.append(user_message)
 
-        # Make synchronous OpenAI API call with retry logic and proper timeout handling
-        response = _make_openai_request_with_retry(
+        # Make synchronous OpenAI API call with shorter timeout to prevent worker timeouts
+        response = openai.chat.completions.create(
             model=model,
             messages=messages,
             response_format={"type": "json_object"},
-            temperature=0.0
-        )
+            temperature=0.0,
+            timeout=60.0)
 
         content = response.choices[0].message.content
         if not content:
