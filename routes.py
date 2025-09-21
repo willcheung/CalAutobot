@@ -79,6 +79,7 @@ def webhook_check_emails():
         
         # Import here to avoid circular dependencies
         from gmail_processor import check_new_emails
+        from gmail_service import GmailOAuthError
         
         # Run the email check
         check_new_emails()
@@ -89,6 +90,16 @@ def webhook_check_emails():
             "message": "Email check completed",
             "timestamp": datetime.utcnow().isoformat()
         }, 200
+        
+    except GmailOAuthError as e:
+        logger.error(f"❌ Gmail OAuth authentication failed: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        return {
+            "status": "error",
+            "message": f"Gmail authentication failed: {str(e)}",
+            "error_type": "oauth_error",
+            "timestamp": datetime.utcnow().isoformat()
+        }, 503  # Service Unavailable - indicates service dependency (Gmail OAuth) is down
         
     except Exception as e:
         logger.error(f"❌ Email check webhook failed: {str(e)}")

@@ -8,7 +8,7 @@ from helpers.event_utils import format_event_for_api
 from helpers.domain_utils import get_base_url
 from helpers.event_deduplication import deduplicate_events, should_skip_attachment
 from app import db
-from gmail_service import gmail_service
+from gmail_service import gmail_service, GmailOAuthError
 import sentry_sdk
 
 logger = logging.getLogger(__name__)
@@ -60,6 +60,13 @@ def check_new_emails():
         if duration > 120:  # 2 minutes
             logger.warning(f"⚠️ Email check took {duration:.2f}s - consider optimization for 5-min intervals")
         
+    except GmailOAuthError as e:
+        end_time = datetime.utcnow()
+        duration = (end_time - start_time).total_seconds()
+        logger.error(f"Gmail OAuth error in email check after {duration:.2f}s: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        # Re-raise OAuth errors so webhook endpoint can return error status
+        raise
     except Exception as e:
         end_time = datetime.utcnow()
         duration = (end_time - start_time).total_seconds()

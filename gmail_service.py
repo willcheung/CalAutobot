@@ -9,6 +9,10 @@ import json
 
 logger = logging.getLogger(__name__)
 
+class GmailOAuthError(Exception):
+    """Custom exception for Gmail OAuth authentication errors"""
+    pass
+
 class GmailService:
     """
     Backend Gmail service for checking emails from a single inbox.
@@ -57,7 +61,7 @@ class GmailService:
         try:
             if not self.credentials:
                 logger.error("Gmail credentials not initialized")
-                return None
+                raise GmailOAuthError("Gmail credentials not initialized")
             
             # Refresh token if needed
             if self.credentials.expired:
@@ -68,8 +72,18 @@ class GmailService:
             return service
             
         except Exception as e:
-            logger.error(f"Error getting Gmail service: {str(e)}")
-            return None
+            error_msg = str(e)
+            logger.error(f"Error getting Gmail service: {error_msg}")
+            
+            # Check if this is an OAuth authentication error
+            if any(phrase in error_msg.lower() for phrase in [
+                'invalid_grant', 'token has been expired', 'token has been revoked',
+                'invalid_client', 'unauthorized_client', 'refresh_token'
+            ]):
+                raise GmailOAuthError(f"Gmail OAuth authentication failed: {error_msg}")
+            
+            # For other errors, re-raise as generic exception
+            raise
     
     def get_unread_emails(self, max_results: int = 50) -> List[Dict]:
         """
@@ -83,9 +97,6 @@ class GmailService:
         """
         try:
             service = self.get_service()
-            if not service:
-                logger.error("Failed to get Gmail service")
-                return []
             
             # Search for unread emails sent to go@calautobot.com only
             results = service.users().messages().list(
@@ -116,6 +127,9 @@ class GmailService:
             logger.info(f"Successfully processed {len(emails)} emails")
             return emails
             
+        except GmailOAuthError:
+            # Re-raise OAuth errors so they can be handled by caller
+            raise
         except Exception as e:
             logger.error(f"Error getting unread emails: {str(e)}")
             return []
