@@ -61,7 +61,7 @@ class GmailService:
         try:
             if not self.credentials:
                 logger.error("Gmail credentials not initialized")
-                raise GmailOAuthError("Gmail credentials not initialized")
+                return None  # Don't raise OAuth error for missing credentials
             
             # Refresh token if needed
             if self.credentials.expired:
@@ -72,15 +72,19 @@ class GmailService:
             return service
             
         except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error getting Gmail service: {error_msg}")
+            error_msg = str(e).lower()
+            logger.error(f"Error getting Gmail service: {str(e)}")
             
-            # Check if this is an OAuth authentication error
-            if any(phrase in error_msg.lower() for phrase in [
-                'invalid_grant', 'token has been expired', 'token has been revoked',
-                'invalid_client', 'unauthorized_client', 'refresh_token'
-            ]):
-                raise GmailOAuthError(f"Gmail OAuth authentication failed: {error_msg}")
+            # More specific OAuth authentication error detection
+            oauth_errors = [
+                'invalid_grant',
+                'token has been expired or revoked',
+                'token_expired',
+                'invalid_token'
+            ]
+            
+            if any(phrase in error_msg for phrase in oauth_errors):
+                raise GmailOAuthError(f"Gmail OAuth authentication failed: {str(e)}")
             
             # For other errors, re-raise as generic exception
             raise
