@@ -31,18 +31,16 @@ class GmailService:
             client_id = os.environ.get("GMAIL_CLIENT_ID")
             client_secret = os.environ.get("GMAIL_CLIENT_SECRET") 
             refresh_token = os.environ.get("GMAIL_REFRESH_TOKEN")
-            access_token = os.environ.get("GMAIL_ACCESS_TOKEN")
             
             if not all([client_id, client_secret, refresh_token]):
                 logger.error("Missing required Gmail credentials in environment variables")
                 return
             
-            # Create credentials object
+            # Create credentials object (access token will be obtained automatically from refresh token)
             token_data = {
                 "client_id": client_id,
                 "client_secret": client_secret,
-                "refresh_token": refresh_token,
-                "token": access_token
+                "refresh_token": refresh_token
             }
             
             self.credentials = Credentials.from_authorized_user_info(
