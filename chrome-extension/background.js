@@ -25,8 +25,8 @@ class CalendarAIBackground {
       return true; // Keep message channel open for async response
     });
 
-    // Handle context menu (future feature) - temporarily disabled
-    // this.setupContextMenu();
+    // Handle context menu - extract events from selected text
+    this.setupContextMenu();
   }
 
   async handleMessage(request, sender, sendResponse) {
@@ -91,11 +91,21 @@ class CalendarAIBackground {
 
   async checkAuthStatus() {
     try {
-      const result = await chrome.storage.local.get(['user', 'authToken']);
-      return {
-        isAuthenticated: !!(result.user && result.authToken),
-        user: result.user || null
-      };
+      // Use same SessionManager logic as popup
+      const result = await chrome.storage.local.get(['session']);
+      const session = result.session;
+      
+      if (session && session.isLoggedIn) {
+        return {
+          isAuthenticated: true,
+          user: {
+            email: session.email,
+            username: session.username
+          }
+        };
+      }
+      
+      return { isAuthenticated: false, user: null };
     } catch (error) {
       console.error('Auth status check error:', error);
       return { isAuthenticated: false, user: null };
@@ -146,9 +156,9 @@ class CalendarAIBackground {
       // Log processing instead of notification to avoid permission issues
       console.log('Calendar AI: Processing selected text...');
 
-      // Get auth token
-      const result = await chrome.storage.local.get(['authToken']);
-      const authToken = result.authToken;
+      // Get session (reuse SessionManager approach)
+      const result = await chrome.storage.local.get(['session']);
+      const authToken = 'session-token'; // Use same token as popup
 
       // Use same API base URL logic as popup.js
       const apiBaseUrl = 'https://calautobot.com';
