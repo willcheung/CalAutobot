@@ -12,6 +12,16 @@ import json
 
 logger = logging.getLogger(__name__)
 
+def add_dynamic_cors_headers(response):
+    """Add dynamic CORS headers for Chrome extension requests"""
+    origin = request.headers.get('Origin')
+    if origin and origin.startswith('chrome-extension://'):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    return response
+
 def setup_chrome_extension_routes(app):
     """Setup Chrome extension API routes"""
     
@@ -26,16 +36,11 @@ def setup_chrome_extension_routes(app):
         # Handle CORS preflight
         if request.method == 'OPTIONS':
             response = jsonify({'status': 'ok'})
-            response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-            return response
+            return add_dynamic_cors_headers(response)
 
         # Add CORS headers to all responses
         def add_cors_headers(response):
-            response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            return response
+            return add_dynamic_cors_headers(response)
 
         # Log incoming request details
         logger.info(f"📨 Chrome extension API request: {request.method} {request.path}")
@@ -185,16 +190,11 @@ def setup_chrome_extension_routes(app):
         """Verify Chrome extension authentication"""
         
         def add_cors_headers(response):
-            response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            return response
+            return add_dynamic_cors_headers(response)
             
         if request.method == 'OPTIONS':
             response = jsonify({'status': 'ok'})
-            response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
-            response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-            response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-            return response
+            return add_dynamic_cors_headers(response)
 
         try:
 
@@ -234,5 +234,4 @@ def setup_chrome_extension_routes(app):
         except Exception as e:
             logger.error(f"Chrome extension auth verify error: {str(e)}")
             response = jsonify({'authenticated': False, 'error': 'Verification failed'})
-            response.headers.add('Access-Control-Allow-Origin', 'chrome-extension://*')
-            return response, 500
+            return add_dynamic_cors_headers(response), 500
