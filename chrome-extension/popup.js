@@ -92,7 +92,34 @@ class CalendarAIPopup {
           await SessionManager.clear();
         }
       } else {
-        console.log('📭 No stored session found');
+        console.log('📭 No stored session found - checking web app authentication');
+        
+        // No stored session, but user might be logged in to web app
+        // Check if user is authenticated on web app
+        try {
+          const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
+            credentials: 'include',
+            mode: 'cors'
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            console.log('🌐 Web app auth response:', userData);
+            
+            if (userData.authenticated && userData.email) {
+              console.log('🎉 Found existing web app authentication, creating session');
+              // User is authenticated on web app, create extension session
+              await SessionManager.save(userData);
+              
+              this.user = userData;
+              this.authToken = 'session-token';
+              console.log('✅ Session created from web app auth for:', userData.email);
+              return;
+            }
+          }
+        } catch (error) {
+          console.log('🌐 Web app auth check failed:', error.message);
+        }
       }
       
       // No valid session found
