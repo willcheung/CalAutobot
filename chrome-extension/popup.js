@@ -64,12 +64,18 @@ class CalendarAIPopup {
 
   async checkAuthStatus() {
     try {
+      console.log('🔍 Checking authentication status...');
+      
       // Get stored session
       const session = await SessionManager.get();
+      console.log('📦 Stored session:', session);
       
       if (session) {
+        console.log('🔐 Verifying session with server for:', session.email);
         // Verify session is still valid with server
         const isValid = await SessionManager.verify(session, this.apiBaseUrl);
+        console.log('✅ Session verification result:', isValid);
+        
         if (isValid) {
           // Session is valid, set user data
           this.user = {
@@ -85,12 +91,14 @@ class CalendarAIPopup {
           console.log('❌ Session expired, clearing storage');
           await SessionManager.clear();
         }
+      } else {
+        console.log('📭 No stored session found');
       }
       
       // No valid session found
       this.user = null;
       this.authToken = null;
-      console.log('No valid session found');
+      console.log('🔓 No valid session - showing login screen');
       
     } catch (error) {
       console.log('Session check error:', error);
