@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Calendar Autobot AI",
-  "version": "1.0.3",
-  "description": "Your AI bot that creates Google Calendar events from screenshots, emails and attachments.",
+  "name": "CalAutobot: Screenshots to GCal",
+  "version": "1.0.4",
+  "description": "Automatically create Google Calendar events from screenshots, emails and attachments.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
