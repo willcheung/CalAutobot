@@ -1,4 +1,54 @@
 // Calendar AI Chrome Extension - Popup Script
+
+// Simple Session Manager - leverages existing Flask endpoints
+const SessionManager = {
+  // Save session when user logs in
+  async save(userData) {
+    await chrome.storage.local.set({
+      session: {
+        email: userData.email,
+        username: userData.username || userData.email,
+        isLoggedIn: true,
+        timestamp: Date.now()
+      }
+    });
+  },
+
+  // Get stored session
+  async get() {
+    const result = await chrome.storage.local.get(['session']);
+    return result.session || null;
+  },
+
+  // Verify session is still valid with backend
+  async verify(session, apiBaseUrl) {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/extension/auth/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer session-token' // Simple token for existing endpoint
+        },
+        body: JSON.stringify({ email: session.email })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.authenticated;
+      }
+      return false;
+    } catch (error) {
+      console.log('Session verification failed (network/server error)');
+      return false;
+    }
+  },
+
+  // Clear session
+  async clear() {
+    await chrome.storage.local.remove(['session']);
+  }
+};
+
 class CalendarAIPopup {
   constructor() {
     this.apiBaseUrl = 'https://calautobot.com';
@@ -14,59 +64,38 @@ class CalendarAIPopup {
 
   async checkAuthStatus() {
     try {
-      // Always check web app authentication status first to detect logout
-      let webAuthValid = false;
-      try {
-        const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
-          credentials: 'include',
-          mode: 'cors'
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          if (userData.authenticated) {
-            // User is authenticated on web app
-            this.user = userData;
-            this.authToken = 'web-session';
-            
-            await chrome.storage.local.set({
-              user: userData,
-              authToken: 'web-session'
-            });
-            
-            console.log('Found existing web authentication:', userData.email);
-            webAuthValid = true;
-          } else {
-            // User is not authenticated (authenticated: false), clear local storage
-            console.log('User not authenticated on web app, clearing extension storage');
-            await chrome.storage.local.clear();
-            this.user = null;
-            this.authToken = null;
-            return;
-          }
-        } else if (response.status === 401 || response.status === 403) {
-          // User is not authenticated on web app, clear local storage
-          console.log('User logged out from web app (401/403), clearing extension storage');
-          await chrome.storage.local.clear();
-          this.user = null;
-          this.authToken = null;
+      // Get stored session
+      const session = await SessionManager.get();
+      
+      if (session) {
+        // Verify session is still valid with server
+        const isValid = await SessionManager.verify(session, this.apiBaseUrl);
+        if (isValid) {
+          // Session is valid, set user data
+          this.user = {
+            email: session.email,
+            username: session.username,
+            authenticated: true
+          };
+          this.authToken = 'session-token';
+          console.log('✅ Valid session found for:', session.email);
           return;
-        }
-      } catch (fetchError) {
-        console.log('Web authentication check failed - checking local storage');
-      }
-
-      // Only use local storage if web auth check failed due to network issues
-      if (!webAuthValid) {
-        const result = await chrome.storage.local.get(['user', 'authToken']);
-        if (result.user && result.authToken) {
-          this.user = result.user;
-          this.authToken = result.authToken;
+        } else {
+          // Session expired or invalid, clear it
+          console.log('❌ Session expired, clearing storage');
+          await SessionManager.clear();
         }
       }
+      
+      // No valid session found
+      this.user = null;
+      this.authToken = null;
+      console.log('No valid session found');
+      
     } catch (error) {
-      console.log('Auth check completed - no existing session found');
-      // This is normal for users who haven't signed in yet
+      console.log('Session check error:', error);
+      this.user = null;
+      this.authToken = null;
     }
   }
 
@@ -117,7 +146,7 @@ class CalendarAIPopup {
   async handleAuth() {
     if (this.user) {
       // Sign out
-      await chrome.storage.local.clear();
+      await SessionManager.clear();
       this.user = null;
       this.authToken = null;
       this.updateUI();
@@ -147,10 +176,10 @@ class CalendarAIPopup {
       chrome.tabs.create({ url: authUrl }, async (tab) => {
         this.showStatus('Complete sign-in in the new tab, then click extension again', 'processing');
         
-        // Check for successful auth every 3 seconds  
+        // Check for successful auth every 3 seconds using simple session check
         const authCheckInterval = setInterval(async () => {
           try {
-            // Method 1: Try to get user info from Calendar AI backend
+            // Try to get user info from Calendar AI backend
             const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
               credentials: 'include',
               mode: 'cors'
@@ -159,48 +188,22 @@ class CalendarAIPopup {
             if (response.ok) {
               const userData = await response.json();
               if (userData.authenticated) {
-                // Store user data
-                this.user = userData;
-                this.authToken = 'web-session';
+                // Save session using SessionManager
+                await SessionManager.save(userData);
                 
-                await chrome.storage.local.set({
-                  user: userData,
-                  authToken: 'web-session'
-                });
+                // Update local state
+                this.user = userData;
+                this.authToken = 'session-token';
                 
                 clearInterval(authCheckInterval);
                 this.updateUI();
                 this.showStatus('Successfully signed in!', 'success');
+                console.log('✅ Signed in successfully:', userData.email);
                 return;
               }
             }
-            
-            // Method 2: Check if user went to dashboard (indicates successful auth)
-            chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-              if (tabs[0] && tabs[0].url && tabs[0].url.includes('/dashboard')) {
-                // User is on dashboard, simulate successful auth for demo
-                const demoUser = {
-                  email: 'user@example.com',
-                  username: 'Demo User',
-                  authenticated: true
-                };
-                
-                this.user = demoUser;
-                this.authToken = 'web-session';
-                
-                chrome.storage.local.set({
-                  user: demoUser,
-                  authToken: 'web-session'
-                });
-                
-                clearInterval(authCheckInterval);
-                this.updateUI();
-                this.showStatus('Successfully signed in!', 'success');
-              }
-            });
-            
           } catch (error) {
-            // Continue checking
+            // Continue checking - network issues are normal during auth flow
           }
         }, 3000);
         
