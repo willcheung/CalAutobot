@@ -42,7 +42,7 @@ def login():
         authorization_endpoint,
         redirect_uri=request.url_root.rstrip('/') + REDIRECT_URL,
         scope=[
-            "email", "profile",
+            "email",
             "https://www.googleapis.com/auth/calendar.app.created"
         ],
         access_type="offline",  # Request offline access to get refresh token
@@ -82,7 +82,7 @@ def callback():
     userinfo = userinfo_response.json()
     if userinfo.get("email_verified"):
         users_email = userinfo["email"]
-        users_name = userinfo["given_name"]
+        users_name = userinfo["email"]  # Use email as username instead of given_name
         google_id = userinfo["sub"]
     else:
         return "User email not available or not verified by Google.", 400
