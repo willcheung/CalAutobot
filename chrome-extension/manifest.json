@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "CalAutobot: Screenshots to GCal",
-  "version": "1.0.4",
-  "description": "AI event scheduler that automatically creates Google Calendar events from screenshots, emails and attachments.",
+  "name": "CalAutobot: Screenshots to Google Calendar",
+  "version": "1.0.5",
+  "description": "AI calendar agent that automatically creates Google Calendar events from screenshots, emails and attachments.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -23,7 +23,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "AI Event Scheduler"
+    "default_title": "AI Event Creator"
   },
   "background": {
     "service_worker": "background.js"
