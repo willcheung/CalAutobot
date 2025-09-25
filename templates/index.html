@@ -84,7 +84,7 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 text-center">
-                <h1 class="hero-title">From Email, Screenshot, or PDF to Calendar Event</h1>
+                <h1 class="hero-title">From Email, Picture, PDF<br/> to Calendar Event</h1>
                 <p class="hero-subtitle">
                     No typing. No manual copy-paste. Our AI finds the date and adds it to your Google Calendar. 
                 </p>
@@ -105,14 +105,12 @@
                             <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
                             Download our Chrome Extension
                         </a>
-                        <p class="small text-light mt-3 mb-0">Free forever • Secure • You stay in control</p>
                     </div>
                 {% else %}
                     <div class="hero-actions mt-4">
                         <a href="{{ url_for('main_routes.dashboard') }}" class="btn btn-accent btn-lg">
                             Go to Dashboard
                         </a>
-                        <p class="small text-light mt-3 mb-0">Free forever • Secure • You stay in control</p>
                     </div>
                 {% endif %}
             </div>
@@ -475,6 +473,19 @@ Confirmation Number: HTL789456<br><br>
                             </div>
                         </div>
                     </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
+                                Do you create a separate calendar for events?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes! We automatically create a "Cal Autobot" calendar in your Google Calendar account. This keeps all extracted events organized separately from your personal calendar, making it easy to manage and review them without cluttering your main calendar.
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="accordion-item">
                         <h2 class="accordion-header">
@@ -511,19 +522,6 @@ Confirmation Number: HTL789456<br><br>
                         <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
                                 Yes, your privacy is our priority. We cannot access your main Google Calendar events and create a new "Cal Autobot" calendar. We use secure encryption for all data transmission. Your text input is processed by AI but not permanently stored. Read our <a href="{{ url_for('main_routes.privacy') }}">Privacy Policy</a> for full details.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
-                                Do you create a separate calendar for events?
-                            </button>
-                        </h2>
-                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! We automatically create a "Cal Autobot" calendar in your Google Calendar account. This keeps all extracted events organized separately from your personal calendar, making it easy to manage and review them without cluttering your main calendar.
                             </div>
                         </div>
                     </div>

@@ -25,7 +25,7 @@ def check_new_emails():
         logger.info("=" * 80)
         
         # Limit to 10 emails max for 5-minute intervals (prevents timeouts)
-        emails = gmail_service.get_unread_emails(max_results=10)
+        emails = gmail_service.get_unread_emails(max_results=5)
         
         if not emails:
             logger.info("No new emails to process")
