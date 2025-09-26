@@ -156,6 +156,13 @@ def extract_events_from_text(text,
                     event[
                         "event_description"] = f"{event['event_description']} \n\n(from {from_email})"
 
+        # Add CalAutobot.com branding to all event descriptions
+        for event in events:
+            if event.get("event_description"):
+                event["event_description"] = f"{event['event_description']}\n\n- Created by CalAutobot.com"
+            else:
+                event["event_description"] = "- Created by CalAutobot.com"
+
         # Add emojis to event names using OpenAI-generated emoji
         for event in events:
             if event.get("event_name"):
