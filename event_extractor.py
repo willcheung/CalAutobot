@@ -19,7 +19,7 @@ EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting structured cale
 
 Output Schema:
 Return a single JSON object with a top-level key "events" containing a list of event objects.  
-Each event object must include the following keys (use `null` if unavailable):  
+Each event object must include the following keys (use null if unavailable):  
 - "event_name" (string, include traveler name(s) if a flight; append one relevant emoji)  
 - "event_description" (string, multi-line human-readable summary with key details)  
 - "start_date" (YYYY-MM-DD or null)  
