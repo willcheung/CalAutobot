@@ -168,7 +168,6 @@ class CalendarAIPopup {
       screenshotBtn.disabled = false;
       textInput.disabled = false;
     } else {
-      authStatus.textContent = 'Sign in to start creating calendar events';
       authStatus.className = 'auth-status unauthenticated';
       authBtn.style.display = 'flex';
       mainSection.classList.remove('show');

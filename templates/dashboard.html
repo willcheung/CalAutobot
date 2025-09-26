@@ -58,7 +58,7 @@
             <!-- Note below CTA -->
             <div class="row mb-4">
                 <div class="col-12">
-                    <p class="text-center text-muted mb-0" style="font-size: 0.9rem;"><span style="font-size: 1.2rem">💡</span><strong>Note:</strong> We will create "Cal Autobot" calendar so it doesn't get mingled up with your other calendar events.</p>
+                    <p class="text-center text-muted mb-0" style="font-size: 0.9rem;"><span style="font-size: 1.2rem">💡</span><strong>Note:</strong> We will create "Cal Autobot" calendar so it doesn't get mingled up with your private calendar.</p>
                 </div>
             </div>
         </div>
@@ -69,7 +69,7 @@
                     <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" style="width: 20px; height: 20px;" class="me-2">
                     Chrome Extension
                 </h5>
-                <p class="mb-3" style="font-size: 0.9rem; color: #666;">Take screenshots of event calendars, websites, and schedules directly from your browser. Perfect for extracting events from images and web content.</p>
+                <p class="mb-3" style="font-size: 0.9rem; color: #666;">Turn screenshots and websites into calendars events without leaving your tab.</p>
                 
                 <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="btn btn-dark w-100 d-block text-center">
                     <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" style="width: 18px; height: 18px;" class="me-2">
@@ -92,7 +92,7 @@
             <div class="input-card">
                 <h3 class="mb-3">
                     <i data-feather="edit-3" class="me-2"></i>
-                    Or extract events from text
+                    Extract events from text
                 </h3>
 
                 <form method="POST" action="{{ url_for('main_routes.extract_events') }}">
@@ -119,7 +119,7 @@
                     <i data-feather="mail" class="me-2"></i>
                     Additional Emails
                 </h5>
-                <p style="font-size: 0.75rem; color: #444">Events sent from these email addresses will sync to your connected Google Calendar.</p>
+                <p style="font-size: 0.75rem; color: #444">Events forwarded from these email addresses will sync to your connected Google Calendar.</p>
                 
                 <!-- Add Email Form -->
                 <form id="add-email-form" method="POST" action="{{ url_for('main_routes.add_email') }}" class="mb-3">
