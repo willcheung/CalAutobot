@@ -64,7 +64,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "keepalives_idle": "600",
         "keepalives_interval": "30",
         "keepalives_count": "3",
-        "options": "-c statement_timeout=30000"  # 30 second statement timeout
+        "options": "-c statement_timeout=120000"  # 120 second statement timeout (2 minutes)
     }
 }
 
