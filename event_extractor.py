@@ -15,44 +15,62 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # Centralized prompt template - single place to edit the extraction prompt
-EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting calendar events from text, documents and images. Always respond with valid JSON format. If text is non-English, retain original language as much as possible. Provide the output as a JSON object with a "events" key containing a list, where each object in the list represents an event with keys: "event_name", "event_description", "start_date", "start_time", "start_datetime", "end_date", "end_time", "end_datetime", "location", "emoji". If a piece of information is not found, use null for its value.
+EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting structured calendar events from unstructured text, documents, and images.  Always respond **only** with a valid JSON object. No extra commentary, no explanations.  
 
-If no events are found, return an empty list for the "events" key.
+Output Schema:
+Return a single JSON object with a top-level key "events" containing a list of event objects.  
+Each event object must include the following keys (use `null` if unavailable):  
+- "event_name" (string, include traveler name(s) if a flight; append one relevant emoji)  
+- "event_description" (string, multi-line human-readable summary with key details)  
+- "start_date" (YYYY-MM-DD or null)  
+- "start_time" (HH:MM:SS or null)  
+- "start_datetime" (RFC3339 combined datetime in **{user_timezone}** timezone or null)  
+- "end_date" (YYYY-MM-DD or null)  
+- "end_time" (HH:MM:SS or null)  
+- "end_datetime" (RFC3339 combined datetime in **{user_timezone}** timezone or null)  
+- "location" (string or null)  
+- "emoji" (string, one relevant emoji)
 
-Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction. If there's an image or document, extract events from the content of the image or document."""
+If no events are found, return:  
+{"events": []}
+"""
 
-EVENT_EXTRACTION_PROMPT = """Given the following text or attached image/document, extract all event information.
+EVENT_EXTRACTION_PROMPT = """
+Extraction rules:
+- If text is non-English, retain original language as much as possible. 
+- Sometimes the text is content of an email or forwarded email. If it is, use the body of the email for event extraction. If there's an image or document, extract events from the content of the image or document.
+- Extract clear "event_name" and add one relevant emoji. 
+- Build "event_description" that summarizes this calendar event. Include details like booking codes, confirmation numbers, and other important details for the event. Make description easily human readable with new lines and bullet points.
+- Resolve "start_datetime" and "end_datetime" into RFC3339.
+- Extract "location" if available.
+- Expand recurring events into individual objects.
+- Remove duplicates.
+- Resolve relative dates (e.g., “tomorrow”, “next Monday”) using email sent date if available, else assume current date = {current_date}.
 
-If text, image or document is a flight itinerary, extract each event and carefully convert timezones:
-- Traveler's timezone is {user_timezone}.
-- The event name. Add traveler's name(s) from the text into the event name. Also generate one relevant emoji for the event name, given the context of the event.
-- The event description that gives context to this calendar event. Include flight duration and other critical travel details like travel agent contact, confirmation number, booking details. If there are multiple travelers, list all of them. Make description easily human readable with new lines and bullet points.
-- Identify the departure and arrival airport codes or cities.
-- Use the known IANA time zones for these airports to determine their timezone offsets for the specified dates. (Example: San Francisco International Airport (SFO) = America/Los_Angeles (UTC-7 during DST, UTC-8 otherwise)
-Taiwan Taoyuan International Airport (TPE) = Asia/Taipei (UTC+8 year-round))
-- The start (departure) datetime as a combined date-time value (formatted according to IETF Datatracker RFC3339) converted to traveler's timezone. Consider Daylight Saving Time vs Standard Time where applicable.
-- The end (arrival) datetime as a combined date-time value (formatted according to IETF Datatracker RFC3339) converted to traveler's timezone. Consider Daylight Saving Time vs Standard Time where applicable.
-- The event location is departure airport.
-- IMPORTANT: Always ensure end datetime is after start datetime, especially for international flights.
+Flight Itineraries:
+- Treat each flight leg as an event.
+- Use {user_timezone} timezone for traveler’s perspective.
+- Extract traveler names; include in "event_name".
+- Identify departure/arrival airports (IATA code and city).
+- Use their correct IANA timezones (with DST rules) for departure/arrival times.
+- "start_datetime" = departure local time converted to traveler’s timezone.
+- "end_datetime" = arrival local time converted to traveler’s timezone.
+- Always ensure end_datetime > start_datetime.
+- "location" = departure airport.
+- "event_description" must include:
+-- Airline + flight number
+-- Departure + arrival airports and times
+-- Duration, cabin, aircraft, seat info (if given)
+-- Passenger(s) names
+-- Confirmation/booking codes
+-- Other details (distance, travel agent contact, etc.)
+-- Format description with bullet points or new lines.
 
-If text, image or document is not a flight itinerary, extract event and identify:
-- The event name. Also generate one relevant emoji for the event name, given the context of the event.
-- The event description that summarizes this calendar event. Include details like booking codes, confirmation numbers, and other important details for the event. Make description easily human readable with new lines and bullet points.
-- The start datetime as a combined date-time value (formatted according to IETF Datatracker RFC3339)
-- The end datetime as a combined date-time value (formatted according to IETF Datatracker RFC3339)
-- The location (if specified).
-
-If events are recurring, extract each instance of the event.
-
-If same events are repeated in the email or text, extract only one instance of the event and don't include the duplicates in the output.
-
-If a date is relative (e.g., "next Monday," "tomorrow"), first check the email sent date to resolve it. If there's no email sent date, then assume the current date is {current_date} for resolving it.
-
-Text: '''{text}'''"""
+Input: '''{text}'''"""
 
 
 def extract_events_from_text(text,
-                             current_date=None,
+                             current_date=datetime.today(),
                              user_timezone="UTC",
                              image_data=None):
     """
