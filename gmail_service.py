@@ -23,7 +23,6 @@ class GmailService:
         """Initialize Gmail service with backend credentials"""
         self.credentials = None
         self._initialize_credentials()
-        self._update_sender_display_name()
     
     def _initialize_credentials(self):
         """Initialize Gmail credentials from environment variables"""
@@ -46,10 +45,7 @@ class GmailService:
             
             self.credentials = Credentials.from_authorized_user_info(
                 token_data,
-                scopes=[
-                    'https://mail.google.com',
-                    'https://www.googleapis.com/auth/gmail.settings.basic'
-                ]
+                scopes=['https://mail.google.com']
             )
             
             logger.info("Gmail credentials initialized successfully")
@@ -57,30 +53,6 @@ class GmailService:
         except Exception as e:
             logger.error(f"Error initializing Gmail credentials: {str(e)}")
             self.credentials = None
-    
-    def _update_sender_display_name(self):
-        """Update the SendAs display name to show 'Cal @CalAutobot.com'"""
-        try:
-            service = self.get_service()
-            if not service:
-                return
-            
-            # Update the sendAs settings for go@calautobot.com
-            send_as_config = {
-                'displayName': 'Cal @CalAutobot.com'
-            }
-            
-            service.users().settings().sendAs().patch(
-                userId='me',
-                sendAsEmail='go@calautobot.com',
-                body=send_as_config
-            ).execute()
-            
-            logger.info("Updated sender display name to 'Cal @CalAutobot.com'")
-            
-        except Exception as e:
-            # Don't fail initialization if this fails - it's not critical
-            logger.warning(f"Could not update sender display name: {str(e)}")
     
     def get_service(self):
         """Get Gmail API service with fresh token"""
@@ -455,11 +427,9 @@ class GmailService:
             from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
             
-            from email.utils import formataddr
-            
             message = MIMEMultipart('alternative')
             message['To'] = to
-            message['From'] = formataddr(('Cal @CalAutobot.com', 'go@calautobot.com'))
+            message['From'] = 'Cal @CalAutobot.com <go@calautobot.com>'
             message['Subject'] = subject
             
             # Add HTML body
