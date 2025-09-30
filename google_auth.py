@@ -95,7 +95,7 @@ def callback():
     logger = logging.getLogger(__name__)
 
     user = User.query.filter_by(email=users_email).first()
-    is_temp_user_signup = False  # Initialize to avoid unbound variable
+    is_provisional_user_signup = False  # Track if this is a provisional user upgrading
     
     if not user:
         user = User()
@@ -103,11 +103,12 @@ def callback():
         user.email = users_email
         user.google_id = google_id
         user.timezone = user_timezone
+        user.email_count = 0  # Real users have no email limit
         db.session.add(user)
         logger.info(f"Created new user {users_email} with timezone {user_timezone}")
     else:
-        # Check if this is a temp user (no google_id) converting to real user
-        is_temp_user_signup = (user.google_id is None)
+        # Check if this is a provisional user (no google_id) converting to real user
+        is_provisional_user_signup = (user.google_id is None)
         
         # Only update timezone if it's different (optimization)
         if user.timezone != user_timezone:
@@ -115,10 +116,12 @@ def callback():
             user.timezone = user_timezone
             logger.info(f"Updated timezone for user {users_email}: {old_timezone} -> {user_timezone}")
         
-        if is_temp_user_signup:
-            # Update temp user to real user
+        if is_provisional_user_signup:
+            # Upgrade provisional user to real authenticated user
             user.google_id = google_id
-            user.username = users_name  # Replace temp username with real name
+            user.username = users_name
+            user.email_count = 0  # Reset email count - real users have no limit
+            logger.info(f"✅ Upgraded provisional user {users_email} to authenticated user")
 
     # Update the Google token for Calendar API access
     user.google_token = json.dumps(token_data)
@@ -143,8 +146,8 @@ def callback():
         # or by re-processing their recent emails
         logger.info(f"New user {users_email} signed up after email invitation")
 
-    # Auto-sync events for temp users who just signed up
-    if 'is_temp_user_signup' in locals() and is_temp_user_signup:
+    # Auto-sync events for provisional users who just signed up
+    if is_provisional_user_signup:
         try:
             from google_calendar import get_or_create_textbot_calendar, create_calendar_event
             from helpers.event_utils import prepare_event_data_for_calendar

@@ -161,25 +161,33 @@ def process_single_email(email_data: Dict) -> bool:
             user = db.session.query(User).join(UserEmail).filter(UserEmail.email == sender_email).first()
         
         if user:
-            # Check if email was found via UserEmail lookup
-            user_email = UserEmail.query.filter_by(email=sender_email).first()
-            is_additional_email = user_email is not None
-            
-            # If found via UserEmail or has google_id, treat as existing user
-            if is_additional_email or user.google_id is not None:
-                # This is an existing user - process and send confirmation
+            # Check if this is a real user (has google_id) or provisional user (no google_id)
+            if user.google_id:
+                # Real authenticated user - process normally
                 return process_existing_user_email(
                     formatted_text, attachments_data, user, sender_email, subject
                 )
             else:
-                # This is a temp user - send signup email
-                return process_temp_user_email(
-                    formatted_text, attachments_data, user, sender_email, subject
-                )
+                # Provisional user - check email limit
+                if user.email_count >= 2:
+                    # Hit limit - send limit reached email
+                    logger.info(f"📧 Provisional user {sender_email} hit 2-email limit")
+                    send_limit_reached_email(sender_email)
+                    return True
+                else:
+                    # Under limit - process and increment count
+                    user.email_count += 1
+                    db.session.commit()
+                    logger.info(f"📧 Processing email {user.email_count}/2 for provisional user {sender_email}")
+                    return process_provisional_user_email(
+                        formatted_text, attachments_data, user, sender_email, subject
+                    )
         else:
-            # SECURITY: Ignore emails from non-users to prevent unauthorized usage
-            logger.info(f"🚫 Ignoring email from non-user: {sender_email} (not in user database)")
-            return True  # Mark as "processed" but don't actually process
+            # New user - create provisional user
+            logger.info(f"📧 Creating new provisional user for {sender_email}")
+            return process_new_provisional_user_email(
+                formatted_text, attachments_data, sender_email, subject
+            )
             
     except Exception as e:
         logger.error(f"Error processing single email: {str(e)}")
@@ -280,15 +288,15 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
         sentry_sdk.capture_exception(e)
         return False
 
-def process_temp_user_email(formatted_text: str, attachments_data: List[Dict], 
-                           user: User, sender_email: str, subject: str) -> bool:
-    """Process email for temp user (no Google authentication)"""
+def process_provisional_user_email(formatted_text: str, attachments_data: List[Dict], 
+                                  user: User, sender_email: str, subject: str) -> bool:
+    """Process email for provisional user (no Google authentication yet)"""
     try:
         result = process_text_to_events(
             formatted_text, 
             user, 
             source_type="email", 
-            auto_sync=False  # Don't auto-sync for temp users
+            auto_sync=False  # Don't auto-sync for provisional users
         )
         
         # Process attachments if present
@@ -297,85 +305,123 @@ def process_temp_user_email(formatted_text: str, attachments_data: List[Dict],
             
             text_input = result.get('text_input')
             if text_input:
-                logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for temp user {user.id}")
+                logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for provisional user {user.id}")
                 processed_attachments = attachment_processor.process_email_attachments(
                     text_input, attachments_data
                 )
-                logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for temp user {user.id}")
+                logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for provisional user {user.id}")
         
-        # Send signup email with extracted events (reuse existing function)
-        send_signup_email_with_events(sender_email, result['events'], subject)
+        # Send provisional summary email with extracted events
+        send_provisional_summary_email(sender_email, result['events'])
         
         return True
         
     except Exception as e:
-        logger.error(f"Error processing email for temp user {sender_email}: {str(e)}")
+        logger.error(f"Error processing email for provisional user {sender_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
         return False
 
-def process_new_user_email(formatted_text: str, attachments_data: List[Dict], 
-                          sender_email: str, subject: str) -> bool:
-    """Process email for new user (create temp user)"""
+def process_new_provisional_user_email(formatted_text: str, attachments_data: List[Dict], 
+                                       sender_email: str, subject: str) -> bool:
+    """Process email for new provisional user (create provisional user)"""
     try:
-        # Create temporary user
-        temp_user = User()
-        temp_user.email = sender_email
-        temp_user.username = sender_email.split('@')[0]
-        temp_user.is_temporary = True
-        temp_user.timezone = 'UTC'
+        # Create provisional user
+        new_user = User()
+        new_user.email = sender_email
+        new_user.username = sender_email
+        new_user.google_id = None  # No Google auth yet
+        new_user.email_count = 1  # First email
+        new_user.timezone = 'UTC'
         
-        db.session.add(temp_user)
+        db.session.add(new_user)
         db.session.commit()
         
-        logger.info(f"Created temporary user for {sender_email}")
+        logger.info(f"✅ Created provisional user for {sender_email}")
         
-        # Process the email for this new temp user
-        return process_temp_user_email(formatted_text, attachments_data, temp_user, sender_email, subject)
+        # Process the email for this new provisional user
+        return process_provisional_user_email(formatted_text, attachments_data, new_user, sender_email, subject)
         
     except Exception as e:
-        logger.error(f"Error creating new user for {sender_email}: {str(e)}")
+        logger.error(f"Error creating provisional user for {sender_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
         db.session.rollback()
         return False
 
-def send_signup_email_with_events(recipient_email: str, events_data: List, original_subject: str = ""):
-    """
-    Send email to new user with extracted events and signup link.
-    Note: This now just logs instead of actually sending email since we're removing Mailgun send functionality.
-    You may want to integrate with a different email service for sending.
-    """
+def send_provisional_summary_email(recipient_email: str, events_data: List):
+    """Send email to provisional user with extracted events and signup link"""
     try:
-        logger.info(f"📧 Would send signup email to {recipient_email} with {len(events_data)} events")
-        logger.info(f"📧 Events found: {[event.get('event_name', 'Unnamed') for event in events_data]}")
+        from flask import render_template
         
-        # TODO: Integrate with your preferred email sending service here
-        # For now, just log the signup invitation
         base_url = get_base_url()
-        signup_url = f"{base_url}/google_login?email={recipient_email}"
-        logger.info(f"📧 Signup URL for {recipient_email}: {signup_url}")
+        signup_url = f"{base_url}/google_login"
         
-        return True
+        # Render email template
+        html_body = render_template(
+            'emails/provisional_summary.html',
+            events=events_data,
+            signup_url=signup_url
+        )
+        
+        subject = f"✅ We found {len(events_data)} event{'s' if len(events_data) != 1 else ''} in your email!"
+        
+        # Send email using Gmail service
+        success = gmail_service.send_email(
+            to=recipient_email,
+            subject=subject,
+            html_body=html_body
+        )
+        
+        if success:
+            logger.info(f"📧 Sent provisional summary email to {recipient_email} with {len(events_data)} events")
+        else:
+            logger.error(f"❌ Failed to send provisional summary email to {recipient_email}")
+        
+        return success
         
     except Exception as e:
-        logger.error(f"Error preparing signup email for {recipient_email}: {str(e)}")
+        logger.error(f"Error sending provisional summary email to {recipient_email}: {str(e)}")
+        sentry_sdk.capture_exception(e)
+        return False
+
+def send_limit_reached_email(recipient_email: str):
+    """Send email to provisional user who hit the 2-email limit"""
+    try:
+        from flask import render_template
+        
+        # Render email template
+        html_body = render_template('emails/limit_reached.html')
+        
+        subject = "⚠️ Email limit reached - Sign up to continue"
+        
+        # Send email using Gmail service
+        success = gmail_service.send_email(
+            to=recipient_email,
+            subject=subject,
+            html_body=html_body
+        )
+        
+        if success:
+            logger.info(f"📧 Sent limit reached email to {recipient_email}")
+        else:
+            logger.error(f"❌ Failed to send limit reached email to {recipient_email}")
+        
+        return success
+        
+    except Exception as e:
+        logger.error(f"Error sending limit reached email to {recipient_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
         return False
 
 def send_confirmation_email(recipient_email: str, events_count: int, synced_count: int):
-    """
-    Send confirmation email to existing user after processing.
-    Note: This now just logs instead of actually sending email since we're removing Mailgun send functionality.
-    You may want to integrate with a different email service for sending.
-    """
+    """Send confirmation email to existing user after processing"""
     try:
-        logger.info(f"📧 Would send confirmation email to {recipient_email}: {events_count} events processed, {synced_count} synced")
+        logger.info(f"📧 Confirmation: {recipient_email} - {events_count} events processed, {synced_count} synced")
         
-        # TODO: Integrate with your preferred email sending service here
-        # For now, just log the confirmation
         base_url = get_base_url()
         dashboard_url = f"{base_url}/dashboard"
         logger.info(f"📧 Dashboard URL for {recipient_email}: {dashboard_url}")
         
+        # For now, just log - can add actual email template later if needed
         return True
         
     except Exception as e:
