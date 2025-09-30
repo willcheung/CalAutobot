@@ -473,7 +473,7 @@ class GmailService:
             
             message = MIMEMultipart('alternative')
             message['To'] = to
-            message['From'] = 'go@calautobot.com'
+            message['From'] = 'cal@calautobot.com'
             message['Subject'] = subject
             
             # Add HTML body
