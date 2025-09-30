@@ -23,6 +23,7 @@ class GmailService:
         """Initialize Gmail service with backend credentials"""
         self.credentials = None
         self._initialize_credentials()
+        self._set_sender_display_name()
     
     def _initialize_credentials(self):
         """Initialize Gmail credentials from environment variables"""
@@ -45,7 +46,10 @@ class GmailService:
             
             self.credentials = Credentials.from_authorized_user_info(
                 token_data,
-                scopes=['https://mail.google.com']
+                scopes=[
+                    'https://mail.google.com',
+                    'https://www.googleapis.com/auth/gmail.settings.basic'
+                ]
             )
             
             logger.info("Gmail credentials initialized successfully")
@@ -53,6 +57,46 @@ class GmailService:
         except Exception as e:
             logger.error(f"Error initializing Gmail credentials: {str(e)}")
             self.credentials = None
+    
+    def _set_sender_display_name(self):
+        """Set the display name for the sender email address via Gmail API"""
+        try:
+            if not self.credentials:
+                return
+            
+            service = self.get_service()
+            if not service:
+                return
+            
+            # First, list all sendAs aliases to find the right one
+            send_as_list = service.users().settings().sendAs().list(userId='me').execute()
+            send_as_aliases = send_as_list.get('sendAs', [])
+            
+            # Find the primary email or go@calautobot.com
+            target_email = None
+            for alias in send_as_aliases:
+                if alias.get('sendAsEmail') == 'go@calautobot.com':
+                    target_email = 'go@calautobot.com'
+                    break
+                elif alias.get('isPrimary'):
+                    target_email = alias.get('sendAsEmail')
+            
+            if not target_email:
+                logger.warning("No sendAs email found to update display name")
+                return
+            
+            # Patch the sendAs settings with the display name
+            service.users().settings().sendAs().patch(
+                userId='me',
+                sendAsEmail=target_email,
+                body={'displayName': 'Cal @CalAutobot.com'}
+            ).execute()
+            
+            logger.info(f"✅ Updated sender display name to 'Cal @CalAutobot.com' for {target_email}")
+            
+        except Exception as e:
+            # Don't fail initialization if we can't set display name
+            logger.warning(f"Could not set sender display name: {str(e)}")
     
     def get_service(self):
         """Get Gmail API service with fresh token"""
@@ -429,8 +473,7 @@ class GmailService:
             
             message = MIMEMultipart('alternative')
             message['To'] = to
-            # Set From header with display name
-            message['From'] = '"Cal @CalAutobot.com" <go@calautobot.com>'
+            message['From'] = 'go@calautobot.com'
             message['Subject'] = subject
             
             # Add HTML body
