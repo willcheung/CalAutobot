@@ -15,7 +15,7 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 # Centralized prompt template - single place to edit the extraction prompt
-EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting structured calendar events from unstructured text, documents, and images.  Always respond **only** with a valid JSON object. No extra commentary, no explanations.  
+EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting structured calendar events from unstructured text, documents, and images.  Always respond with a valid JSON object. No extra commentary, no explanations.  
 
 Output Schema:
 Return a single JSON object with a top-level key "events" containing a list of event objects.  
@@ -45,6 +45,7 @@ Extraction rules:
 - Extract "location" if available.
 - Expand recurring events into individual objects.
 - Remove duplicates.
+- Use user's {user_timezone} timezone.
 - Resolve relative dates (e.g., “tomorrow”, “next Monday”) using email sent date if available, else assume current date = {current_date}.
 
 Flight Itineraries:
