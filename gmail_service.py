@@ -404,6 +404,53 @@ class GmailService:
         except Exception as e:
             logger.error(f"Error marking email as read {message_id}: {str(e)}")
             return False
+    
+    def send_email(self, to: str, subject: str, html_body: str) -> bool:
+        """
+        Send an email using Gmail API.
+        
+        Args:
+            to (str): Recipient email address
+            subject (str): Email subject
+            html_body (str): HTML email body
+        
+        Returns:
+            bool: True if successful
+        """
+        try:
+            service = self.get_service()
+            if not service:
+                logger.error("Cannot send email: Gmail service not available")
+                return False
+            
+            # Create email message
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            
+            message = MIMEMultipart('alternative')
+            message['To'] = to
+            message['From'] = 'go@calautobot.com'
+            message['Subject'] = subject
+            
+            # Add HTML body
+            html_part = MIMEText(html_body, 'html')
+            message.attach(html_part)
+            
+            # Encode message
+            raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+            
+            # Send message
+            service.users().messages().send(
+                userId='me',
+                body={'raw': raw_message}
+            ).execute()
+            
+            logger.info(f"Successfully sent email to {to}: {subject}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error sending email to {to}: {str(e)}")
+            return False
 
 # Global instance
 gmail_service = GmailService()
