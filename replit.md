@@ -16,12 +16,14 @@ Preferred communication style: Simple, everyday language.
 - **Deployment**: Gunicorn WSGI server.
 - **Core Components**:
     - **User Authentication**: Handles Google OAuth, token refresh, and session management.
+    - **Provisional User System**: Public access via go@calautobot.com with 2-email limit before signup required. Provisional users (google_id=NULL) can send up to 2 emails and receive event extraction results. OAuth signup automatically upgrades provisional → authenticated users with auto-sync of stored events.
     - **AI Event Extraction**: Processes text using GPT-4o, applies structured prompting, resolves relative dates, and parses emails.
     - **Google Calendar Integration**: Manages event creation, updating, deletion, and token refresh with Google Calendar API. Optimized with try-first approach to reduce unnecessary token refreshes by ~66%.
-    - **Database Models**: Defines `User`, `Event`, and `TextInput` models for data storage.
+    - **Database Models**: Defines `User`, `Event`, and `TextInput` models for data storage. User model includes `email_count` field for tracking provisional user limits.
     - **Web Routes**: Manages dashboard operations, text processing, event editing, and RESTful API endpoints.
     - **Data Flow**: Users authenticate, input text, AI processes it, events are stored, reviewed, and then synced to Google Calendar.
     - **Webhook System**: Implemented for real-time Google Calendar push notifications, including automatic event deletion sync, with token-based validation. Updated to use production domain (calautobot.com) for webhook endpoints with asynchronous processing to prevent worker timeouts.
+    - **Email Templates**: Dedicated templates in `templates/emails/` for provisional user communications (provisional_summary.html for event results, limit_reached.html for signup prompt).
 
 ### Frontend
 - **Templates**: Jinja2 with Bootstrap 5.
