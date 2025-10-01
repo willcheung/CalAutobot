@@ -299,20 +299,36 @@ def process_provisional_user_email(formatted_text: str, attachments_data: List[D
             auto_sync=False  # Don't auto-sync for provisional users
         )
         
+        email_events = result.get('events', [])
+        text_input = result.get('text_input')
+        
+        # Collect all events from email body and attachments
+        all_events = list(email_events)  # Start with email events
+        
         # Process attachments if present
-        if attachments_data:
+        if attachments_data and text_input:
             from attachment_processor import attachment_processor
             
-            text_input = result.get('text_input')
-            if text_input:
-                logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for provisional user {user.id}")
-                processed_attachments = attachment_processor.process_email_attachments(
-                    text_input, attachments_data
-                )
-                logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for provisional user {user.id}")
+            logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for provisional user {user.id}")
+            processed_attachments = attachment_processor.process_email_attachments(
+                text_input, attachments_data, auto_sync=False
+            )
+            logger.info(f"✅ COMPLETED processing {len(processed_attachments)} attachments for provisional user {user.id}")
+            
+            # Collect events from all attachments
+            for attachment in processed_attachments:
+                if attachment and hasattr(attachment, 'id'):
+                    # Get events created from this attachment
+                    attachment_events = Event.query.filter_by(
+                        user_id=user.id,
+                        text_input_id=text_input.id
+                    ).filter(
+                        Event.extracted_at >= attachment.created_at
+                    ).all()
+                    all_events.extend(attachment_events)
         
-        # Send provisional summary email with extracted events
-        send_provisional_summary_email(sender_email, result['events'])
+        # Send provisional summary email with ALL extracted events (email + attachments)
+        send_provisional_summary_email(sender_email, all_events)
         
         return True
         
