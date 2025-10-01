@@ -91,14 +91,17 @@
                 
                 {% if not current_user.is_authenticated %}
                     <div class="hero-actions mt-4">
-                        <div class="email-cta-box">
-                            <p class="mb-2" style="font-size: 1.1rem; font-weight: 500;">Try it free - Send any email to:</p>
+                        <p class="mb-3" style="font-size: 1.1rem; font-weight: 500;">Try it free - Send any email to:</p>
+                        <div class="email-cta-wrapper">
                             <a href="mailto:go@CalAutobot.com" class="email-address-link">
                                 <i data-feather="mail" style="width: 20px; height: 20px;"></i>
                                 go@CalAutobot.com
                             </a>
-                            <p class="small mt-2 opacity-75">Get your first 2 emails processed for free, no signup required</p>
+                            <button class="copy-email-btn" onclick="copyEmailAddress(); return false;" title="Copy email address">
+                                <i data-feather="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
                         </div>
+                        <p class="small mt-2 opacity-75">Get your first 2 emails processed for free, no signup required</p>
                         <br>
                         <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
                             <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
