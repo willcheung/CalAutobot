@@ -149,21 +149,17 @@ def callback():
     # Auto-sync events for provisional users who just signed up
     if is_provisional_user_signup:
         try:
-            from google_calendar import get_or_create_textbot_calendar, create_calendar_event
+            from google_calendar import create_calendar_event
             from helpers.event_utils import prepare_event_data_for_calendar
             import logging
             logger = logging.getLogger(__name__)
             
-            logger.info(f"Temp user {users_email} signed up, auto-syncing existing events")
+            logger.info(f"✅ Provisional user {users_email} signed up, auto-syncing existing events")
             
             # Get user's unsynced events
-            unsynced_events = user.events.filter_by(is_synced=False).all()
+            unsynced_events = Event.query.filter_by(user_id=user.id, is_synced=False).all()
             
             if unsynced_events:
-                # Get access token and create calendar
-                access_token = json.loads(user.google_token)['access_token']
-                calendar_id = get_or_create_textbot_calendar(user, access_token)
-                
                 synced_count = 0
                 for event in unsynced_events:
                     try:
@@ -174,17 +170,19 @@ def callback():
                             event.google_event_id = google_event_id
                             event.is_synced = True
                             synced_count += 1
-                            logger.info(f"Auto-synced event '{event.event_name}' for new user")
+                            logger.info(f"✅ Auto-synced event '{event.event_name}' for provisional user")
                     
                     except Exception as sync_error:
                         logger.warning(f"Failed to sync event '{event.event_name}': {str(sync_error)}")
                 
                 # Commit the sync updates
                 db.session.commit()
-                logger.info(f"Auto-synced {synced_count}/{len(unsynced_events)} events for new user {users_email}")
+                logger.info(f"✅ Auto-synced {synced_count}/{len(unsynced_events)} events for provisional user {users_email}")
+            else:
+                logger.info(f"No unsynced events found for provisional user {users_email}")
         
         except Exception as e:
-            logger.error(f"Error auto-syncing events for new user {users_email}: {str(e)}")
+            logger.error(f"Error auto-syncing events for provisional user {users_email}: {str(e)}")
             # Don't fail the signup process if sync fails
 
     return redirect(url_for("main_routes.dashboard"))
