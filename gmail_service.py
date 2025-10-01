@@ -99,6 +99,9 @@ class GmailService:
         """
         try:
             service = self.get_service()
+            if not service:
+                logger.error("Gmail service not available")
+                return []
             
             # Search for unread emails sent to go@calautobot.com only
             results = service.users().messages().list(
@@ -164,7 +167,7 @@ class GmailService:
             logger.error(f"Error getting email details for {message_id}: {str(e)}")
             return None
     
-    def _parse_gmail_message(self, service, message: Dict) -> Dict:
+    def _parse_gmail_message(self, service, message: Dict) -> Optional[Dict]:
         """
         Parse Gmail message into the same format as Mailgun webhook data.
         
