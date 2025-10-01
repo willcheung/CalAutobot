@@ -43,21 +43,13 @@
         }
         .cta-button {
             display: inline-block;
-            background: #ffffff;
-            color: #3c4043 !important;
-            padding: 12px 24px;
+            background: #3F51B5;
+            color: white !important;
+            padding: 14px 28px;
             text-decoration: none;
-            border-radius: 4px;
-            font-weight: 500;
-            font-size: 14px;
-            border: 1px solid #dadce0;
-            font-family: 'Google Sans', Roboto, Arial, sans-serif;
-        }
-        .google-icon {
-            width: 18px;
-            height: 18px;
-            margin-right: 8px;
-            vertical-align: middle;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
         }
         .features {
             text-align: center;
@@ -95,16 +87,13 @@
     {% endfor %}
 
     <div class="cta">
-        <a href="{{ signup_url }}" class="cta-button" style="color: #3c4043 !important;">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="google-icon">
-            Sign up with Google
-        </a>
+        <a href="{{ signup_url }}" class="cta-button" style="color: white !important;">🚀 Sign up to sync to Google Calendar</a>
         <div class="features">Free forever • 1-click setup • Your events are waiting</div>
     </div>
 
     <div class="footer">
         <p>
-            @
+            <strong>Privacy:</strong> We'll hold these events until you sign up.<br>
             <a href="https://calautobot.com">CalAutobot.com</a> - Never miss an event again
         </p>
     </div>
