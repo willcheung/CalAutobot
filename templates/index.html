@@ -128,13 +128,8 @@
                 <!-- Tab Navigation -->
                 <ul class="nav nav-pills justify-content-center mb-4" id="exampleTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="school-tab" data-bs-toggle="pill" data-bs-target="#school-example" type="button" role="tab" aria-controls="school-example" aria-selected="true">
-                            <i data-feather="book-open" class="me-2"></i>School Events
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="travel-tab" data-bs-toggle="pill" data-bs-target="#travel-example" type="button" role="tab" aria-controls="travel-example" aria-selected="false">
-                            <i data-feather="plane" class="me-2"></i>Travel Itinerary
+                        <button class="nav-link active" id="sports-tab" data-bs-toggle="pill" data-bs-target="#sports-example" type="button" role="tab" aria-controls="sports-example" aria-selected="true">
+                            <i data-feather="award" class="me-2"></i>Sports Schedule
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -143,81 +138,121 @@
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="sports-tab" data-bs-toggle="pill" data-bs-target="#sports-example" type="button" role="tab" aria-controls="sports-example" aria-selected="false">
-                            <i data-feather="award" class="me-2"></i>Sports Schedule
+                        <button class="nav-link" id="travel-tab" data-bs-toggle="pill" data-bs-target="#travel-example" type="button" role="tab" aria-controls="travel-example" aria-selected="false">
+                            <i data-feather="plane" class="me-2"></i>Travel Itinerary
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="school-tab" data-bs-toggle="pill" data-bs-target="#school-example" type="button" role="tab" aria-controls="school-example" aria-selected="false">
+                            <i data-feather="book-open" class="me-2"></i>School Events
                         </button>
                     </li>
                 </ul>
 
                 <!-- Tab Content -->
                 <div class="tab-content" id="exampleTabContent">
-                    <!-- School Events Tab -->
-                    <div class="tab-pane fade show active" id="school-example" role="tabpanel" aria-labelledby="school-tab">
+                    <!-- Sports Schedule Tab -->
+                    <div class="tab-pane fade show active" id="sports-example" role="tabpanel" aria-labelledby="sports-tab">
                         <div class="example-card">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Back to School Events</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample1()" id="extractBtn1">
+                                <h3 class="mb-0">Real Madrid Match Schedule</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample4()" id="extractBtn4">
                                     <i data-feather="calendar" class="me-1"></i>Extract
                                 </button>
                             </div>
                             
-                            <div class="mt-4" id="extractedEvents1" style="display: none;">
+                            <div class="mt-4" id="extractedEvents4" style="display: none;">
                                 <h5 class="text-success mb-3">
                                     <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
                                 </h5>
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">9th Grade/New Student Orientation</h6>
-                                            <p class="mb-0 text-muted small">Aug 12, 2025 • 2:00 PM - 5:30 PM • Bow Gym</p>
+                                            <h6 class="mb-1">Real Madrid vs Villarreal ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 4, 2025 • 12:00 PM</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">School Photos/Student ID Cards</h6>
-                                            <p class="mb-0 text-muted small">Aug 13, 2025 • 9:00 AM - 3:00 PM • Bow Gym</p>
+                                            <h6 class="mb-1">Getafe vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 19, 2025 • 12:00 PM</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Welcome-Back BBQ</h6>
-                                            <p class="mb-0 text-muted small">Aug 15, 2025 • 12:00 PM - 1:00 PM • Senior Quad</p>
+                                            <h6 class="mb-1">Real Madrid vs Juventus ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 22, 2025 • 12:00 PM • UEFA Champions League - Matchday 3 of 8</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Welcome-Back Dance</h6>
-                                            <p class="mb-0 text-muted small">Aug 22, 2025 • 7:30 PM - 10:30 PM • Senior Quad</p>
+                                            <h6 class="mb-1">Real Madrid vs Barcelona ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 26, 2025 • 8:15 AM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Valencia ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 1, 2025 • 1:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Liverpool vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 4, 2025 • 12:00 PM • UEFA Champions League - Matchday 4 of 8</p>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {{ cta_buttons('ctaButtons1') }}
+                                {{ cta_buttons('ctaButtons4') }}
                             </div>
                             
-                            <div class="example-text">
-                                <code style="font-size: 0.7rem; line-height: 1.2;">
-                                <strong>9th Grade/New Student Orientation</strong><br>
-                                Date: Tuesday, Aug. 12, 2025<br>
-                                Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
-                                Location: Bow Gym<br><br>
+                            <div class="example-text text-center">
+                                <img src="{{ url_for('static', filename='images/sports-schedule.png') }}" alt="Real Madrid match schedule" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                            </div>
+                        </div>
+                    </div>
 
-                                <strong>School Photos/Student ID Cards</strong><br>
-                                9th Graders & New to HS Students: Aug. 12 during orientation<br>
-                                10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
-                                Location: Bow Gym<br><br>
-
-                                <strong>Welcome-Back BBQ</strong><br>
-                                Date: Friday, Aug. 15, 2025<br>
-                                Time: During lunch<br>
-                                Location: Senior Quad<br>
-                                A fun and free event for all students with food, games, and music!<br><br>
-
-                                <strong>Welcome-Back Dance</strong><br>
-                                Date: Friday, Aug. 22, 2025<br>
-                                Time: 7:30-10:30 pm<br>
-                                Location: Senior Quad
-                                </code>
+                    <!-- Photo Events Tab -->
+                    <div class="tab-pane fade" id="photo-example" role="tabpanel" aria-labelledby="photo-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Photo of Events</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample3()" id="extractBtn3">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents3" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Napa Valley Wine Festival</h6>
+                                            <p class="mb-0 text-muted small">Apr 12, 2025 • 2:00 PM - 8:00 PM • Riverside Park Amphitheater</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Book Club Meeting</h6>
+                                            <p class="mb-0 text-muted small">Every Thursday • 7:00 PM - 8:30 PM • Central Library</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Art Gallery Opening</h6>
+                                            <p class="mb-0 text-muted small">Apr 18, 2025 • 6:00 PM - 10:00 PM • Downtown Art Center</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {{ cta_buttons('ctaButtons3') }}
+                            </div>
+                            
+                            <div class="example-text text-center">
+                                <img src="{{ url_for('static', filename='images/wine-festival.PNG') }}" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
                             </div>
                         </div>
                     </div>
@@ -284,108 +319,73 @@ Confirmation Number: HTL789456<br><br>
                         </div>
                     </div>
 
-                    <!-- Photo Events Tab -->
-                    <div class="tab-pane fade" id="photo-example" role="tabpanel" aria-labelledby="photo-tab">
+                    <!-- School Events Tab -->
+                    <div class="tab-pane fade" id="school-example" role="tabpanel" aria-labelledby="school-tab">
                         <div class="example-card">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Photo of Events</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample3()" id="extractBtn3">
+                                <h3 class="mb-0">Back to School Events</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample1()" id="extractBtn1">
                                     <i data-feather="calendar" class="me-1"></i>Extract
                                 </button>
                             </div>
                             
-                            <div class="mt-4" id="extractedEvents3" style="display: none;">
+                            <div class="mt-4" id="extractedEvents1" style="display: none;">
                                 <h5 class="text-success mb-3">
                                     <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
                                 </h5>
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Napa Valley Wine Festival</h6>
-                                            <p class="mb-0 text-muted small">Apr 12, 2025 • 2:00 PM - 8:00 PM • Riverside Park Amphitheater</p>
+                                            <h6 class="mb-1">9th Grade/New Student Orientation</h6>
+                                            <p class="mb-0 text-muted small">Aug 12, 2025 • 2:00 PM - 5:30 PM • Bow Gym</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Book Club Meeting</h6>
-                                            <p class="mb-0 text-muted small">Every Thursday • 7:00 PM - 8:30 PM • Central Library</p>
+                                            <h6 class="mb-1">School Photos/Student ID Cards</h6>
+                                            <p class="mb-0 text-muted small">Aug 13, 2025 • 9:00 AM - 3:00 PM • Bow Gym</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Art Gallery Opening</h6>
-                                            <p class="mb-0 text-muted small">Apr 18, 2025 • 6:00 PM - 10:00 PM • Downtown Art Center</p>
+                                            <h6 class="mb-1">Welcome-Back BBQ</h6>
+                                            <p class="mb-0 text-muted small">Aug 15, 2025 • 12:00 PM - 1:00 PM • Senior Quad</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Welcome-Back Dance</h6>
+                                            <p class="mb-0 text-muted small">Aug 22, 2025 • 7:30 PM - 10:30 PM • Senior Quad</p>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {{ cta_buttons('ctaButtons3') }}
+                                {{ cta_buttons('ctaButtons1') }}
                             </div>
                             
-                            <div class="example-text text-center">
-                                <img src="{{ url_for('static', filename='images/wine-festival.PNG') }}" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
-                            </div>
-                        </div>
-                    </div>
+                            <div class="example-text">
+                                <code style="font-size: 0.7rem; line-height: 1.2;">
+                                <strong>9th Grade/New Student Orientation</strong><br>
+                                Date: Tuesday, Aug. 12, 2025<br>
+                                Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
+                                Location: Bow Gym<br><br>
 
-                    <!-- Sports Schedule Tab -->
-                    <div class="tab-pane fade" id="sports-example" role="tabpanel" aria-labelledby="sports-tab">
-                        <div class="example-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Real Madrid Match Schedule</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample4()" id="extractBtn4">
-                                    <i data-feather="calendar" class="me-1"></i>Extract
-                                </button>
-                            </div>
-                            
-                            <div class="mt-4" id="extractedEvents4" style="display: none;">
-                                <h5 class="text-success mb-3">
-                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
-                                </h5>
-                                <div class="row g-2">
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Villarreal ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 4, 2025 • 12:00 PM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Getafe vs Real Madrid ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 19, 2025 • 12:00 PM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Juventus ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 22, 2025 • 12:00 PM • UEFA Champions League - Matchday 3 of 8</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Barcelona ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 26, 2025 • 8:15 AM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Valencia ⚽</h6>
-                                            <p class="mb-0 text-muted small">Nov 1, 2025 • 1:00 PM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Liverpool vs Real Madrid ⚽</h6>
-                                            <p class="mb-0 text-muted small">Nov 4, 2025 • 12:00 PM • UEFA Champions League - Matchday 4 of 8</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {{ cta_buttons('ctaButtons4') }}
-                            </div>
-                            
-                            <div class="example-text text-center">
-                                <img src="{{ url_for('static', filename='images/sports-schedule.png') }}" alt="Real Madrid match schedule" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                                <strong>School Photos/Student ID Cards</strong><br>
+                                9th Graders & New to HS Students: Aug. 12 during orientation<br>
+                                10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
+                                Location: Bow Gym<br><br>
+
+                                <strong>Welcome-Back BBQ</strong><br>
+                                Date: Friday, Aug. 15, 2025<br>
+                                Time: During lunch<br>
+                                Location: Senior Quad<br>
+                                A fun and free event for all students with food, games, and music!<br><br>
+
+                                <strong>Welcome-Back Dance</strong><br>
+                                Date: Friday, Aug. 22, 2025<br>
+                                Time: 7:30-10:30 pm<br>
+                                Location: Senior Quad
+                                </code>
                             </div>
                         </div>
                     </div>
