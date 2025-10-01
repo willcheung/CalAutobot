@@ -91,7 +91,7 @@
                 
                 {% if not current_user.is_authenticated %}
                     <div class="hero-actions mt-4">
-                        <p class="mb-3" style="font-size: 1.1rem; font-weight: 500;">Try it free - Send any email to:</p>
+                        <p class="mb-3" style="font-size: 0.9rem; font-weight: 300;">Try it free. Send any email to:</p>
                         <div class="email-cta-wrapper">
                             <a href="mailto:go@CalAutobot.com" class="email-address-link">
                                 <i data-feather="mail" style="width: 20px; height: 20px;"></i>
@@ -101,13 +101,6 @@
                                 <i data-feather="copy" style="width: 18px; height: 18px;"></i>
                             </button>
                         </div>
-                        <p class="small mt-2 opacity-75">Get your first 2 emails processed for free, no signup required</p>
-                        <br>
-                        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
-                            <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                            Download our Chrome Extension
-                        </a>
-                        <p class="small mt-3 text-white">We never access your private calendar. All events are organized separately.</p>
                     </div>
                 {% else %}
                     <div class="hero-actions mt-4">
@@ -147,6 +140,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="photo-tab" data-bs-toggle="pill" data-bs-target="#photo-example" type="button" role="tab" aria-controls="photo-example" aria-selected="false">
                             <i data-feather="camera" class="me-2"></i>Photo Events
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sports-tab" data-bs-toggle="pill" data-bs-target="#sports-example" type="button" role="tab" aria-controls="sports-example" aria-selected="false">
+                            <i data-feather="award" class="me-2"></i>Sports Schedule
                         </button>
                     </li>
                 </ul>
@@ -199,23 +197,23 @@
                             
                             <div class="example-text">
                                 <code style="font-size: 0.7rem; line-height: 1.2;">
-                                9th Grade/New Student Orientation<br>
+                                <strong>9th Grade/New Student Orientation</strong><br>
                                 Date: Tuesday, Aug. 12, 2025<br>
                                 Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
                                 Location: Bow Gym<br><br>
 
-                                School Photos/Student ID Cards<br>
-                                9th Graders & New to Gunn Students: Aug. 12 during orientation<br>
+                                <strong>School Photos/Student ID Cards</strong><br>
+                                9th Graders & New to HS Students: Aug. 12 during orientation<br>
                                 10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
                                 Location: Bow Gym<br><br>
 
-                                Welcome-Back BBQ<br>
+                                <strong>Welcome-Back BBQ</strong><br>
                                 Date: Friday, Aug. 15, 2025<br>
                                 Time: During lunch<br>
                                 Location: Senior Quad<br>
                                 A fun and free event for all students with food, games, and music!<br><br>
 
-                                Welcome-Back Dance<br>
+                                <strong>Welcome-Back Dance</strong><br>
                                 Date: Friday, Aug. 22, 2025<br>
                                 Time: 7:30-10:30 pm<br>
                                 Location: Senior Quad
@@ -326,6 +324,68 @@ Confirmation Number: HTL789456<br><br>
                             
                             <div class="example-text text-center">
                                 <img src="{{ url_for('static', filename='images/wine-festival.PNG') }}" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sports Schedule Tab -->
+                    <div class="tab-pane fade" id="sports-example" role="tabpanel" aria-labelledby="sports-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Real Madrid Match Schedule</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample4()" id="extractBtn4">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents4" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Villarreal ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 4, 2025 • 12:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Getafe vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 19, 2025 • 12:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Juventus ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 22, 2025 • 12:00 PM • UEFA Champions League - Matchday 3 of 8</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Barcelona ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 26, 2025 • 8:15 AM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Valencia ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 1, 2025 • 1:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Liverpool vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 4, 2025 • 12:00 PM • UEFA Champions League - Matchday 4 of 8</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {{ cta_buttons('ctaButtons4') }}
+                            </div>
+                            
+                            <div class="example-text text-center">
+                                <img src="{{ url_for('static', filename='images/sports-schedule.png') }}" alt="Real Madrid match schedule" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
                             </div>
                         </div>
                     </div>
@@ -843,6 +903,49 @@ function extractExample3() {
     }, 3000);
 }
 
+function extractExample4() {
+    const btn = document.getElementById('extractBtn4');
+    const eventsDiv = document.getElementById('extractedEvents4');
+    const ctaDiv = document.getElementById('ctaButtons4');
+    
+    // Button loading state
+    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
+    btn.disabled = true;
+    btn.classList.add('extract-loading');
+    
+    // Add shimmer effect to example image
+    const exampleText = btn.closest('.example-card').querySelector('.example-text');
+    exampleText.classList.add('extract-loading');
+    
+    // Simulate AI processing delay for image
+    setTimeout(() => {
+        // Remove loading effects
+        exampleText.classList.remove('extract-loading');
+        btn.classList.remove('extract-loading');
+        
+        // Show extracted events with animation
+        eventsDiv.style.display = 'block';
+        eventsDiv.classList.add('fade-in');
+        
+        // Show CTA buttons
+        ctaDiv.style.display = 'block';
+        ctaDiv.classList.add('fade-in');
+        
+        // Update button
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Replace feather icons
+        feather.replace();
+        
+        // Hide button after a moment
+        setTimeout(() => {
+            btn.style.display = 'none';
+        }, 2000);
+    }, 3000);
+}
+
 // Reset examples when tab changes
 document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('#exampleTabs button[data-bs-toggle="pill"]');
@@ -850,7 +953,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tabs.forEach(tab => {
         tab.addEventListener('shown.bs.tab', function() {
             // Reset all examples
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 const btn = document.getElementById(`extractBtn${i}`);
                 const eventsDiv = document.getElementById(`extractedEvents${i}`);
                 
