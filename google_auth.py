@@ -96,6 +96,7 @@ def callback():
 
     user = User.query.filter_by(email=users_email).first()
     is_provisional_user_signup = False  # Track if this is a provisional user upgrading
+    old_timezone = None  # Track old timezone for event conversion
     
     if not user:
         user = User()
@@ -110,9 +111,11 @@ def callback():
         # Check if this is a provisional user (no google_id) converting to real user
         is_provisional_user_signup = (user.google_id is None)
         
+        # Capture old timezone before updating (needed for event conversion)
+        old_timezone = user.timezone
+        
         # Only update timezone if it's different (optimization)
         if user.timezone != user_timezone:
-            old_timezone = user.timezone
             user.timezone = user_timezone
             logger.info(f"Updated timezone for user {users_email}: {old_timezone} -> {user_timezone}")
         
@@ -151,6 +154,8 @@ def callback():
         try:
             from google_calendar import create_calendar_event
             from helpers.event_utils import prepare_event_data_for_calendar
+            from datetime import datetime
+            import pytz
             import logging
             logger = logging.getLogger(__name__)
             
@@ -158,6 +163,36 @@ def callback():
             
             # Get user's unsynced events
             unsynced_events = Event.query.filter_by(user_id=user.id, is_synced=False).all()
+            
+            # Convert event times from UTC to user's timezone
+            if old_timezone == 'UTC' and user_timezone != 'UTC' and unsynced_events:
+                logger.info(f"Converting {len(unsynced_events)} events from UTC to {user_timezone}")
+                user_tz = pytz.timezone(user_timezone)
+                
+                for event in unsynced_events:
+                    # Convert start_datetime
+                    if event.start_datetime:
+                        try:
+                            # Parse ISO format datetime string
+                            utc_dt = datetime.fromisoformat(event.start_datetime.replace('Z', '+00:00'))
+                            # Convert to user's timezone
+                            local_dt = utc_dt.astimezone(user_tz)
+                            event.start_datetime = local_dt.isoformat()
+                        except Exception as e:
+                            logger.warning(f"Failed to convert start_datetime for event {event.id}: {str(e)}")
+                    
+                    # Convert end_datetime
+                    if event.end_datetime:
+                        try:
+                            utc_dt = datetime.fromisoformat(event.end_datetime.replace('Z', '+00:00'))
+                            local_dt = utc_dt.astimezone(user_tz)
+                            event.end_datetime = local_dt.isoformat()
+                        except Exception as e:
+                            logger.warning(f"Failed to convert end_datetime for event {event.id}: {str(e)}")
+                
+                # Commit timezone conversions
+                db.session.commit()
+                logger.info(f"✅ Converted event times from UTC to {user_timezone}")
             
             if unsynced_events:
                 synced_count = 0
