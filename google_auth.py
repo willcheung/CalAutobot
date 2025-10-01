@@ -151,6 +151,8 @@ def callback():
 
     # Auto-sync events for provisional users who just signed up
     if is_provisional_user_signup:
+        print(f"[SYNC DEBUG] Starting auto-sync for provisional user {users_email}")
+        logger.info(f"[SYNC DEBUG] Starting auto-sync for provisional user {users_email}")
         try:
             from google_calendar import create_calendar_event
             from helpers.event_utils import prepare_event_data_for_calendar
@@ -159,13 +161,17 @@ def callback():
             import logging
             logger = logging.getLogger(__name__)
             
+            print(f"[SYNC DEBUG] Imports successful, getting unsynced events...")
             logger.info(f"✅ Provisional user {users_email} signed up, auto-syncing existing events")
             
             # Get user's unsynced events
             unsynced_events = Event.query.filter_by(user_id=user.id, is_synced=False).all()
+            print(f"[SYNC DEBUG] Found {len(unsynced_events)} unsynced events")
+            logger.info(f"[SYNC DEBUG] Found {len(unsynced_events)} unsynced events")
             
             # Convert event times from UTC to user's timezone
             if old_timezone == 'UTC' and user_timezone != 'UTC' and unsynced_events:
+                print(f"[SYNC DEBUG] Converting timezone from {old_timezone} to {user_timezone}")
                 logger.info(f"Converting {len(unsynced_events)} events from UTC to {user_timezone}")
                 user_tz = pytz.timezone(user_timezone)
                 
@@ -217,7 +223,11 @@ def callback():
                 logger.info(f"No unsynced events found for provisional user {users_email}")
         
         except Exception as e:
+            print(f"[SYNC DEBUG] ERROR in auto-sync: {str(e)}")
+            import traceback
+            print(f"[SYNC DEBUG] Traceback: {traceback.format_exc()}")
             logger.error(f"Error auto-syncing events for provisional user {users_email}: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             # Don't fail the signup process if sync fails
 
     return redirect(url_for("main_routes.dashboard"))
