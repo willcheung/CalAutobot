@@ -116,6 +116,11 @@ def index():
         return redirect(url_for("main_routes.dashboard"))
     return render_template("index.html")
 
+@main_routes.route("/signup")
+def signup():
+    """Landing page that detects timezone and redirects to Google OAuth"""
+    return render_template("signup_redirect.html")
+
 @main_routes.route("/dashboard")
 @login_required
 def dashboard():
