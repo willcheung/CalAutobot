@@ -433,12 +433,12 @@ def remove_email(email_id):
     
     return redirect(url_for("main_routes.dashboard"))
 
-@main_routes.route("/waitlist")
+@main_routes.route("/cal")
 def waitlist():
     """Cal AI scheduling assistant waitlist page"""
     return render_template("waitlist.html")
 
-@main_routes.route("/waitlist/join", methods=["POST"])
+@main_routes.route("/cal/join", methods=["POST"])
 def join_waitlist():
     """Handle waitlist signup"""
     try:
