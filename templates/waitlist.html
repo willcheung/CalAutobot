@@ -53,6 +53,63 @@
 }
 </script>
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does Cal compare to Calendly for Google Calendar scheduling?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It works entirely through email by reading conversation threads and coordinating directly with participants. This maintains the personal touch of email while automating the logistics. Calendly forces people to interact with a separate tool, which creates friction and a 40% drop-off rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Cal work with Google Calendar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, Cal is designed specifically for Google Calendar integration. It automatically checks your availability, proposes meeting times based on your calendar, and creates Google Calendar events for all participants once a time is confirmed. Everything syncs seamlessly without any manual data entry."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does Cal cost for appointment scheduling?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cal is currently in private beta. Join the waitlist to get early access pricing, which will be significantly discounted compared to our future standard rates. Early adopters receive special lifetime pricing as a thank you for being among the first to trust Cal with their scheduling."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Cal better than manual scheduling for online meeting coordination?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It eliminates the back-and-forth email chains while maintaining the personal touch that scheduling links lack. You get the efficiency of automation with the warmth of direct communication."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How quickly can I start using Cal for appointment scheduling?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Setup takes about 30 seconds. Once you have access, you simply CC cal@yourdomain.com on any scheduling email thread. Cal reads the conversation context and begins coordinating immediately. No complex configuration, no calendar permissions to manage, no training required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What makes Cal different from other AI scheduling assistants?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling links that feel transactional, Cal participates in email threads just like a real executive assistant would. It understands context, handles time zone confusion, and adapts to conversational scheduling requests rather than forcing people into rigid booking flows."
+      }
+    }
+  ]
+}
+</script>
+
 <style>
     .waitlist-hero {
         background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
@@ -221,6 +278,104 @@
         margin-top: 8px;
     }
     
+    .use-cases-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+    
+    .use-case-card {
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        height: 100%;
+    }
+    
+    .use-case-card h4 {
+        color: #1a1f36;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 1.2rem;
+    }
+    
+    .use-case-card .scenario {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+        font-style: italic;
+    }
+    
+    .comparison-section {
+        padding: 80px 0;
+        background: white;
+    }
+    
+    .comparison-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .comparison-table table {
+        width: 100%;
+        margin: 0;
+    }
+    
+    .comparison-table th {
+        background: #f8f9fa;
+        padding: 20px;
+        font-weight: 600;
+        color: #1a1f36;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .comparison-table td {
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+        color: #4b5563;
+    }
+    
+    .comparison-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .check-icon {
+        color: #10b981;
+        font-weight: bold;
+    }
+    
+    .cross-icon {
+        color: #ef4444;
+        font-weight: bold;
+    }
+    
+    .faq-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+    
+    .faq-item {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .faq-item h4 {
+        color: #1a1f36;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+    }
+    
+    .faq-item p {
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.6;
+    }
+    
     @media (max-width: 768px) {
         .waitlist-title {
             font-size: 2.5rem;
@@ -359,6 +514,154 @@
             <div class="stat-item">
                 <span class="stat-number">100%</span>
                 <div class="stat-label">Email-based</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="use-cases-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Who Uses Cal?</h2>
+                <p class="text-muted">Real appointment scheduling scenarios across industries</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="use-case-card">
+                    <h4><i data-feather="trending-up" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Sales Teams</h4>
+                    <p class="scenario">"Can we schedule a demo to discuss your needs?"</p>
+                    <p class="text-muted mb-0">Sales reps schedule 10-20 demos per week. Cal eliminates the back-and-forth, letting reps focus on prospect relationships instead of calendar coordination. Faster scheduling = faster pipeline velocity.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="use-case-card">
+                    <h4><i data-feather="users" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Recruiters</h4>
+                    <p class="scenario">"Let's find time for your interview with the hiring manager."</p>
+                    <p class="text-muted mb-0">Coordinating interviews across multiple calendars is time-consuming. Cal handles availability checks, time zones, and calendar invites automatically, reducing time-to-hire and improving candidate experience.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="use-case-card">
+                    <h4><i data-feather="briefcase" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Account Managers</h4>
+                    <p class="scenario">"Time for our quarterly business review?"</p>
+                    <p class="text-muted mb-0">Client relationships matter. Cal maintains the personal touch of direct email communication while handling the logistics, so you can focus on delivering value and strengthening partnerships.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="comparison-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Cal vs Traditional Scheduling Tools</h2>
+                <p class="text-muted">How Cal compares to Calendly, Doodle, and manual scheduling</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Cal (AI Assistant)</th>
+                                <th>Calendly/Doodle</th>
+                                <th>Manual Scheduling</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Setup required</strong></td>
+                                <td><span class="check-icon">✓</span> 30 seconds (just CC Cal)</td>
+                                <td><span class="cross-icon">✗</span> Account + profile setup</td>
+                                <td><span class="check-icon">✓</span> None</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Personal touch</strong></td>
+                                <td><span class="check-icon">✓</span> Natural email conversation</td>
+                                <td><span class="cross-icon">✗</span> "Click my link" = impersonal</td>
+                                <td><span class="check-icon">✓</span> Personal but time-consuming</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Time investment</strong></td>
+                                <td><span class="check-icon">✓</span> 0 minutes per meeting</td>
+                                <td><span class="cross-icon">✗</span> Still requires link sharing</td>
+                                <td><span class="cross-icon">✗</span> 5-10 min per meeting</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Google Calendar sync</strong></td>
+                                <td><span class="check-icon">✓</span> Automatic</td>
+                                <td><span class="check-icon">✓</span> Automatic</td>
+                                <td><span class="cross-icon">✗</span> Manual entry</td>
+                            </tr>
+                            <tr>
+                                <td><strong>App required</strong></td>
+                                <td><span class="check-icon">✓</span> No, just email</td>
+                                <td><span class="cross-icon">✗</span> Recipient visits website</td>
+                                <td><span class="check-icon">✓</span> No</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Handles negotiation</strong></td>
+                                <td><span class="check-icon">✓</span> AI negotiates availability</td>
+                                <td><span class="cross-icon">✗</span> Pick from predefined slots</td>
+                                <td><span class="cross-icon">✗</span> Manual back-and-forth</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="faq-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Frequently Asked Questions</h2>
+                <p class="text-muted">Everything you need to know about Cal</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="faq-item">
+                    <h4>How does Cal compare to Calendly for Google Calendar scheduling?</h4>
+                    <p>Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It works entirely through email by reading conversation threads and coordinating directly with participants. This maintains the personal touch of email while automating the logistics. Calendly forces people to interact with a separate tool, which creates friction and a 40% drop-off rate.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>Does Cal work with Google Calendar?</h4>
+                    <p>Yes, Cal is designed specifically for Google Calendar integration. It automatically checks your availability, proposes meeting times based on your calendar, and creates Google Calendar events for all participants once a time is confirmed. Everything syncs seamlessly without any manual data entry.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>How much does Cal cost for appointment scheduling?</h4>
+                    <p>Cal is currently in private beta. Join the waitlist to get early access pricing, which will be significantly discounted compared to our future standard rates. Early adopters receive special lifetime pricing as a thank you for being among the first to trust Cal with their scheduling.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>Is Cal better than manual scheduling for online meeting coordination?</h4>
+                    <p>Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It eliminates the back-and-forth email chains ("Does Tuesday at 2pm work?" "How about Wednesday?") while maintaining the personal touch that scheduling links lack. You get the efficiency of automation with the warmth of direct communication.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>How quickly can I start using Cal for appointment scheduling?</h4>
+                    <p>Setup takes about 30 seconds. Once you have access, you simply CC cal@yourdomain.com on any scheduling email thread. Cal reads the conversation context and begins coordinating immediately. No complex configuration, no calendar permissions to manage, no training required.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>What makes Cal different from other AI scheduling assistants?</h4>
+                    <p>Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling links that feel transactional, Cal participates in email threads just like a real executive assistant would. It understands context, handles time zone confusion, and adapts to conversational scheduling requests rather than forcing people into rigid booking flows.</p>
+                </div>
             </div>
         </div>
     </div>
