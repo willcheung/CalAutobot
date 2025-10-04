@@ -20,7 +20,7 @@
         </a>
         <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
             <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-            Download Chrome Extension
+            Take web screenshots with Chrome Extension
         </a>
     {% endif %}
 </div>
@@ -30,7 +30,7 @@
 
 {% block head %}
 <!-- SEO Meta Tags -->
-<meta name="description" content="Transform emails, screenshots, photos, and text into Google Calendar events with AI. Forward any email to go@CalAutobot.com and our AI automatically extracts dates, times, and event details to sync with your calendar.">
+<meta name="description" content="Transform emails, websites, photos, and text into Google Calendar events with AI. Forward any email to go@CalAutobot.com and our AI automatically extracts dates, times, and event details to sync with your calendar.">
 <meta name="keywords" content="calendar automation, email to calendar, AI calendar, Google Calendar sync, event extraction, calendar events, email automation, schedule management">
 <meta name="author" content="Calendar Autobot">
 <meta name="robots" content="index, follow">
@@ -84,28 +84,25 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 text-center">
-                <h1 class="hero-title">Turn Emails, Pictures, PDFs<br/> to Calendar Events</h1>
+                <h1 class="hero-title">Stop Wasting Time Scheduling. <br/>Let AI Do It for You.</h1>
                 <p class="hero-subtitle">
-                    No typing. No manual copy-paste. Our AI finds the date and adds it to your Google Calendar. 
+                    No typing. No copy-paste. Turn emails, pictures, or websites into Google Calendar events. 
                 </p>
                 
                 {% if not current_user.is_authenticated %}
                     <div class="hero-actions mt-4">
-                        <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Sign up free with Google
-                        </a>
-                        <br>
-                        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
-                            <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                            Download our Chrome Extension
-                        </a>
-                        <p class="small mt-3 text-white">We never access your private calendar. All events are organized separately.</p>
+                        <p class="mb-2" style="font-size: 0.9rem; font-weight: 300;">Try it free. Forward any email to:</p>
+                        <div class="email-cta-wrapper">
+                            <a href="mailto:go@CalAutobot.com" class="email-address-link">
+                                <i data-feather="mail" style="width: 20px; height: 20px;"></i>
+                                go@CalAutobot.com
+                            </a>
+                            <button class="copy-email-btn" onclick="copyEmailAddress(); return false;" title="Copy email address">
+                                <i data-feather="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+
+                        <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">Take web screenshots without leaving your tab using our <a style="color: #81D4FA; text-decoration: underline;" href="https://chromewebstore.google.com/detail/calautobot-pictures-to-go/lmempdbkammjlmomcgjglolnmebeedok">Chrome Extension</a></p>
                     </div>
                 {% else %}
                     <div class="hero-actions mt-4">
@@ -133,13 +130,8 @@
                 <!-- Tab Navigation -->
                 <ul class="nav nav-pills justify-content-center mb-4" id="exampleTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="school-tab" data-bs-toggle="pill" data-bs-target="#school-example" type="button" role="tab" aria-controls="school-example" aria-selected="true">
-                            <i data-feather="book-open" class="me-2"></i>School Events
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="travel-tab" data-bs-toggle="pill" data-bs-target="#travel-example" type="button" role="tab" aria-controls="travel-example" aria-selected="false">
-                            <i data-feather="plane" class="me-2"></i>Travel Itinerary
+                        <button class="nav-link active" id="sports-tab" data-bs-toggle="pill" data-bs-target="#sports-example" type="button" role="tab" aria-controls="sports-example" aria-selected="true">
+                            <i data-feather="award" class="me-2"></i>Sports Schedule
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -147,77 +139,122 @@
                             <i data-feather="camera" class="me-2"></i>Photo Events
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="travel-tab" data-bs-toggle="pill" data-bs-target="#travel-example" type="button" role="tab" aria-controls="travel-example" aria-selected="false">
+                            <i data-feather="briefcase" class="me-2"></i>Travel Itinerary
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="school-tab" data-bs-toggle="pill" data-bs-target="#school-example" type="button" role="tab" aria-controls="school-example" aria-selected="false">
+                            <i data-feather="book-open" class="me-2"></i>School Events
+                        </button>
+                    </li>
                 </ul>
 
                 <!-- Tab Content -->
                 <div class="tab-content" id="exampleTabContent">
-                    <!-- School Events Tab -->
-                    <div class="tab-pane fade show active" id="school-example" role="tabpanel" aria-labelledby="school-tab">
+                    <!-- Sports Schedule Tab -->
+                    <div class="tab-pane fade show active" id="sports-example" role="tabpanel" aria-labelledby="sports-tab">
                         <div class="example-card">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Back to School Events</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample1()" id="extractBtn1">
+                                <h3 class="mb-0">Real Madrid Match Schedule</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample4()" id="extractBtn4">
                                     <i data-feather="calendar" class="me-1"></i>Extract
                                 </button>
                             </div>
                             
-                            <div class="mt-4" id="extractedEvents1" style="display: none;">
+                            <div class="mt-4" id="extractedEvents4" style="display: none;">
                                 <h5 class="text-success mb-3">
                                     <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
                                 </h5>
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">9th Grade/New Student Orientation</h6>
-                                            <p class="mb-0 text-muted small">Aug 12, 2025 • 2:00 PM - 5:30 PM • Bow Gym</p>
+                                            <h6 class="mb-1">Real Madrid vs Villarreal ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 4, 2025 • 12:00 PM</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">School Photos/Student ID Cards</h6>
-                                            <p class="mb-0 text-muted small">Aug 13, 2025 • 9:00 AM - 3:00 PM • Bow Gym</p>
+                                            <h6 class="mb-1">Getafe vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 19, 2025 • 12:00 PM</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Welcome-Back BBQ</h6>
-                                            <p class="mb-0 text-muted small">Aug 15, 2025 • 12:00 PM - 1:00 PM • Senior Quad</p>
+                                            <h6 class="mb-1">Real Madrid vs Juventus ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 22, 2025 • 12:00 PM • UEFA Champions League - Matchday 3 of 8</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Welcome-Back Dance</h6>
-                                            <p class="mb-0 text-muted small">Aug 22, 2025 • 7:30 PM - 10:30 PM • Senior Quad</p>
+                                            <h6 class="mb-1">Real Madrid vs Barcelona ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 26, 2025 • 8:15 AM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Valencia ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 1, 2025 • 1:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Liverpool vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 4, 2025 • 12:00 PM • UEFA Champions League - Matchday 4 of 8</p>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {{ cta_buttons('ctaButtons1') }}
+                                {{ cta_buttons('ctaButtons4') }}
                             </div>
                             
-                            <div class="example-text">
-                                <code style="font-size: 0.7rem; line-height: 1.2;">
-                                9th Grade/New Student Orientation<br>
-                                Date: Tuesday, Aug. 12, 2025<br>
-                                Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
-                                Location: Bow Gym<br><br>
+                            <div class="example-text text-center">
+                                <img src="{{ url_for('static', filename='images/sports-schedule.png') }}" alt="Real Madrid match schedule" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                            </div>
+                        </div>
+                    </div>
 
-                                School Photos/Student ID Cards<br>
-                                9th Graders & New to Gunn Students: Aug. 12 during orientation<br>
-                                10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
-                                Location: Bow Gym<br><br>
-
-                                Welcome-Back BBQ<br>
-                                Date: Friday, Aug. 15, 2025<br>
-                                Time: During lunch<br>
-                                Location: Senior Quad<br>
-                                A fun and free event for all students with food, games, and music!<br><br>
-
-                                Welcome-Back Dance<br>
-                                Date: Friday, Aug. 22, 2025<br>
-                                Time: 7:30-10:30 pm<br>
-                                Location: Senior Quad
-                                </code>
+                    <!-- Photo Events Tab -->
+                    <div class="tab-pane fade" id="photo-example" role="tabpanel" aria-labelledby="photo-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Photo of Events</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample3()" id="extractBtn3">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents3" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Napa Valley Wine Festival</h6>
+                                            <p class="mb-0 text-muted small">Apr 12, 2025 • 2:00 PM - 8:00 PM • Riverside Park Amphitheater</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Book Club Meeting</h6>
+                                            <p class="mb-0 text-muted small">Every Thursday • 7:00 PM - 8:30 PM • Central Library</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Art Gallery Opening</h6>
+                                            <p class="mb-0 text-muted small">Apr 18, 2025 • 6:00 PM - 10:00 PM • Downtown Art Center</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {{ cta_buttons('ctaButtons3') }}
+                            </div>
+                            
+                            <div class="example-text text-center">
+                                <img src="{{ url_for('static', filename='images/wine-festival.PNG') }}" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
                             </div>
                         </div>
                     </div>
@@ -284,46 +321,73 @@ Confirmation Number: HTL789456<br><br>
                         </div>
                     </div>
 
-                    <!-- Photo Events Tab -->
-                    <div class="tab-pane fade" id="photo-example" role="tabpanel" aria-labelledby="photo-tab">
+                    <!-- School Events Tab -->
+                    <div class="tab-pane fade" id="school-example" role="tabpanel" aria-labelledby="school-tab">
                         <div class="example-card">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Photo of Events</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample3()" id="extractBtn3">
+                                <h3 class="mb-0">Back to School Events</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample1()" id="extractBtn1">
                                     <i data-feather="calendar" class="me-1"></i>Extract
                                 </button>
                             </div>
                             
-                            <div class="mt-4" id="extractedEvents3" style="display: none;">
+                            <div class="mt-4" id="extractedEvents1" style="display: none;">
                                 <h5 class="text-success mb-3">
                                     <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
                                 </h5>
                                 <div class="row g-2">
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Napa Valley Wine Festival</h6>
-                                            <p class="mb-0 text-muted small">Apr 12, 2025 • 2:00 PM - 8:00 PM • Riverside Park Amphitheater</p>
+                                            <h6 class="mb-1">9th Grade/New Student Orientation</h6>
+                                            <p class="mb-0 text-muted small">Aug 12, 2025 • 2:00 PM - 5:30 PM • Bow Gym</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Book Club Meeting</h6>
-                                            <p class="mb-0 text-muted small">Every Thursday • 7:00 PM - 8:30 PM • Central Library</p>
+                                            <h6 class="mb-1">School Photos/Student ID Cards</h6>
+                                            <p class="mb-0 text-muted small">Aug 13, 2025 • 9:00 AM - 3:00 PM • Bow Gym</p>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="event-preview-card">
-                                            <h6 class="mb-1">Art Gallery Opening</h6>
-                                            <p class="mb-0 text-muted small">Apr 18, 2025 • 6:00 PM - 10:00 PM • Downtown Art Center</p>
+                                            <h6 class="mb-1">Welcome-Back BBQ</h6>
+                                            <p class="mb-0 text-muted small">Aug 15, 2025 • 12:00 PM - 1:00 PM • Senior Quad</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Welcome-Back Dance</h6>
+                                            <p class="mb-0 text-muted small">Aug 22, 2025 • 7:30 PM - 10:30 PM • Senior Quad</p>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                {{ cta_buttons('ctaButtons3') }}
+                                {{ cta_buttons('ctaButtons1') }}
                             </div>
                             
-                            <div class="example-text text-center">
-                                <img src="{{ url_for('static', filename='images/wine-festival.PNG') }}" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                            <div class="example-text">
+                                <code style="font-size: 0.7rem; line-height: 1.2;">
+                                <strong>9th Grade/New Student Orientation</strong><br>
+                                Date: Tuesday, Aug. 12, 2025<br>
+                                Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
+                                Location: Bow Gym<br><br>
+
+                                <strong>School Photos/Student ID Cards</strong><br>
+                                9th Graders & New to HS Students: Aug. 12 during orientation<br>
+                                10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
+                                Location: Bow Gym<br><br>
+
+                                <strong>Welcome-Back BBQ</strong><br>
+                                Date: Friday, Aug. 15, 2025<br>
+                                Time: During lunch<br>
+                                Location: Senior Quad<br>
+                                A fun and free event for all students with food, games, and music!<br><br>
+
+                                <strong>Welcome-Back Dance</strong><br>
+                                Date: Friday, Aug. 22, 2025<br>
+                                Time: 7:30-10:30 pm<br>
+                                Location: Senior Quad
+                                </code>
                             </div>
                         </div>
                     </div>
@@ -348,7 +412,7 @@ Confirmation Number: HTL789456<br><br>
                     <div class="feature-icon">
                         <i data-feather="mail"></i>
                     </div>
-                    <h4>Forward Email or Take Screenshot</h4>
+                    <h4>Forward Email or Take Web Screenshot</h4>
                     <p>Forward your emails to us or use our Chrome extension to capture screenshots of events. Works with any text or image content.</p>
                 </div>
             </div>
@@ -394,7 +458,7 @@ Confirmation Number: HTL789456<br><br>
                     <div class="mt-2">
                         <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
                         <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                        Download our Chrome Extension
+                            Take web screenshots with Chrome Extension
                     </a>
                     </div>
                 {% endif %}
@@ -433,7 +497,7 @@ Confirmation Number: HTL789456<br><br>
                         <div class="mt-3">
                             <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
                                 <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                                Download Chrome Extension
+                                Take web screenshots with Chrome Extension
                             </a>
                         </div>
                     </div>
@@ -470,7 +534,7 @@ Confirmation Number: HTL789456<br><br>
                         </h2>
                         <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Calendar Autobot uses advanced AI to analyze your text input (emails, documents, screenshots) and automatically extracts event information like dates, times, locations, and descriptions. It then creates these events in your Google Calendar with just one click.
+                                Calendar Autobot uses advanced AI to analyze your text input (emails, documents, website screenshots) and automatically extracts event information like dates, times, locations, and descriptions. It then creates these events in your Google Calendar with just one click.
                             </div>
                         </div>
                     </div>
@@ -548,7 +612,7 @@ Confirmation Number: HTL789456<br><br>
                         </h2>
                         <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Our AI is highly accurate, but you always have the opportunity to review and edit extracted events before they're added to your calendar. If extraction doesn't work as expected, you can manually adjust the details. Send us an email to <a href="mailto:support@gettextbot.com">support@getTextBot.com</a> with any issues.
+                                Our AI is highly accurate, but there's always room for it to make mistakes. If extraction doesn't work as expected, you can manually adjust the details. Send a note to <a href="https://calautobot.featurebase.app/">our support site</a> with any issues.
                             </div>
                         </div>
                     </div>
@@ -597,7 +661,7 @@ Confirmation Number: HTL789456<br><br>
                         <div class="mt-1">
                             <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
                                 <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                                Download our Chrome Extension
+                                Take web screenshots with Chrome Extension
                             </a>
                         </div>
                     {% endif %}
@@ -841,6 +905,49 @@ function extractExample3() {
     }, 3000);
 }
 
+function extractExample4() {
+    const btn = document.getElementById('extractBtn4');
+    const eventsDiv = document.getElementById('extractedEvents4');
+    const ctaDiv = document.getElementById('ctaButtons4');
+    
+    // Button loading state
+    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
+    btn.disabled = true;
+    btn.classList.add('extract-loading');
+    
+    // Add shimmer effect to example image
+    const exampleText = btn.closest('.example-card').querySelector('.example-text');
+    exampleText.classList.add('extract-loading');
+    
+    // Simulate AI processing delay for image
+    setTimeout(() => {
+        // Remove loading effects
+        exampleText.classList.remove('extract-loading');
+        btn.classList.remove('extract-loading');
+        
+        // Show extracted events with animation
+        eventsDiv.style.display = 'block';
+        eventsDiv.classList.add('fade-in');
+        
+        // Show CTA buttons
+        ctaDiv.style.display = 'block';
+        ctaDiv.classList.add('fade-in');
+        
+        // Update button
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Replace feather icons
+        feather.replace();
+        
+        // Hide button after a moment
+        setTimeout(() => {
+            btn.style.display = 'none';
+        }, 2000);
+    }, 3000);
+}
+
 // Reset examples when tab changes
 document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('#exampleTabs button[data-bs-toggle="pill"]');
@@ -848,7 +955,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tabs.forEach(tab => {
         tab.addEventListener('shown.bs.tab', function() {
             // Reset all examples
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 4; i++) {
                 const btn = document.getElementById(`extractBtn${i}`);
                 const eventsDiv = document.getElementById(`extractedEvents${i}`);
                 

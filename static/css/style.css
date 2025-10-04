@@ -576,6 +576,52 @@ code, pre {
     margin-top: 2rem;
 }
 
+/* Email CTA */
+.email-cta-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.email-address-link {
+    color: white !important;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.email-address-link:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.copy-email-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.copy-email-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 /* Features section */
 .features-section {
     padding: 4rem 0;

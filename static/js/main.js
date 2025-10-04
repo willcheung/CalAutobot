@@ -58,13 +58,21 @@ document.addEventListener('DOMContentLoaded', function() {
     submitButtons.forEach(button => {
         button.closest('form').addEventListener('submit', function() {
             button.disabled = true;
-            const originalText = button.innerHTML;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+            const originalContent = Array.from(button.childNodes).map(node => node.cloneNode(true));
+            
+            // Clear and add spinner safely
+            button.textContent = '';
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner-border spinner-border-sm me-2';
+            spinner.setAttribute('role', 'status');
+            button.appendChild(spinner);
+            button.appendChild(document.createTextNode('Processing...'));
             
             // Re-enable after 30 seconds as failsafe
             setTimeout(() => {
                 button.disabled = false;
-                button.innerHTML = originalText;
+                button.textContent = '';
+                originalContent.forEach(node => button.appendChild(node));
             }, 30000);
         });
     });
@@ -173,10 +181,16 @@ function showToast(message, type = 'info') {
     
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} alert-dismissible fade show`;
-    toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
+    
+    // Safely add message as text content
+    toast.textContent = message;
+    
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn-close';
+    closeButton.setAttribute('data-bs-dismiss', 'alert');
+    toast.appendChild(closeButton);
     
     toastContainer.appendChild(toast);
     
@@ -301,28 +315,33 @@ window.startGoogleLogin = function() {
 }
 
 // Function to copy email address
-window.copyEmail = function() {
+window.copyEmailAddress = function() {
     const email = 'go@CalAutobot.com';
     navigator.clipboard.writeText(email).then(() => {
         showToast('Email copied to clipboard!', 'success');
         
         // Temporarily change the copy icon to a check mark
-        const copyIcon = document.querySelector('.copy-icon');
-        if (copyIcon) {
-            const originalIcon = copyIcon.getAttribute('data-feather');
-            copyIcon.setAttribute('data-feather', 'check');
-            feather.replace();
-            
-            // Revert back to copy icon after 2 seconds
-            setTimeout(() => {
-                copyIcon.setAttribute('data-feather', 'copy');
+        const copyBtn = document.querySelector('.copy-email-btn');
+        if (copyBtn) {
+            const copyIcon = copyBtn.querySelector('i[data-feather]');
+            if (copyIcon) {
+                copyIcon.setAttribute('data-feather', 'check');
                 feather.replace();
-            }, 2000);
+                
+                // Revert back to copy icon after 2 seconds
+                setTimeout(() => {
+                    copyIcon.setAttribute('data-feather', 'copy');
+                    feather.replace();
+                }, 2000);
+            }
         }
     }).catch(() => {
-        showToast('Failed to copy email to clipboard', 'error');
+        showToast('Failed to copy email. Please copy manually: go@CalAutobot.com', 'error');
     });
 }
+
+// Legacy function for backwards compatibility
+window.copyEmail = window.copyEmailAddress;
 
 // Initialize tooltips (if Bootstrap tooltips are needed in the future)
 function initializeTooltips() {
@@ -386,7 +405,11 @@ function handleAddEmail(e) {
     // Disable form elements
     emailInput.disabled = true;
     addButton.disabled = true;
-    addButton.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+    addButton.textContent = '';
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner-border spinner-border-sm';
+    spinner.setAttribute('role', 'status');
+    addButton.appendChild(spinner);
     
     // Clear previous messages
     messageDiv.style.display = 'none';
@@ -423,7 +446,10 @@ function handleAddEmail(e) {
         // Re-enable form elements
         emailInput.disabled = false;
         addButton.disabled = false;
-        addButton.innerHTML = '<i data-feather="plus"></i>';
+        addButton.textContent = '';
+        const icon = document.createElement('i');
+        icon.setAttribute('data-feather', 'plus');
+        addButton.appendChild(icon);
         feather.replace();
     });
 }
@@ -446,8 +472,14 @@ function handleRemoveEmail(e) {
     
     // Disable button
     button.disabled = true;
-    const originalHTML = button.innerHTML;
-    button.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+    const originalContent = Array.from(button.childNodes).map(node => node.cloneNode(true));
+    
+    // Clear and add spinner safely
+    button.textContent = '';
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner-border spinner-border-sm';
+    spinner.setAttribute('role', 'status');
+    button.appendChild(spinner);
     
     fetch(`/remove_email/${emailId}`, {
         method: 'POST',
@@ -465,7 +497,8 @@ function handleRemoveEmail(e) {
             showEmailMessage(data.error, 'danger');
             // Re-enable button on error
             button.disabled = false;
-            button.innerHTML = originalHTML;
+            button.textContent = '';
+            originalContent.forEach(node => button.appendChild(node));
             feather.replace();
         }
     })
@@ -474,7 +507,8 @@ function handleRemoveEmail(e) {
         showEmailMessage('An error occurred. Please try again.', 'danger');
         // Re-enable button on error
         button.disabled = false;
-        button.innerHTML = originalHTML;
+        button.textContent = '';
+        originalContent.forEach(node => button.appendChild(node));
         feather.replace();
     });
 }
@@ -509,18 +543,32 @@ function addEmailToList(emailData) {
         container.insertBefore(additionalLabel, container.firstChild);
     }
     
-    // Create new email item
+    // Create new email item safely using DOM methods
     const emailItem = document.createElement('div');
     emailItem.className = 'email-item mb-2';
     emailItem.setAttribute('data-email-id', emailData.id);
     
-    emailItem.innerHTML = `
-        <span class="email-text">${emailData.email}</span>
-        <button type="button" class="btn btn-sm btn-outline-danger email-remove-btn remove-email-ajax" 
-                data-email-id="${emailData.id}" title="Remove email">
-            <i data-feather="x"></i>
-        </button>
-    `;
+    // Create email text span
+    const emailSpan = document.createElement('span');
+    emailSpan.className = 'email-text';
+    emailSpan.textContent = emailData.email; // Safe: uses textContent instead of innerHTML
+    
+    // Create remove button
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'btn btn-sm btn-outline-danger email-remove-btn remove-email-ajax';
+    removeButton.setAttribute('data-email-id', emailData.id);
+    removeButton.setAttribute('title', 'Remove email');
+    
+    // Create icon for button
+    const icon = document.createElement('i');
+    icon.setAttribute('data-feather', 'x');
+    removeButton.appendChild(icon);
+    
+    // Assemble email item
+    emailItem.appendChild(emailSpan);
+    emailItem.appendChild(document.createTextNode(' '));
+    emailItem.appendChild(removeButton);
     
     // Event listener will be handled by event delegation
     
