@@ -124,3 +124,11 @@ class EmailAttachment(db.Model):
     
     # Relationship back to text input
     text_input = db.relationship('TextInput', backref=db.backref('attachments', lazy=True))
+
+class CalWaitlist(db.Model):
+    """
+    Model for Cal AI scheduling assistant waitlist
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

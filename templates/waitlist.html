@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Cal - Your AI Scheduling Assistant | Join Waitlist{% endblock %}
+
+{% block head %}
+<style>
+    .waitlist-hero {
+        background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
+        padding: 80px 0 100px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .waitlist-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    
+    .hero-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .waitlist-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 24px;
+    }
+    
+    .waitlist-subtitle {
+        font-size: 1.35rem;
+        font-weight: 300;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 700px;
+        margin: 0 auto 40px;
+    }
+    
+    .waitlist-form {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .waitlist-form .form-control {
+        padding: 16px 20px;
+        font-size: 1.1rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        border-radius: 8px;
+    }
+    
+    .waitlist-form .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .waitlist-form .form-control:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #6366f1;
+        color: white;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .waitlist-btn {
+        padding: 16px 40px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background: #6366f1;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        transition: all 0.3s;
+    }
+    
+    .waitlist-btn:hover {
+        background: #4f46e5;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .problem-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+    
+    .problem-card {
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .problem-card h4 {
+        color: #ef4444;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    
+    .solution-section {
+        padding: 80px 0;
+        background: white;
+    }
+    
+    .benefit-card {
+        text-align: center;
+        padding: 40px 24px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s;
+        height: 100%;
+    }
+    
+    .benefit-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+    
+    .benefit-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 28px;
+    }
+    
+    .cta-section {
+        padding: 80px 0;
+        background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 32px;
+        margin-top: 48px;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #6366f1;
+        display: block;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-top: 8px;
+    }
+    
+    @media (max-width: 768px) {
+        .waitlist-title {
+            font-size: 2.5rem;
+        }
+        
+        .waitlist-subtitle {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="waitlist-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <div class="hero-badge">
+                    🚀 Early Access
+                </div>
+                
+                <h1 class="waitlist-title">Stop the Scheduling<br/>Back-and-Forth</h1>
+                
+                <p class="waitlist-subtitle">
+                    Meet Cal — your AI scheduling assistant that handles meeting coordination via email. 
+                    No more "what time works for you?" Just CC Cal and focus on what matters: closing deals and building relationships.
+                </p>
+                
+                <form class="waitlist-form mt-4" method="POST" action="{{ url_for('main_routes.join_waitlist') }}">
+                    <div class="input-group mb-3">
+                        <input type="email" 
+                               class="form-control" 
+                               name="email" 
+                               placeholder="Enter your work email" 
+                               required>
+                        <button class="waitlist-btn" type="submit">
+                            Join Waitlist
+                        </button>
+                    </div>
+                    <small style="color: rgba(255, 255, 255, 0.7);">
+                        Join innovative teams who are automating their scheduling
+                    </small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="problem-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">The Scheduling Tax on Your Business</h2>
+                <p class="text-muted">Every "click my link" kills momentum and feels transactional</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="problem-card">
+                    <h4>⏰ Time Drain</h4>
+                    <p class="mb-0">Sales reps spend 5+ hours per week on scheduling logistics instead of selling</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="problem-card">
+                    <h4>💔 Deal Killer</h4>
+                    <p class="mb-0">That moment of excitement? Gone. Natural conversation flow? Interrupted. Interest? Fading.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="problem-card">
+                    <h4>🤖 Robotic Experience</h4>
+                    <p class="mb-0">Scheduling links feel impersonal and passive-aggressive. Nothing about it reflects how humans actually meet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="solution-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">How Cal Works</h2>
+                <p class="text-muted">Natural scheduling that feels human, powered by AI</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        📧
+                    </div>
+                    <h4>Just CC Cal</h4>
+                    <p class="text-muted mb-0">Reply to any scheduling email and CC cal@yourdomain.com. Cal reads the thread and understands context.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        🤖
+                    </div>
+                    <h4>AI Handles Everything</h4>
+                    <p class="text-muted mb-0">Cal proposes times, negotiates availability, handles time zones, and creates calendar events automatically.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        ✅
+                    </div>
+                    <h4>Meeting Confirmed</h4>
+                    <p class="text-muted mb-0">All participants receive calendar invites instantly. No links, no apps, no friction.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-number">5+ hrs</span>
+                <div class="stat-label">Saved per week</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">Zero</span>
+                <div class="stat-label">Apps to install</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">30 sec</span>
+                <div class="stat-label">Setup time</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">100%</span>
+                <div class="stat-label">Email-based</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-4">Be Among the First</h2>
+                <p class="mb-4" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">
+                    Join forward-thinking teams who are eliminating scheduling friction
+                </p>
+                
+                <form class="waitlist-form" method="POST" action="{{ url_for('main_routes.join_waitlist') }}">
+                    <div class="input-group mb-3">
+                        <input type="email" 
+                               class="form-control" 
+                               name="email" 
+                               placeholder="Enter your work email" 
+                               required>
+                        <button class="waitlist-btn" type="submit">
+                            Join Waitlist
+                        </button>
+                    </div>
+                    <small style="color: rgba(255, 255, 255, 0.7);">
+                        🎁 Early adopters get special pricing
+                    </small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
