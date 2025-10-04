@@ -80,15 +80,16 @@
 {% endblock %}
 
 {% block content %}
-<div class="announcement-banner">
-    <div class="container d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-        <div class="banner-text">
-            <strong>Meet Cal — your AI scheduling assistant.</strong>
-            <span>Let Cal take over the back-and-forth of scheduling so you can focus on building relationships and closing deals.</span>
-        </div>
-        <a href="https://calautobot.com/waitlist" class="btn btn-banner" target="_blank" rel="noopener">Join waitlist</a>
+
+<div class="announcement-banner" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 12px 20px; text-align: center; color: white; position: relative;">
+    <div class="container">
+        <p style="margin: 0; font-size: 0.95rem; font-weight: 400;">
+            🚀 <strong>Meet Cal</strong> — your AI scheduling assistant. Let Cal take over the back-and-forth of scheduling so you can focus on building relationships and closing deals. 
+            <a href="#waitlist" style="color: #FFD700; text-decoration: underline; font-weight: 500; margin-left: 8px;">Join waitlist</a>
+        </p>
     </div>
 </div>
+
 <div class="hero-section">
     <div class="container">
         <div class="row justify-content-center">
@@ -681,57 +682,6 @@ Confirmation Number: HTL789456<br><br>
 </div>
 
 <style>
-.announcement-banner {
-    background: linear-gradient(90deg, #3f51b5 0%, #5c6bc0 50%, #7e57c2 100%);
-    color: #fff;
-    padding: 0.9rem 0;
-    text-align: center;
-}
-
-.announcement-banner .banner-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.announcement-banner .banner-text strong {
-    font-size: 1.05rem;
-    font-weight: 700;
-}
-
-.announcement-banner .banner-text span {
-    font-size: 0.95rem;
-    font-weight: 400;
-}
-
-.btn-banner {
-    background: #ffffff;
-    color: #3f51b5;
-    font-weight: 600;
-    border-radius: 999px;
-    padding: 0.55rem 1.6rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.btn-banner:hover {
-    color: #283593;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-}
-
-@media (min-width: 768px) {
-    .announcement-banner .banner-text {
-        flex-direction: row;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .announcement-banner .banner-text strong,
-    .announcement-banner .banner-text span {
-        display: inline;
-    }
-}
-
 .event-preview-card {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
