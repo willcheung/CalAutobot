@@ -436,7 +436,7 @@ def remove_email(email_id):
 @main_routes.route("/cal")
 def waitlist():
     """Cal AI scheduling assistant waitlist page"""
-    return render_template("waitlist.html")
+    return render_template("cal.html")
 
 @main_routes.route("/cal/join", methods=["POST"])
 def join_waitlist():
