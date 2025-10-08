@@ -1,0 +1,240 @@
+Building wheels for collected packages: psycopg2-binary
+  Building wheel for psycopg2-binary (pyproject.toml) ... error
+  error: subprocess-exited-with-error
+  
+  × Building wheel for psycopg2-binary (pyproject.toml) did not run successfully.
+  │ exit code: 1
+  ╰─> [224 lines of output]
+      /private/var/folders/7t/j8bxkggj6pxc4fr4wmkz9ds00000gn/T/pip-build-env-ebzfn2ot/overlay/lib/python3.13/site-packages/setuptools/dist.py:759: SetuptoolsDeprecationWarning: License classifiers are deprecated.
+      !!
+      
+              ********************************************************************************
+              Please consider removing the following classifiers in favor of a SPDX license expression:
+      
+              License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
+      
+              See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+              ********************************************************************************
+      
+      !!
+        self._finalize_license_expression()
+      running bdist_wheel
+      running build
+      running build_py
+      creating build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/_json.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/extras.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/errorcodes.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/tz.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/_range.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/_ipaddress.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/__init__.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/extensions.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/errors.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/sql.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      copying lib/pool.py -> build/lib.macosx-15.0-arm64-cpython-313/psycopg2
+      running build_ext
+      building 'psycopg2._psycopg' extension
+      creating build/temp.macosx-15.0-arm64-cpython-313/psycopg
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_asis.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_asis.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_binary.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_binary.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_datetime.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_datetime.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_list.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_list.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_pboolean.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_pboolean.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_pdecimal.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_pdecimal.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_pfloat.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_pfloat.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_pint.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_pint.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/adapter_qstring.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/adapter_qstring.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/aix_support.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/aix_support.o
+      In file included from psycopg/aix_support.c:29:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/bytes_format.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/bytes_format.o
+      In file included from psycopg/bytes_format.c:82:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/column_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/column_type.o
+      In file included from psycopg/column_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/connection_int.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/connection_int.o
+      psycopg/connection_int.c:1050:21: warning: 'PyWeakref_GetObject' is deprecated [-Wdeprecated-declarations]
+       1050 |     if (!(py_curs = PyWeakref_GetObject(self->async_cursor))) {
+            |                     ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/weakrefobject.h:30:1: note: 'PyWeakref_GetObject' has been explicitly marked deprecated here
+         30 | Py_DEPRECATED(3.13) PyAPI_FUNC(PyObject *) PyWeakref_GetObject(PyObject *ref);
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/connection_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/connection_type.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/conninfo_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/conninfo_type.o
+      In file included from psycopg/conninfo_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/cursor_int.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/cursor_int.o
+      psycopg/cursor_int.c:77:20: warning: implicit truncation from 'int' to a one-bit wide bit-field changes value from 1 to -1 [-Wsingle-bit-bitfield-constant-conversion]
+         77 |     self->notuples = 1;
+            |                    ^ ~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/cursor_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/cursor_type.o
+      psycopg/cursor_type.c:113:18: warning: implicit truncation from 'int' to a one-bit wide bit-field changes value from 1 to -1 [-Wsingle-bit-bitfield-constant-conversion]
+        113 |     self->closed = 1;
+            |                  ^ ~
+      psycopg/cursor_type.c:782:12: warning: 'PyWeakref_GetObject' is deprecated [-Wdeprecated-declarations]
+        782 |         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+            |            ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/weakrefobject.h:30:1: note: 'PyWeakref_GetObject' has been explicitly marked deprecated here
+         30 | Py_DEPRECATED(3.13) PyAPI_FUNC(PyObject *) PyWeakref_GetObject(PyObject *ref);
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      psycopg/cursor_type.c:829:12: warning: 'PyWeakref_GetObject' is deprecated [-Wdeprecated-declarations]
+        829 |         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+            |            ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/weakrefobject.h:30:1: note: 'PyWeakref_GetObject' has been explicitly marked deprecated here
+         30 | Py_DEPRECATED(3.13) PyAPI_FUNC(PyObject *) PyWeakref_GetObject(PyObject *ref);
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      psycopg/cursor_type.c:914:12: warning: 'PyWeakref_GetObject' is deprecated [-Wdeprecated-declarations]
+        914 |         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+            |            ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/weakrefobject.h:30:1: note: 'PyWeakref_GetObject' has been explicitly marked deprecated here
+         30 | Py_DEPRECATED(3.13) PyAPI_FUNC(PyObject *) PyWeakref_GetObject(PyObject *ref);
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      psycopg/cursor_type.c:983:12: warning: 'PyWeakref_GetObject' is deprecated [-Wdeprecated-declarations]
+        983 |         && PyWeakref_GetObject(self->conn->async_cursor) == (PyObject*)self)
+            |            ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/weakrefobject.h:30:1: note: 'PyWeakref_GetObject' has been explicitly marked deprecated here
+         30 | Py_DEPRECATED(3.13) PyAPI_FUNC(PyObject *) PyWeakref_GetObject(PyObject *ref);
+            | ^
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pyport.h:251:54: note: expanded from macro 'Py_DEPRECATED'
+        251 | #define Py_DEPRECATED(VERSION_UNUSED) __attribute__((__deprecated__))
+            |                                                      ^
+      psycopg/cursor_type.c:1943:20: warning: implicit truncation from 'int' to a one-bit wide bit-field changes value from 1 to -1 [-Wsingle-bit-bitfield-constant-conversion]
+       1943 |     self->notuples = 1;
+            |                    ^ ~
+      6 warnings generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/diagnostics_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/diagnostics_type.o
+      In file included from psycopg/diagnostics_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/error_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/error_type.o
+      In file included from psycopg/error_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/green.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/green.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/libpq_support.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/libpq_support.o
+      In file included from psycopg/libpq_support.c:30:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/lobject_int.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/lobject_int.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/lobject_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/lobject_type.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/microprotocols.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/microprotocols.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/microprotocols_proto.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/microprotocols_proto.o
+      In file included from psycopg/microprotocols_proto.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/notify_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/notify_type.o
+      In file included from psycopg/notify_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/pqpath.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/pqpath.o
+      psycopg/pqpath.c:139:17: warning: implicit conversion from enumeration type 'ConnStatusType' to different enumeration type 'ExecStatusType' [-Wenum-conversion]
+        138 |             PQresStatus(pgres == NULL ?
+            |             ~~~~~~~~~~~
+        139 |                 PQstatus(conn->pgconn) : PQresultStatus(*pgres)));
+            |                 ^~~~~~~~~~~~~~~~~~~~~~
+      psycopg/pqpath.c:1723:11: warning: code will never be executed [-Wunreachable-code]
+       1723 |     ret = 1;
+            |           ^
+      psycopg/pqpath.c:1828:17: warning: implicit conversion from enumeration type 'ConnStatusType' to different enumeration type 'ExecStatusType' [-Wenum-conversion]
+       1827 |             PQresStatus(curs->pgres == NULL ?
+            |             ~~~~~~~~~~~
+       1828 |                 PQstatus(curs->conn->pgconn) : PQresultStatus(curs->pgres)));
+            |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      3 warnings generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/psycopgmodule.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/psycopgmodule.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/replication_connection_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/replication_connection_type.o
+      In file included from psycopg/replication_connection_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/replication_cursor_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/replication_cursor_type.o
+      psycopg/replication_cursor_type.c:158:21: warning: implicit truncation from 'int' to a one-bit wide bit-field changes value from 1 to -1 [-Wsingle-bit-bitfield-constant-conversion]
+        158 |     self->consuming = 1;
+            |                     ^ ~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/replication_message_type.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/replication_message_type.o
+      In file included from psycopg/replication_message_type.c:28:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/solaris_support.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/solaris_support.o
+      In file included from psycopg/solaris_support.c:29:
+      In file included from ./psycopg/psycopg.h:38:
+      ./psycopg/config.h:69:13: warning: unused function 'Dprintf' [-Wunused-function]
+         69 | static void Dprintf(const char *fmt, ...)
+            |             ^~~~~~~
+      1 warning generated.
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/typecast.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/typecast.o
+      clang -fno-strict-overflow -Wsign-compare -Wunreachable-code -fno-common -dynamic -DNDEBUG -g -O3 -Wall "-DPSYCOPG_VERSION=2.9.9 (dt dec pq3 ext lo64)" -DPSYCOPG_DEBUG=1 -DPG_VERSION_NUM=170006 -DHAVE_LO64=1 -DPSYCOPG_DEBUG=1 -I/Users/willcheung/dev/CalAutobot/venv/include -I/opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13 -I. -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/postgresql/server -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include/libxml2 -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/include -I/Applications/Postgres.app/Contents/Versions/17/share/icu -c psycopg/utils.c -o build/temp.macosx-15.0-arm64-cpython-313/psycopg/utils.o
+      psycopg/utils.c:397:12: error: call to undeclared function '_PyInterpreterState_Get'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+        397 |     return _PyInterpreterState_Get() == PyInterpreterState_Main();
+            |            ^
+      psycopg/utils.c:397:12: note: did you mean 'PyInterpreterState_Get'?
+      /opt/homebrew/opt/python@3.13/Frameworks/Python.framework/Versions/3.13/include/python3.13/pystate.h:26:34: note: 'PyInterpreterState_Get' declared here
+         26 | PyAPI_FUNC(PyInterpreterState *) PyInterpreterState_Get(void);
+            |                                  ^
+      psycopg/utils.c:397:38: warning: comparison between pointer and integer ('int' and 'PyInterpreterState *' (aka 'struct _is *')) [-Wpointer-integer-compare]
+        397 |     return _PyInterpreterState_Get() == PyInterpreterState_Main();
+            |            ~~~~~~~~~~~~~~~~~~~~~~~~~ ^  ~~~~~~~~~~~~~~~~~~~~~~~~~
+      1 warning and 1 error generated.
+      error: command '/usr/bin/clang' failed with exit code 1
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+  ERROR: Failed building wheel for psycopg2-binary
+Failed to build psycopg2-binary
+error: failed-wheel-build-for-install
+
+× Failed to build installable wheels for some pyproject.toml based projects
+╰─> psycopg2-binary
