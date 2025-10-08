@@ -1,3 +1,5 @@
 __pycache__/
 attached_assets/
+venv/
 .env
+.venv

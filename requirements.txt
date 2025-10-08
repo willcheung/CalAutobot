@@ -1,7 +1,7 @@
 Flask==3.0.0
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
-SQLAlchemy==2.0.23
+SQLAlchemy==2.0.41
 Werkzeug==3.0.1
 gunicorn==21.2.0
 
@@ -16,6 +16,7 @@ openai==1.6.1
 
 # Database - Updated for Python 3.13 compatibility
 psycopg[binary]>=3.1.0
+psycopg2-binary
 
 # Document processing
 PyPDF2==3.0.1
@@ -33,6 +34,7 @@ pytz==2023.3
 requests==2.31.0
 oauthlib==3.2.2
 python-json-logger==2.0.7
+httpx<0.28
 
 # Monitoring
 sentry-sdk==1.39.1
