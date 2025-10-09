@@ -7,8 +7,8 @@ import os
 import sys
 import logging
 from app import app, db
-from models import Event
-from helpers.event_utils import calculate_event_duration_minutes
+from app.models import Event
+from app.helpers.event_utils import calculate_event_duration_minutes
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

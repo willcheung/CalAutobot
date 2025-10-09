@@ -6,7 +6,7 @@ Run this once to update existing database schema
 """
 
 from app import app, db
-from models import User
+from app.models import User
 
 def migrate_add_refresh_token():
     with app.app_context():

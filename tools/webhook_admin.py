@@ -9,8 +9,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import app, db
-from models import User, Event
-from google_calendar import setup_calendar_webhook_for_user, stop_calendar_webhook_for_user
+from app.models import User, Event
+from app.services.google_calendar import setup_calendar_webhook_for_user, stop_calendar_webhook_for_user
 import json
 from datetime import datetime, timedelta
 

@@ -2,7 +2,7 @@ import hashlib
 import json
 from datetime import datetime
 from typing import List, Dict, Set
-from models import Event
+from app.models import Event
 from app import db
 import logging
 

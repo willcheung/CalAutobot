@@ -6,8 +6,8 @@ Provides a clean API interface for the Chrome extension while reusing existing b
 from flask import request, jsonify
 from flask_login import login_required, current_user
 import logging
-from helpers.event_processing import process_text_to_events
-from models import User
+from app.helpers.event_processing import process_text_to_events
+from app.models import User
 import json
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ def setup_chrome_extension_routes(app):
             total_attachment_synced = 0
             
             if attachments_data:
-                from attachment_processor import attachment_processor
+                from app.services.attachment_processor import attachment_processor
                 
                 text_input_record = result.get('text_input')
                 if text_input_record:
@@ -140,7 +140,7 @@ def setup_chrome_extension_routes(app):
                             total_attachment_events += attachment_events
                             
                             # Count synced events from this attachment
-                            from models import Event
+                            from app.models import Event
                             attachment_synced_events = Event.query.filter_by(
                                 user_id=user.id,
                                 text_input_id=text_input_record.id,

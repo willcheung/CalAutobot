@@ -56,7 +56,7 @@ def main():
         # Initialize Flask app context for database operations
         with app.app_context():
             # Import within app context to avoid circular imports
-            from gmail_processor import check_new_emails
+            from app.services.gmail_processor import check_new_emails
             
             logger.info("🔄 Starting Gmail email check...")
             

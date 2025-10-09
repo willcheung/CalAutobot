@@ -2,13 +2,13 @@ import logging
 import json
 from datetime import datetime
 from typing import List, Dict, Optional
-from models import User, Event, UserEmail, TextInput
-from helpers.event_processing import process_text_to_events
-from helpers.event_utils import format_event_for_api
-from helpers.domain_utils import get_base_url
-from helpers.event_deduplication import deduplicate_events, should_skip_attachment
+from app.models import User, Event, UserEmail, TextInput
+from app.helpers.event_processing import process_text_to_events
+from app.helpers.event_utils import format_event_for_api
+from app.helpers.domain_utils import get_base_url
+from app.helpers.event_deduplication import deduplicate_events, should_skip_attachment
 from app import db
-from gmail_service import gmail_service, GmailOAuthError
+from app.services.gmail_service import gmail_service, GmailOAuthError
 import sentry_sdk
 
 logger = logging.getLogger(__name__)
@@ -245,8 +245,8 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
         # Now sync all unique events if user has Google authentication
         synced_count = 0
         if user.google_id and unique_events:
-            from google_calendar import create_calendar_event
-            from helpers.event_utils import prepare_event_data_for_calendar
+            from app.services.google_calendar import create_calendar_event
+            from app.helpers.event_utils import prepare_event_data_for_calendar
             
             logger.info(f"🔄 Starting centralized sync for {len(unique_events)} unique events")
             

@@ -7,7 +7,7 @@ import requests
 from app import db
 from flask import Blueprint, redirect, request, url_for, session
 from flask_login import login_required, login_user, logout_user
-from models import User, Event
+from app.models import User, Event
 from oauthlib.oauth2 import WebApplicationClient
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID",
@@ -152,8 +152,8 @@ def callback():
     # Auto-sync events for provisional users who just signed up
     if is_provisional_user_signup:
         try:
-            from google_calendar import create_calendar_event
-            from helpers.event_utils import prepare_event_data_for_calendar
+            from app.services.google_calendar import create_calendar_event
+            from app.helpers.event_utils import prepare_event_data_for_calendar
             from datetime import datetime
             import pytz
             import logging

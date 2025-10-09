@@ -39,7 +39,11 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 # create the app
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder="templates",
+    static_folder="static",
+)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1) # needed for url_for to generate with https
 
@@ -93,7 +97,7 @@ login_manager.login_view = 'google_auth.login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    from models import User
+    from app.models import User
     try:
         return User.query.get(int(user_id))
     except Exception as e:
@@ -149,13 +153,12 @@ def handle_exception(e):
 
 with app.app_context():
     # Make sure to import the models here or their tables won't be created
-    import models  # noqa: F401
+    from app import models  # noqa: F401
 
     # Import and register blueprints
-    from routes import main_routes
-    from google_auth import google_auth
-    # Removed mailgun_webhook import - migrated to Gmail API
-    from google_webhook import google_webhook
+    from app.routes.main_routes import main_routes
+    from app.routes.google_auth import google_auth
+    from app.routes.google_webhook import google_webhook
 
     # Register blueprints
     app.register_blueprint(main_routes)
@@ -167,8 +170,8 @@ with app.app_context():
     db.create_all()
 
     # Setup Chrome extension API routes  
-    from chrome_extension_api import setup_chrome_extension_routes
+    from app.routes.chrome_extension_api import setup_chrome_extension_routes
     setup_chrome_extension_routes(app)
 
     # Import extension support routes
-    import routes_extension_support
+    from app.routes import extension_support  # noqa: F401

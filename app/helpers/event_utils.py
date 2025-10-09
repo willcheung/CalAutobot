@@ -1,6 +1,6 @@
 
 from datetime import datetime, timedelta
-from helpers.text_processing import sanitize_text_for_db
+from app.helpers.text_processing import sanitize_text_for_db
 import dateutil.parser
 import logging
 

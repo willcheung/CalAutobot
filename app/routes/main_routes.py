@@ -3,15 +3,29 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from models import User, Event, TextInput, UserEmail, CalWaitlist
-from google_calendar import create_calendar_event, update_calendar_event, delete_calendar_event, check_user_has_calendar_scope
+from app.models import User, Event, TextInput, UserEmail, CalWaitlist
+from app.services.google_calendar import (
+    create_calendar_event,
+    update_calendar_event,
+    delete_calendar_event,
+    check_user_has_calendar_scope,
+)
 from datetime import datetime
 import sentry_sdk
 
 # Import helper modules
-from helpers.event_processing import process_text_to_events
-from helpers.event_utils import prepare_event_data_for_calendar, update_event_from_form, format_event_for_api
-from helpers.domain_utils import get_base_url, get_mailgun_forward_email, is_production, is_development
+from app.helpers.event_processing import process_text_to_events
+from app.helpers.event_utils import (
+    prepare_event_data_for_calendar,
+    update_event_from_form,
+    format_event_for_api,
+)
+from app.helpers.domain_utils import (
+    get_base_url,
+    get_mailgun_forward_email,
+    is_production,
+    is_development,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +92,8 @@ def webhook_check_emails():
         logger.info("🔄 Email check webhook triggered")
         
         # Import here to avoid circular dependencies
-        from gmail_processor import check_new_emails
-        from gmail_service import GmailOAuthError
+        from app.services.gmail_processor import check_new_emails
+        from app.services.gmail_service import GmailOAuthError
         
         # Run the email check
         check_new_emails()

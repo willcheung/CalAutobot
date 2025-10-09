@@ -10,8 +10,8 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import app, db
-from models import User
-from google_calendar import setup_calendar_webhook_for_user, refresh_google_token
+from app.models import User
+from app.services.google_calendar import setup_calendar_webhook_for_user, refresh_google_token
 import logging
 from datetime import datetime
 

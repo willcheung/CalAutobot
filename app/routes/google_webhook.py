@@ -6,7 +6,7 @@ import hashlib
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 from app import db
-from models import User, Event
+from app.models import User, Event
 import sentry_sdk
 
 # Configure logging
@@ -158,7 +158,7 @@ def process_calendar_deletions_for_user(user):
         user: User object whose calendar to sync
     """
     try:
-        from google_calendar import refresh_google_token
+        from app.services.google_calendar import refresh_google_token
         import requests
         
         # Get a fresh access token
@@ -208,7 +208,7 @@ def process_calendar_deletions_for_user(user):
         ).filter(Event.google_event_id.isnot(None)).all()
         
         # Import the reusable delete function
-        from routes import delete_event_internal
+        from app.routes.main_routes import delete_event_internal
         
         deleted_count = 0
         events_to_delete = []
@@ -259,7 +259,7 @@ def setup_calendar_webhook():
     """
     try:
         from flask_login import login_required, current_user
-        from google_calendar import refresh_google_token
+        from app.services.google_calendar import refresh_google_token
         import requests
         import uuid
         

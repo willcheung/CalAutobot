@@ -3,9 +3,9 @@ import logging
 import requests
 import mimetypes
 from typing import List, Dict, Optional, Tuple
-from models import EmailAttachment, TextInput, User, Event
+from app.models import EmailAttachment, TextInput, User, Event
 from app import db
-from event_extractor import extract_events_from_text
+from app.event_extractor import extract_events_from_text
 import json
 import base64
 
@@ -168,7 +168,7 @@ class AttachmentProcessor:
             bool: True if successful, False otherwise
         """
         try:
-            from helpers.event_processing import process_text_to_events
+            from app.helpers.event_processing import process_text_to_events
             
             logger.info(f"📥 PROCESSING attachment content: {attachment_record.filename} ({len(file_content)} bytes)")
             
@@ -224,13 +224,13 @@ class AttachmentProcessor:
         Returns:
             Dict: Processing results
         """
-        from helpers.event_processing import process_text_to_events
-        from event_extractor import validate_and_clean_event
+        from app.helpers.event_processing import process_text_to_events
+        from app.event_extractor import validate_and_clean_event
         from datetime import datetime
         from app import db
-        from models import Event
-        from helpers.text_processing import sanitize_text_for_db
-        from google_calendar import create_calendar_event
+        from app.models import Event
+        from app.helpers.text_processing import sanitize_text_for_db
+        from app.services.google_calendar import create_calendar_event
         
         user = User.query.get(text_input.user_id)
         created_events = []
@@ -279,7 +279,7 @@ class AttachmentProcessor:
                     event.location = sanitize_text_for_db(cleaned_event['location'])
                     
                     # Calculate and store duration in minutes
-                    from helpers.event_utils import calculate_event_duration_minutes
+                    from app.helpers.event_utils import calculate_event_duration_minutes
                     event.duration_minutes = calculate_event_duration_minutes(event)
 
                     created_events.append(event)
@@ -537,7 +537,7 @@ class AttachmentProcessor:
             text_input (TextInput): Parent text input
         """
         try:
-            from models import Event
+            from app.models import Event
             
             for event_data in extracted_events:
                 # Create event record
