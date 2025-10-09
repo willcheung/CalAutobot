@@ -1,0 +1,32 @@
+Metadata-Version: 2.4
+Name: repl-nix-workspace
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.11
+Requires-Dist: email-validator>=2.2.0
+Requires-Dist: flask-login>=0.6.3
+Requires-Dist: flask>=3.1.1
+Requires-Dist: flask-sqlalchemy>=3.1.1
+Requires-Dist: gunicorn>=23.0.0
+Requires-Dist: oauthlib>=3.2.2
+Requires-Dist: openai>=1.86.0
+Requires-Dist: psycopg2-binary>=2.9.10
+Requires-Dist: google-auth>=2.40.3
+Requires-Dist: google-auth-oauthlib>=1.2.2
+Requires-Dist: google-auth-httplib2>=0.2.0
+Requires-Dist: google-api-python-client>=2.172.0
+Requires-Dist: sqlalchemy>=2.0.41
+Requires-Dist: werkzeug>=3.1.3
+Requires-Dist: requests>=2.32.4
+Requires-Dist: sentry-sdk>=2.30.0
+Requires-Dist: python-json-logger>=3.3.0
+Requires-Dist: boto3>=1.39.7
+Requires-Dist: botocore>=1.39.7
+Requires-Dist: pypdf2>=3.0.1
+Requires-Dist: python-docx>=1.2.0
+Requires-Dist: python-magic>=0.4.27
+Requires-Dist: python-dateutil>=2.9.0.post0
+Requires-Dist: pytz>=2025.2
+Provides-Extra: test
+Requires-Dist: pytest>=8.3.3; extra == "test"
+Requires-Dist: pytest-flask>=1.3.0; extra == "test"

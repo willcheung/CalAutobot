@@ -1,4 +1,9 @@
 __pycache__/
+app/helpers/__pycache__/
+app/routes/__pycache__/
+app/services/__pycache__/
+app/__pycache__/
+tools/__pycache__/
 attached_assets/
 venv/
 .env

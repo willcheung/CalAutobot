@@ -10,7 +10,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend
 - **Framework**: Flask with SQLAlchemy ORM.
-- **Database**: PostgreSQL.
+- **Database**: PostgreSQL in production, SQLite fallback for local/dev and test fixtures.
 - **Authentication**: Google OAuth 2.0 with Flask-Login.
 - **AI Integration**: OpenAI GPT-4o for event extraction.
 - **Deployment**: Gunicorn WSGI server.
@@ -57,9 +57,11 @@ Preferred communication style: Simple, everyday language.
 - OpenAI Python client
 - Authentication libraries (oauthlib, requests)
 - Database drivers (psycopg2-binary)
+- Testing stack (pytest, pytest-flask) via optional `test` extras
 
 ## Project Layout Notes
 - `app/` is now the main application package. Core modules (`models.py`, `event_extractor.py`), helpers, services, and blueprints live under `app/` (e.g., `app/routes/`, `app/helpers/`, `app/services/`). Templates and static assets moved to `app/templates/` and `app/static/`.
 - `tools/` contains operational scripts such as cron-driven email checks and migration utilities. Import paths inside these scripts reference the new package layout (`app.*`).
 - Legacy `requirements.txt` and `webhook_test.py` were removed; dependency management relies on `pyproject.toml`/`uv.lock`.
+- Tests live under `tests/` with fixtures in `tests/conftest.py` that spin up an isolated SQLite database.
 ```

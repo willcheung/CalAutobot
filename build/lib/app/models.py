@@ -1,0 +1,134 @@
+from app import db
+from flask_login import UserMixin
+from datetime import datetime
+import json
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    google_id = db.Column(db.String(100), unique=True, nullable=True)
+    google_token = db.Column(db.Text, nullable=True)
+    google_refresh_token = db.Column(db.Text, nullable=True)  # Store refresh token separately
+    textbot_calendar_id = db.Column(db.String(100), nullable=True)  # Store Cal Pilot calendar ID
+    timezone = db.Column(db.String(50), default='UTC')  # User's timezone
+    email_count = db.Column(db.Integer, default=0)  # Track emails sent for provisional users
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Google Calendar webhook fields
+    webhook_channel_id = db.Column(db.String(100), nullable=True)  # Google webhook channel ID
+    webhook_resource_id = db.Column(db.String(100), nullable=True)  # Google webhook resource ID
+    webhook_expiration = db.Column(db.DateTime, nullable=True)  # When webhook expires
+    
+    # Relationship with events
+    events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
+    text_inputs = db.relationship('TextInput', backref='user', lazy=True, cascade='all, delete-orphan')
+    additional_emails = db.relationship('UserEmail', backref='user', lazy=True, cascade='all, delete-orphan')
+
+class Event(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Event details
+    event_name = db.Column(db.String(200), nullable=False)
+    event_description = db.Column(db.Text)
+    start_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time)
+    start_datetime = db.Column(db.String(100))  # RFC3339 datetime string
+    end_date = db.Column(db.Date)
+    end_time = db.Column(db.Time)
+    end_datetime = db.Column(db.String(100))  # RFC3339 datetime string
+    location = db.Column(db.String(500))
+    
+    # Google Calendar integration
+    google_event_id = db.Column(db.String(100))
+    is_synced = db.Column(db.Boolean, default=False)
+    
+    # Event duration
+    duration_minutes = db.Column(db.Integer)  # Duration in minutes calculated from start/end times
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    extracted_at = db.Column(db.DateTime, default=datetime.utcnow)  # When this event was extracted from text
+    
+    # Link to original text input
+    text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'))
+
+class UserEmail(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Add unique constraint on email to prevent duplicates across users
+    __table_args__ = (db.UniqueConstraint('email', name='unique_user_email'),)
+
+class TextInput(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Input data
+    original_text = db.Column(db.Text, nullable=False)
+    source_type = db.Column(db.String(50), default='manual')  # manual, email
+    from_email = db.Column(db.String(120))  # if source is email
+    
+    # Processing results
+    extracted_events_json = db.Column(db.Text)  # JSON string of extracted events
+    processing_status = db.Column(db.String(50), default='pending')  # pending, completed, failed
+    error_message = db.Column(db.Text)
+    
+    # OpenAI API tracking
+    openai_status = db.Column(db.String(50), default='pending')  # pending, success, timeout, error, offline
+    openai_error_message = db.Column(db.Text)  # Specific OpenAI error details
+    
+    # Metadata
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship with events
+    events = db.relationship('Event', backref='text_input', lazy=True)
+    
+    @property
+    def extracted_events(self):
+        if self.extracted_events_json:
+            try:
+                return json.loads(self.extracted_events_json)
+            except json.JSONDecodeError:
+                return []
+        return []
+    
+    @extracted_events.setter
+    def extracted_events(self, events_list):
+        self.extracted_events_json = json.dumps(events_list)
+
+
+class EmailAttachment(db.Model):
+    """
+    Model for storing email attachment metadata and processing status.
+    Used for tracking attachment processing from Mailgun emails.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'), nullable=False)
+    
+    # File metadata
+    filename = db.Column(db.String(255), nullable=False)
+    file_type = db.Column(db.String(50), nullable=False)  # MIME type
+    file_size = db.Column(db.Integer, nullable=False)
+    
+    # Processing status
+    processing_status = db.Column(db.String(50), default='pending')  # pending, processed, failed
+    extracted_events_count = db.Column(db.Integer, default=0)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship back to text input
+    text_input = db.relationship('TextInput', backref=db.backref('attachments', lazy=True))
+
+class CalWaitlist(db.Model):
+    """
+    Model for Cal AI scheduling assistant waitlist
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
