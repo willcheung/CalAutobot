@@ -218,7 +218,7 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
         # Process attachments if present (no auto-sync)
         if attachments_data and text_input:
             # Import here to avoid circular dependency
-            from attachment_processor import attachment_processor
+            from app.services.attachment_processor import attachment_processor
             
             logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for existing user {user.id} (no auto-sync)")
             processed_attachments = attachment_processor.process_email_attachments(
@@ -307,7 +307,7 @@ def process_provisional_user_email(formatted_text: str, attachments_data: List[D
         
         # Process attachments if present
         if attachments_data and text_input:
-            from attachment_processor import attachment_processor
+            from app.services.attachment_processor import attachment_processor
             
             logger.info(f"🔄 PROCESSING {len(attachments_data)} attachments for provisional user {user.id}")
             processed_attachments = attachment_processor.process_email_attachments(
