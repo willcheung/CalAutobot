@@ -441,7 +441,7 @@ class GmailService:
             start_history_id (str): Starting history ID from which to fetch events.
 
         Returns:
-            List[Dict]: History records containing messageAdded/labelsAdded entries.
+            List[Dict]: History records containing messageAdded/labelAdded entries.
         """
         try:
             service = self.get_service()
@@ -455,7 +455,7 @@ class GmailService:
                 params = {
                     'userId': 'me',
                     'startHistoryId': str(start_history_id),
-                    'historyTypes': ['messageAdded', 'labelsAdded']
+                    'historyTypes': ['messageAdded', 'labelAdded']
                 }
                 if page_token:
                     params['pageToken'] = page_token
