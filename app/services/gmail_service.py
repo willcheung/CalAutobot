@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 import json
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -378,6 +379,104 @@ class GmailService:
         except Exception as e:
             logger.error(f"Error downloading attachment {attachment_id}: {str(e)}")
             return None
+
+    def start_watch(self, topic_name: str, label_ids: Optional[List[str]] = None,
+                    label_filter_action: str = 'include') -> Optional[Dict]:
+        """
+        Start or renew a Gmail push watch on the configured mailbox.
+
+        Args:
+            topic_name (str): Full Pub/Sub topic name.
+            label_ids (List[str], optional): Labels to scope the watch to.
+            label_filter_action (str): Either 'include' or 'exclude'.
+
+        Returns:
+            Optional[Dict]: Gmail watch response with historyId/expiration.
+        """
+        try:
+            service = self.get_service()
+            if not service:
+                logger.error("Cannot start Gmail watch: service unavailable")
+                return None
+
+            body = {
+                'topicName': topic_name,
+                'labelFilterAction': label_filter_action
+            }
+            if label_ids:
+                body['labelIds'] = label_ids
+
+            response = service.users().watch(
+                userId='me',
+                body=body
+            ).execute()
+
+            history_id = response.get('historyId')
+            expiration_ms = response.get('expiration')
+            expiration_dt = None
+            if expiration_ms:
+                try:
+                    expiration_dt = datetime.utcfromtimestamp(int(expiration_ms) / 1000.0)
+                except (TypeError, ValueError):
+                    expiration_dt = None
+
+            logger.info(
+                "Started Gmail watch on topic %s (labels=%s, historyId=%s, expires=%s)",
+                topic_name,
+                label_ids,
+                history_id,
+                expiration_dt.isoformat() if expiration_dt else "unknown"
+            )
+            return response
+
+        except Exception as e:
+            logger.error(f"Error starting Gmail watch: {str(e)}")
+            return None
+
+    def list_history(self, start_history_id: str) -> List[Dict]:
+        """
+        Fetch Gmail history records starting from the provided history ID.
+
+        Args:
+            start_history_id (str): Starting history ID from which to fetch events.
+
+        Returns:
+            List[Dict]: History records containing messageAdded/labelsAdded entries.
+        """
+        try:
+            service = self.get_service()
+            if not service:
+                logger.error("Cannot list Gmail history: service unavailable")
+                return []
+
+            all_history = []
+            page_token = None
+            while True:
+                params = {
+                    'userId': 'me',
+                    'startHistoryId': str(start_history_id),
+                    'historyTypes': ['messageAdded', 'labelsAdded']
+                }
+                if page_token:
+                    params['pageToken'] = page_token
+
+                response = service.users().history().list(**params).execute()
+                all_history.extend(response.get('history', []))
+                page_token = response.get('nextPageToken')
+
+                if not page_token:
+                    break
+
+            logger.info(
+                "Fetched %s Gmail history record(s) from start ID %s",
+                len(all_history),
+                start_history_id
+            )
+            return all_history
+
+        except Exception as e:
+            logger.error(f"Error listing Gmail history from {start_history_id}: {str(e)}")
+            return []
     
     def mark_as_read(self, message_id: str) -> bool:
         """

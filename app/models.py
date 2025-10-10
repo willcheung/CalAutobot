@@ -125,6 +125,34 @@ class EmailAttachment(db.Model):
     # Relationship back to text input
     text_input = db.relationship('TextInput', backref=db.backref('attachments', lazy=True))
 
+class GmailPushState(db.Model):
+    """
+    Tracks Gmail push notification watch state per monitored mailbox.
+    We keep everything in a single row per email so the renewal job
+    and push processor can share state without extra services.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    email_address = db.Column(db.String(255), unique=True, nullable=False)
+    last_history_id = db.Column(db.String(255), nullable=True)
+    watch_resource_id = db.Column(db.String(255), nullable=True)
+    watch_expiration = db.Column(db.DateTime, nullable=True)
+    label_ids_json = db.Column(db.Text, nullable=True)
+    processing_locked_at = db.Column(db.DateTime, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @property
+    def label_ids(self):
+        if not self.label_ids_json:
+            return []
+        try:
+            return json.loads(self.label_ids_json)
+        except json.JSONDecodeError:
+            return []
+
+    @label_ids.setter
+    def label_ids(self, value):
+        self.label_ids_json = json.dumps(value or [])
+
 class CalWaitlist(db.Model):
     """
     Model for Cal AI scheduling assistant waitlist

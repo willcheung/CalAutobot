@@ -4,6 +4,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Event, TextInput, UserEmail, CalWaitlist
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_auth_requests
 from app.services.google_calendar import (
     create_calendar_event,
     update_calendar_event,
@@ -122,6 +124,145 @@ def webhook_check_emails():
             "status": "error",
             "message": f"Email check failed: {str(e)}",
             "timestamp": datetime.utcnow().isoformat()
+        }, 500
+
+def _verify_pubsub_request():
+    """
+    Validate the Pub/Sub push authentication token when configured.
+    If no expected values are set, accept the request (useful for local testing).
+    """
+    expected_service_account = os.environ.get("GMAIL_PUSH_SERVICE_ACCOUNT_EMAIL")
+    expected_audience = os.environ.get("GMAIL_PUSH_AUDIENCE")
+
+    if not expected_service_account and not expected_audience:
+        return True
+
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        logger.warning("Missing Bearer token on Gmail push request")
+        return False
+
+    token = auth_header.split(" ", 1)[1].strip()
+    try:
+        request_adapter = google_auth_requests.Request()
+        token_info = google_id_token.verify_oauth2_token(
+            token,
+            request_adapter,
+            audience=expected_audience if expected_audience else None
+        )
+    except Exception as exc:
+        logger.warning("Failed to verify Gmail push token: %s", exc)
+        return False
+
+    if expected_service_account and token_info.get("email") != expected_service_account:
+        logger.warning(
+            "Gmail push token email mismatch (got %s, expected %s)",
+            token_info.get("email"),
+            expected_service_account,
+        )
+        return False
+
+    return True
+
+@main_routes.route("/webhook/gmail/push", methods=["GET", "POST"])
+def gmail_push_webhook():
+    """
+    Pub/Sub push endpoint for Gmail history notifications.
+    Respond quickly with 204 to acknowledge receipt.
+    """
+    try:
+        if request.method == "GET":
+            # Allow manual verification or uptime probes with a shared token.
+            expected_token = os.environ.get("GMAIL_PUSH_VERIFICATION_TOKEN")
+            if expected_token:
+                provided = request.args.get("token")
+                if provided != expected_token:
+                    logger.warning("Gmail push verification token mismatch")
+                    return {"status": "error", "message": "unauthorized"}, 403
+            challenge = request.args.get("challenge", "")
+            return (challenge or "", 200)
+
+        if not _verify_pubsub_request():
+            return {"status": "error", "message": "unauthorized"}, 403
+
+        envelope = request.get_json(silent=True) or {}
+        if not envelope.get("message"):
+            logger.warning("Received Gmail push request without message payload")
+            return ("", 204)
+
+        from app.services.gmail_push_processor import handle_history_message
+
+        handle_history_message(envelope)
+        return ("", 204)
+
+    except Exception as exc:
+        logger.exception("Gmail push webhook failed: %s", exc)
+        return {
+            "status": "error",
+            "message": f"Gmail push processing failed: {str(exc)}",
+        }, 500
+
+@main_routes.route("/webhook/gmail/renew-watch", methods=["POST"])
+def gmail_renew_watch_webhook():
+    """
+    Endpoint for external cron to ensure Gmail watch is active.
+    Uses same API key guard as the legacy polling webhook.
+    """
+    try:
+        api_key = request.args.get("key") or request.headers.get("X-API-Key")
+        expected_key = os.environ.get("WEBHOOK_API_KEY", "calendar-ai-webhook-2024")
+        if api_key != expected_key:
+            logger.warning("Unauthorized Gmail watch renewal attempt from %s", request.remote_addr)
+            return {"status": "error", "message": "Unauthorized access"}, 401
+
+        topic_name = os.environ.get("GMAIL_PUSH_TOPIC")
+        if not topic_name:
+            return (
+                {
+                    "status": "error",
+                    "message": "GMAIL_PUSH_TOPIC must be configured to renew watch",
+                },
+                500,
+            )
+
+        raw_label_ids = os.environ.get("GMAIL_PUSH_LABEL_IDS", "")
+        label_ids = [label.strip() for label in raw_label_ids.split(",") if label.strip()]
+        email_address = os.environ.get("GMAIL_PUSH_EMAIL_ADDRESS", "me")
+
+        from app.services.gmail_push_processor import renew_watch_if_needed
+
+        response = renew_watch_if_needed(
+            topic_name=topic_name,
+            label_ids=label_ids or None,
+            email_address=email_address,
+        )
+
+        if response:
+            history_id = response.get("historyId")
+            expiration_ms = response.get("expiration")
+            expiration_iso = None
+            if expiration_ms:
+                try:
+                    expiration_iso = datetime.utcfromtimestamp(int(expiration_ms) / 1000.0).isoformat()
+                except (TypeError, ValueError):
+                    expiration_iso = None
+            return {
+                "status": "success",
+                "message": "Gmail watch renewed",
+                "historyId": history_id,
+                "expiresAt": expiration_iso,
+            }, 200
+
+        return {
+            "status": "success",
+            "message": "Existing Gmail watch still valid",
+        }, 200
+
+    except Exception as exc:
+        logger.exception("Gmail watch renewal failed: %s", exc)
+        return {
+            "status": "error",
+            "message": f"Failed to renew Gmail watch: {str(exc)}",
         }, 500
 
 @main_routes.route("/")
