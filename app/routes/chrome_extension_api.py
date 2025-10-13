@@ -6,7 +6,7 @@ Provides a clean API interface for the Chrome extension while reusing existing b
 from flask import request, jsonify
 from flask_login import login_required, current_user
 import logging
-from app.helpers.event_processing import process_text_to_events
+from app.services.event_processing import process_text_to_events
 from app.models import User
 import json
 

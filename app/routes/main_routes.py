@@ -16,7 +16,7 @@ from datetime import datetime
 import sentry_sdk
 
 # Import helper modules
-from app.helpers.event_processing import process_text_to_events
+from app.services.event_processing import process_text_to_events
 from app.helpers.event_utils import (
     prepare_event_data_for_calendar,
     update_event_from_form,

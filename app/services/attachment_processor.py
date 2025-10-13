@@ -168,7 +168,7 @@ class AttachmentProcessor:
             bool: True if successful, False otherwise
         """
         try:
-            from app.helpers.event_processing import process_text_to_events
+            from app.services.event_processing import process_text_to_events
             
             logger.info(f"📥 PROCESSING attachment content: {attachment_record.filename} ({len(file_content)} bytes)")
             
@@ -224,7 +224,7 @@ class AttachmentProcessor:
         Returns:
             Dict: Processing results
         """
-        from app.helpers.event_processing import process_text_to_events
+        from app.services.event_processing import process_text_to_events
                 from app.agents.event_extractor import validate_and_clean_event
         from datetime import datetime
         from app import db

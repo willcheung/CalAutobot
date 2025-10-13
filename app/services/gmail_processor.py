@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional
 from app.models import User, Event, UserEmail, TextInput
-from app.helpers.event_processing import process_text_to_events
+from app.services.event_processing import process_text_to_events
 from app.helpers.event_utils import format_event_for_api
 from app.helpers.domain_utils import get_base_url
 from app.helpers.event_deduplication import deduplicate_events, should_skip_attachment

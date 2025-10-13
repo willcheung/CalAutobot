@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from app import db
-from app.helpers.event_processing import process_text_to_events
+from app.services.event_processing import process_text_to_events
 from app.models import Event, TextInput, User
 
 
@@ -32,8 +32,8 @@ def test_process_text_to_events_creates_records(monkeypatch, app_context):
         captured_event_payload.update(event_data)
         return "google-event-123"
 
-    monkeypatch.setattr("app.helpers.event_processing.extract_events_from_text", fake_extract_events)
-    monkeypatch.setattr("app.helpers.event_processing.create_calendar_event", fake_create_calendar_event)
+    monkeypatch.setattr("app.services.event_processing.extract_events_from_text", fake_extract_events)
+    monkeypatch.setattr("app.services.event_processing.create_calendar_event", fake_create_calendar_event)
 
     raw_text = "Important update <b>today</b>"
     result = process_text_to_events(raw_text, user, source_type="manual", auto_sync=True)
