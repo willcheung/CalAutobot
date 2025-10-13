@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from app import db
 from app.models import User, Event, TextInput
-from app.event_extractor import extract_events_from_text, validate_and_clean_event
+from app.agents.event_extractor import extract_events_from_text, validate_and_clean_event
 from app.services.google_calendar import create_calendar_event
 from app.helpers.text_processing import sanitize_text_for_db
 from app.helpers.event_utils import calculate_event_duration_minutes

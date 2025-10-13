@@ -1,7 +1,7 @@
 # Calendar AI - Text to Calendar Events Service
 
 ## Overview
-Calendar AI is a Flask-based web application designed to transform unstructured text (emails, documents, itineraries) into structured calendar events using AI. It integrates with Google Calendar for automatic event creation and offers a modern interface for managing extracted events. The project aims to streamline event organization, reduce manual data entry, and enhance productivity for users by leveraging advanced AI capabilities to interpret and schedule their daily information.
+Calendar AI is a Flask-based application that turns unstructured inputs (emails, documents, screenshots, itineraries) into structured Google Calendar events via OpenAI extraction. It provides a web dashboard, Gmail ingestion pipeline, and Chrome extension so users can review, edit, and automatically sync detected events. The goal is to reduce manual data entry while keeping a clear audit trail of the original content.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -10,20 +10,21 @@ Preferred communication style: Simple, everyday language.
 
 ### Backend
 - **Framework**: Flask with SQLAlchemy ORM.
-- **Database**: PostgreSQL in production, SQLite fallback for local/dev and test fixtures.
-- **Authentication**: Google OAuth 2.0 with Flask-Login.
-- **AI Integration**: OpenAI GPT-4o for event extraction.
+- **Database**: PostgreSQL in production, SQLite fallback for local/dev and tests.
+- **Authentication**: Google OAuth 2.0 with Flask-Login, including provisional-to-authenticated upgrade flow.
+- **AI Integration**: OpenAI `gpt-4.1-mini` model for text and attachment extraction.
 - **Deployment**: Gunicorn WSGI server.
 - **Core Components**:
-    - **User Authentication**: Handles Google OAuth, token refresh, and session management.
-    - **Provisional User System**: Public access via go@calautobot.com with 2-email limit before signup required. Provisional users (google_id=NULL) can send up to 2 emails and receive event extraction results. OAuth signup automatically upgrades provisional → authenticated users with auto-sync of stored events.
-    - **AI Event Extraction**: Processes text using GPT-4o, applies structured prompting, resolves relative dates, and parses emails.
-    - **Google Calendar Integration**: Manages event creation, updating, deletion, and token refresh with Google Calendar API. Optimized with try-first approach to reduce unnecessary token refreshes by ~66%.
-    - **Database Models**: Defines `User`, `Event`, and `TextInput` models for data storage. User model includes `email_count` field for tracking provisional user limits.
-    - **Web Routes**: Manages dashboard operations, text processing, event editing, and RESTful API endpoints.
-    - **Data Flow**: Users authenticate, input text, AI processes it, events are stored, reviewed, and then synced to Google Calendar.
-    - **Webhook System**: Implemented for real-time Google Calendar push notifications, including automatic event deletion sync, with token-based validation. Updated to use production domain (calautobot.com) for webhook endpoints with asynchronous processing to prevent worker timeouts.
-    - **Email Templates**: Dedicated templates in `templates/emails/` for provisional user communications (provisional_summary.html for event results, limit_reached.html for signup prompt).
+    - **User Authentication**: Handles Google OAuth, token refresh handling, session management, and provisional user upgrades.
+    - **Provisional User System**: Emails to go@calautobot.com create provisional accounts capped at two processed messages; OAuth signup upgrades the account and auto-syncs stored events.
+    - **AI Event Extraction**: Structured prompting, timezone-aware date resolution, emoji tagging, validation, and persistence via `process_text_to_events`.
+    - **Google Calendar Integration**: Manages calendar creation, event CRUD, webhook registration, and token refresh via `app/services/google_calendar.py`.
+    - **Gmail Ingestion**: Polling (cron) and push (Pub/Sub) processors download messages, filter attachments, deduplicate events, and mark mail as read.
+    - **Database Models**: `User`, `Event`, `TextInput`, `EmailAttachment`, `GmailPushState`, and `CalWaitlist` capture user data, extraction history, attachments, push state, and waitlist entries.
+    - **Web Routes**: Blueprints in `app/routes` provide dashboard UI, REST endpoints, webhook handlers, and Chrome-extension APIs.
+    - **Data Flow**: Inputs (manual, Gmail, Chrome extension) go through `process_text_to_events`, which orchestrates OpenAI extraction, sanitization, database writes, and optional calendar sync.
+    - **Webhook System**: Google Calendar webhook verifies tokens, spawns background deletion workers, and keeps database in sync with remote deletions.
+    - **Email Templates**: `templates/emails/limit_reached.html` notifies provisional users who hit their quota.
 
 ### Frontend
 - **Templates**: Jinja2 with Bootstrap 5.
@@ -33,7 +34,7 @@ Preferred communication style: Simple, everyday language.
 - **UI/UX Decisions**: Responsive design, consistent iconography, clear user journey (e.g., "Forward Email or Take Screenshot" -> "AI Processes Your Content" -> "Auto-Sync to Google Calendar"), optimized dashboard layout, mobile responsiveness with hidden navbar buttons and dedicated mobile sections.
 
 ### Chrome Extension
-- **Functionality**: Full Chrome Extension with popup, background service, content scripts. Supports text input, context menu integration, screenshot analysis with GPT-4o Vision, and Google Authentication.
+- **Functionality**: Chrome extension with popup, background service worker, and content scripts. Supports text input, context menu extraction, screenshot uploads, and Google authentication.
 - **Architecture**: `manifest.json`, `popup.html/js`, `background.js`, `content.js`, and dedicated API endpoints (`chrome_extension_api.py`) with CORS support.
 - **User Experience**: Real-time feedback via toast notifications, auto-sync with Google Calendar, and keyboard shortcuts.
 
@@ -44,12 +45,13 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Services
-- **OpenAI API**: GPT-4o model for AI event extraction.
-- **Google OAuth 2.0**: For user authentication.
-- **Google Calendar API**: For calendar integration and push notifications.
-- **PostgreSQL**: Primary database storage.
-- **Mailgun Email API**: For fetching stored emails and attachments.
-- **Sentry**: For error tracking and monitoring.
+- **OpenAI API**: `gpt-4.1-mini` for AI event extraction.
+- **Google OAuth 2.0**: User authentication and refresh tokens.
+- **Google Calendar API**: Calendar creation, event sync, and push notifications.
+- **Gmail API**: Email ingestion, attachment download, history streaming, and Pub/Sub watch management.
+- **Google Pub/Sub**: Push delivery of Gmail history updates (via configured topic).
+- **PostgreSQL**: Primary production database.
+- **Sentry**: Error tracking and monitoring.
 
 ### Python Packages
 - Flask ecosystem (Flask, Flask-SQLAlchemy, Flask-Login)
@@ -60,8 +62,11 @@ Preferred communication style: Simple, everyday language.
 - Testing stack (pytest, pytest-flask) via optional `test` extras
 
 ## Project Layout Notes
-- `app/` is now the main application package. Core modules (`models.py`, `event_extractor.py`), helpers, services, and blueprints live under `app/` (e.g., `app/routes/`, `app/helpers/`, `app/services/`). Templates and static assets moved to `app/templates/` and `app/static/`.
-- `tools/` contains operational scripts such as cron-driven email checks and migration utilities. Import paths inside these scripts reference the new package layout (`app.*`).
-- Legacy `requirements.txt` and `webhook_test.py` were removed; dependency management relies on `pyproject.toml`/`uv.lock`.
-- Tests live under `tests/` with fixtures in `tests/conftest.py` that spin up an isolated SQLite database.
+- `app/` is the main application package. Core modules (`models.py`, `event_extractor.py`), helpers, services, and blueprints live under `app/` (e.g., `app/routes/`, `app/helpers/`, `app/services/`). Templates and static assets are under `app/templates/` and `app/static/`.
+- `tools/` contains operational scripts such as the cron-friendly Gmail checker (`tools/check_emails.py`).
+- Dependencies are managed via `pyproject.toml`/`uv.lock`; tests live in `tests/` with fixtures that create isolated SQLite databases.
+
+## Documentation Practice
+- Update this file whenever architecture, dependencies, or user flows change.
+- Record new features and integration points here as they ship so scheduled deployments and collaborators stay informed.
 ```

@@ -5,7 +5,7 @@ import mimetypes
 from typing import List, Dict, Optional, Tuple
 from app.models import EmailAttachment, TextInput, User, Event
 from app import db
-from app.event_extractor import extract_events_from_text
+from app.agents.event_extractor import extract_events_from_text
 import json
 import base64
 
@@ -225,7 +225,7 @@ class AttachmentProcessor:
             Dict: Processing results
         """
         from app.helpers.event_processing import process_text_to_events
-        from app.event_extractor import validate_and_clean_event
+                from app.agents.event_extractor import validate_and_clean_event
         from datetime import datetime
         from app import db
         from app.models import Event

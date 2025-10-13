@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from app.event_extractor import validate_and_clean_event
+from app.agents.event_extractor import validate_and_clean_event
 from app.helpers.event_utils import calculate_event_duration_minutes
 from app.helpers.text_processing import sanitize_text_for_db
 
