@@ -9,6 +9,8 @@ from app.helpers.domain_utils import get_base_url
 from app.helpers.event_deduplication import deduplicate_events, should_skip_attachment
 from app import db
 from app.services.gmail_service import gmail_service, GmailOAuthError
+from app.agents.task_classifier import classify_email_task
+from app.services.scheduling_agent import handle_scheduling_email
 import sentry_sdk
 
 logger = logging.getLogger(__name__)
@@ -102,6 +104,65 @@ def process_single_email(email_data: Dict) -> bool:
             return False
         
         logger.info(f"Processing email from {sender_email}, subject: {subject}")
+
+        # Determine desired workflow (event extraction vs scheduling)
+        classification_payload = {
+            "subject": subject,
+            "body_text": body_text,
+            "from": sender_email,
+            "to": email_data.get("to") or [],
+            "cc": email_data.get("cc") or [],
+        }
+        task_type = classify_email_task(classification_payload)
+        logger.info(f"Classifier routed email {email_data.get('id')} to {task_type}")
+
+        user = db.session.query(User).filter_by(email=sender_email).first()
+
+        if task_type == "schedule_meeting" or (task_type == "no_action" and (not user or user.google_id is None)):
+            if not user:
+                user = ensure_provisional_user(sender_email)
+
+            if user.google_id is None:
+                handle_provisional_scheduler_user(user)
+                return True
+
+            scheduling_payload = {
+                "sender": email_data.get("sender"),
+                "sender_name": email_data.get("sender_name"),
+                "subject": subject,
+                "body_text": body_text,
+                "body_html": email_data.get("body_html"),
+                "to": email_data.get("to") or [],
+                "cc": email_data.get("cc") or [],
+                "thread_id": email_data.get("thread_id"),
+                "message_id": email_data.get("message_id"),
+                "received_at": email_data.get("received_at"),
+                "raw_headers": email_data.get("raw_headers"),
+                "attachments": attachments_info,
+            }
+            result = handle_scheduling_email(scheduling_payload, owner_user=user)
+            return result is not None
+        elif task_type == "no_action":
+            logger.info("No action taken for email %s; sending courtesy reply.", email_data.get("id"))
+            auto_reply = (
+                "Hi there,\n\n"
+                "Cal is only trained to schedule meetings and create calendar events. "
+                "No action has been taken on this email.\n\n"
+                "Thanks!"
+            )
+            if sender_email:
+                subject_prefix = subject or ""
+                if subject_prefix.lower().startswith("re:"):
+                    reply_subject = subject_prefix
+                else:
+                    reply_subject = f"Re: {subject_prefix}".strip() or "Re: Message from Cal Autobot"
+                try:
+                    gmail_service.send_email(sender_email, reply_subject, auto_reply)
+                except Exception as send_err:
+                    logger.warning("Failed to send no-action reply to %s: %s", sender_email, send_err)
+            else:
+                logger.info("No sender email found; skipping courtesy reply.")
+            return True
         
         # Download attachment content with filtering for signature images
         attachments_data = []
@@ -399,6 +460,33 @@ def send_provisional_summary_email(recipient_email: str, events_data: List):
         sentry_sdk.capture_exception(e)
         return False
 
+def send_provisional_scheduler_email(recipient_email: str):
+    """Send onboarding email to provisional user requesting meeting scheduling."""
+    try:
+        from flask import render_template
+
+        signup_url = f"{get_base_url()}/signup"
+        html_body = render_template(
+            'emails/provisional_scheduler.html',
+            signup_url=signup_url,
+        )
+
+        subject = "✨ Unlock Cal's meeting coordination assistant"
+        success = gmail_service.send_email(
+            to=recipient_email,
+            subject=subject,
+            html_body=html_body,
+        )
+        if success:
+            logger.info("📧 Sent scheduler onboarding email to %s", recipient_email)
+        else:
+            logger.error("❌ Failed to send scheduler onboarding email to %s", recipient_email)
+        return success
+    except Exception as exc:
+        logger.error("Error sending scheduler onboarding email to %s: %s", recipient_email, exc)
+        sentry_sdk.capture_exception(exc)
+        return False
+
 def send_limit_reached_email(recipient_email: str):
     """Send email to provisional user who hit the 2-email limit"""
     try:
@@ -447,3 +535,35 @@ def send_confirmation_email(recipient_email: str, events_count: int, synced_coun
         logger.error(f"Error preparing confirmation email for {recipient_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
         return False
+
+def ensure_provisional_user(sender_email: str) -> User:
+    """Create or retrieve a provisional user record for the sender."""
+    user = db.session.query(User).filter_by(email=sender_email).first()
+    if user:
+        return user
+
+    user = User()
+    user.email = sender_email
+    user.username = sender_email
+    user.google_id = None
+    user.email_count = 0
+    user.timezone = 'UTC'
+
+    db.session.add(user)
+    db.session.commit()
+    logger.info("✅ Created provisional user for scheduling: %s", sender_email)
+    return user
+
+
+def handle_provisional_scheduler_user(user: User) -> None:
+    """Handle scheduling requests for provisional users (invite or limit notice)."""
+    if user.email_count is None:
+        user.email_count = 0
+
+    if user.email_count >= 2:
+        send_limit_reached_email(user.email)
+        return
+
+    user.email_count += 1
+    db.session.commit()
+    send_provisional_scheduler_email(user.email)

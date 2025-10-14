@@ -51,6 +51,7 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
     text_input.original_text = sanitized_text  # Save sanitized version to database
     text_input.source_type = source_type
     text_input.from_email = sanitized_from_email
+    text_input.task_type = "extract_event"
     text_input.extracted_events = extracted_events
     text_input.processing_status = "completed"
     text_input.openai_status = openai_status if openai_status else ("offline" if is_offline else "success")

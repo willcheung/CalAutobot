@@ -51,8 +51,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1) # needed for url_for 
 # configure the database, relative to the app instance folder
 database_url = os.environ.get("DATABASE_URL")
 if not database_url:
-    # Fallback for development
-    database_url = "sqlite:///calendar_ai.db"
     logger.warning("No DATABASE_URL found, using SQLite fallback")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url

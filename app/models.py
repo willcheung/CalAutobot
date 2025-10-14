@@ -72,7 +72,9 @@ class TextInput(db.Model):
     original_text = db.Column(db.Text, nullable=False)
     source_type = db.Column(db.String(50), default='manual')  # manual, email
     from_email = db.Column(db.String(120))  # if source is email
-    
+    task_type = db.Column(db.String(50), nullable=True)  # extract_event, schedule_meeting, etc.
+    raw_email_context = db.Column(db.Text, nullable=True)  # Optional JSON/serialized email metadata for scheduling
+
     # Processing results
     extracted_events_json = db.Column(db.Text)  # JSON string of extracted events
     processing_status = db.Column(db.String(50), default='pending')  # pending, completed, failed
@@ -100,6 +102,106 @@ class TextInput(db.Model):
     @extracted_events.setter
     def extracted_events(self, events_list):
         self.extracted_events_json = json.dumps(events_list)
+
+
+class MeetingRequest(db.Model):
+    """
+    Tracks a multi-party meeting coordination workflow.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'), nullable=True)
+    subject = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(50), default='pending')  # pending, collecting, proposed, confirmed, reschedule_requested, completed
+    current_step = db.Column(db.String(50), nullable=True)
+    proposed_slots_json = db.Column(db.Text, nullable=True)
+    previous_slots_json = db.Column(db.Text, nullable=True)
+    confirmed_slot_json = db.Column(db.Text, nullable=True)
+    last_message_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('meeting_requests', lazy=True))
+    text_input = db.relationship('TextInput', backref=db.backref('meeting_request', uselist=False))
+    participants = db.relationship('MeetingParticipant', backref='meeting_request', lazy=True, cascade='all, delete-orphan')
+    messages = db.relationship('MeetingMessage', backref='meeting_request', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def proposed_slots(self):
+        if not self.proposed_slots_json:
+            return []
+        try:
+            return json.loads(self.proposed_slots_json)
+        except json.JSONDecodeError:
+            return []
+
+    @proposed_slots.setter
+    def proposed_slots(self, value):
+        self.proposed_slots_json = json.dumps(value or [])
+
+    @property
+    def previous_slots(self):
+        if not self.previous_slots_json:
+            return []
+        try:
+            return json.loads(self.previous_slots_json)
+        except json.JSONDecodeError:
+            return []
+
+    @previous_slots.setter
+    def previous_slots(self, value):
+        self.previous_slots_json = json.dumps(value or [])
+
+    @property
+    def confirmed_slot(self):
+        if not self.confirmed_slot_json:
+            return None
+        try:
+            return json.loads(self.confirmed_slot_json)
+        except json.JSONDecodeError:
+            return None
+
+    @confirmed_slot.setter
+    def confirmed_slot(self, value):
+        self.confirmed_slot_json = json.dumps(value) if value else None
+
+
+class MeetingParticipant(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    meeting_request_id = db.Column(db.Integer, db.ForeignKey('meeting_request.id'), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=True)
+    role = db.Column(db.String(50), default='participant')  # participant, organizer, assistant
+    status = db.Column(db.String(50), default='invited')  # invited, responded, confirmed
+    latest_reply_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class MeetingMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    meeting_request_id = db.Column(db.Integer, db.ForeignKey('meeting_request.id'), nullable=False)
+    sender_email = db.Column(db.String(255), nullable=False)
+    message_id = db.Column(db.String(255), nullable=True)
+    thread_id = db.Column(db.String(255), nullable=True)
+    body_text = db.Column(db.Text, nullable=True)
+    body_html = db.Column(db.Text, nullable=True)
+    parsed_slots_json = db.Column(db.Text, nullable=True)  # structured slots detected in this message
+    metadata_json = db.Column(db.Text, nullable=True)  # additional metadata (headers, etc.)
+    received_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def parsed_slots(self):
+        if not self.parsed_slots_json:
+            return []
+        try:
+            return json.loads(self.parsed_slots_json)
+        except json.JSONDecodeError:
+            return []
+
+    @parsed_slots.setter
+    def parsed_slots(self, value):
+        self.parsed_slots_json = json.dumps(value or [])
 
 
 class EmailAttachment(db.Model):

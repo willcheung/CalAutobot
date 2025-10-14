@@ -1,12 +1,13 @@
 import os
 import logging
 import base64
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 import json
 from datetime import datetime
+from email.utils import getaddresses, parsedate_to_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -185,30 +186,58 @@ class GmailService:
             
             # Extract headers
             subject = self._get_header_value(headers, 'Subject')
-            from_email = self._get_header_value(headers, 'From')
-            to_email = self._get_header_value(headers, 'To')
-            date = self._get_header_value(headers, 'Date')
-            
-            # Extract email address from "Name <email>" format
-            if from_email and '<' in from_email and '>' in from_email:
-                from_email = from_email.split('<')[1].split('>')[0].strip()
+            from_header = self._get_header_value(headers, 'From')
+            to_header = self._get_header_value(headers, 'To')
+            cc_header = self._get_header_value(headers, 'Cc')
+            date_header = self._get_header_value(headers, 'Date')
+            message_id_header = self._get_header_value(headers, 'Message-ID')
+
+            # Parse addresses
+            from_name, from_email = self._parse_single_address(from_header)
+            to_addresses = self._parse_address_list(to_header)
+            cc_addresses = self._parse_address_list(cc_header)
             
             # Extract email body
             body_text = self._extract_body_text(payload)
             
             # Extract attachments
             attachments_data = self._extract_attachments(service, message['id'], payload)
+
+            received_at = None
+            if date_header:
+                try:
+                    received_at = parsedate_to_datetime(date_header)
+                except Exception:
+                    received_at = None
             
-            # Return data in same format as Mailgun webhook
+            raw_headers = {
+                'subject': subject,
+                'from': from_header,
+                'to': to_header,
+                'cc': cc_header,
+                'date': date_header,
+                'message_id': message_id_header,
+            }
+            
+            # Return data structure
             email_data = {
                 'id': message['id'],
+                'thread_id': message.get('threadId'),
+                'message_id': message_id_header or message.get('id'),
                 'sender': from_email.lower().strip() if from_email else '',
-                'recipient': to_email,
+                'sender_name': from_name,
+                'recipient': to_header,
+                'to': to_addresses,
+                'cc': cc_addresses,
                 'subject': subject or '',
                 'stripped-text': body_text,
-                'stripped-html': '',  # We'll use plain text for simplicity
-                'date': date,
-                'attachments': attachments_data
+                'body_text': body_text,
+                'body_html': '',  # plain text fallback
+                'stripped-html': '',
+                'date': date_header,
+                'received_at': received_at,
+                'attachments': attachments_data,
+                'raw_headers': raw_headers,
             }
             
             logger.info(f"Parsed email from {email_data['sender']}: {email_data['subject']}")
@@ -225,6 +254,24 @@ class GmailService:
             if header.get('name', '').lower() == header_name.lower():
                 return header.get('value', '')
         return ''
+
+    def _parse_address_list(self, header_value: str) -> List[str]:
+        if not header_value:
+            return []
+        return [
+            addr.lower()
+            for _, addr in getaddresses([header_value])
+            if addr
+        ]
+
+    def _parse_single_address(self, header_value: str) -> Tuple[Optional[str], Optional[str]]:
+        if not header_value:
+            return None, None
+        names_emails = getaddresses([header_value])
+        if not names_emails:
+            return None, header_value
+        name, email_addr = names_emails[0]
+        return name or None, email_addr
     
     def _extract_body_text(self, payload: Dict) -> str:
         """
