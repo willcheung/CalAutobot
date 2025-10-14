@@ -93,7 +93,7 @@ def classify_email_task(email_metadata: Dict[str, Optional[str]]) -> str:
 
     # Run lightweight LLM classification for ambiguous cases.
     prompt = f"""
-Email input:
+Input:
 '''Subject: {subject or '[no subject]'}
 From: {from_email or '[unknown]'}
 To: {', '.join(sorted(to_addresses)) or '[none]'}
