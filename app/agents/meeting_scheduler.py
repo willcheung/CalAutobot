@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 from openai import OpenAI
@@ -108,7 +108,7 @@ def get_testing_availability(user_timezone: str = "UTC") -> List[Dict[str, str]]
     """
     Retrieve hard-coded availability and filter out past times.
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     slots = []
     for bucket in DEFAULT_AVAILABILITY.values():
         for slot in bucket:

@@ -147,9 +147,9 @@ def process_single_email(email_data: Dict) -> bool:
             logger.info("No action taken for email %s; sending courtesy reply.", email_data.get("id"))
             auto_reply = (
                 "Hi there,\n\n"
-                "Cal is only trained to schedule meetings and create calendar events. "
+                "I've only been trained to schedule meetings and create calendar events. "
                 "No action has been taken on this email.\n\n"
-                "Thanks!"
+                "Thanks!\nCal"
             )
             if sender_email:
                 subject_prefix = subject or ""
@@ -232,9 +232,12 @@ def process_single_email(email_data: Dict) -> bool:
             # Check if this is a real user (has google_id) or provisional user (no google_id)
             if user.google_id:
                 # Real authenticated user - process normally
-                return process_existing_user_email(
+                existing_result = process_existing_user_email(
                     formatted_text, attachments_data, user, sender_email, subject
                 )
+                if existing_result["success"] and existing_result["events_count"] == 0:
+                    send_no_events_response(email_data, sender_email)
+                return existing_result["success"]
             else:
                 # Provisional user - check email limit
                 if user.email_count >= 2:
@@ -247,15 +250,21 @@ def process_single_email(email_data: Dict) -> bool:
                     user.email_count += 1
                     db.session.commit()
                     logger.info(f"📧 Processing email {user.email_count}/2 for provisional user {sender_email}")
-                    return process_provisional_user_email(
+                    provisional_result = process_provisional_user_email(
                         formatted_text, attachments_data, user, sender_email, subject
                     )
+                    if provisional_result["success"] and provisional_result["events_count"] == 0:
+                        send_no_events_response(email_data, sender_email)
+                    return provisional_result["success"]
         else:
             # New user - create provisional user
             logger.info(f"📧 Creating new provisional user for {sender_email}")
-            return process_new_provisional_user_email(
+            provisional_result = process_new_provisional_user_email(
                 formatted_text, attachments_data, sender_email, subject
             )
+            if provisional_result["success"] and provisional_result["events_count"] == 0:
+                send_no_events_response(email_data, sender_email)
+            return provisional_result["success"]
             
     except Exception as e:
         logger.error(f"Error processing single email: {str(e)}")
@@ -263,7 +272,7 @@ def process_single_email(email_data: Dict) -> bool:
         return False
 
 def process_existing_user_email(formatted_text: str, attachments_data: List[Dict], 
-                               user: User, sender_email: str, subject: str) -> bool:
+                               user: User, sender_email: str, subject: str) -> Dict[str, object]:
     """Process email for existing user with Google authentication"""
     try:
         # Disable auto-sync for now - we'll sync all events together after deduplication
@@ -349,15 +358,15 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
         # Send confirmation email with total counts (reuse existing function)
         send_confirmation_email(sender_email, total_events_count, synced_count)
         
-        return True
+        return {"success": True, "events_count": total_events_count}
         
     except Exception as e:
         logger.error(f"Error processing email for existing user {sender_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
-        return False
+        return {"success": False, "events_count": 0}
 
 def process_provisional_user_email(formatted_text: str, attachments_data: List[Dict], 
-                                  user: User, sender_email: str, subject: str) -> bool:
+                                  user: User, sender_email: str, subject: str) -> Dict[str, object]:
     """Process email for provisional user (no Google authentication yet)"""
     try:
         result = process_text_to_events(
@@ -398,15 +407,15 @@ def process_provisional_user_email(formatted_text: str, attachments_data: List[D
         # Send provisional summary email with ALL extracted events (email + attachments)
         send_provisional_summary_email(sender_email, all_events)
         
-        return True
+        return {"success": True, "events_count": len(all_events)}
         
     except Exception as e:
         logger.error(f"Error processing email for provisional user {sender_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
-        return False
+        return {"success": False, "events_count": 0}
 
 def process_new_provisional_user_email(formatted_text: str, attachments_data: List[Dict], 
-                                       sender_email: str, subject: str) -> bool:
+                                       sender_email: str, subject: str) -> Dict[str, object]:
     """Process email for new provisional user (create provisional user)"""
     try:
         # Create provisional user
@@ -429,7 +438,7 @@ def process_new_provisional_user_email(formatted_text: str, attachments_data: Li
         logger.error(f"Error creating provisional user for {sender_email}: {str(e)}")
         sentry_sdk.capture_exception(e)
         db.session.rollback()
-        return False
+        return {"success": False, "events_count": 0}
 
 def send_provisional_summary_email(recipient_email: str, events_data: List):
     """Send email to provisional user with extracted events and signup link"""
@@ -574,3 +583,35 @@ def handle_provisional_scheduler_user(user: User) -> None:
     user.email_count += 1
     db.session.commit()
     send_provisional_scheduler_email(user.email)
+
+
+def send_no_events_response(email_data: Dict, recipient_email: str) -> None:
+    """Reply to the email thread indicating no events were found."""
+    if not recipient_email:
+        return
+
+    body = (
+        "Hi there,\n\n"
+        "I looked over your email but couldn't find any calendar events to create. "
+        "If there's a specific date or time you'd like me to capture, feel free to reply with more details.\n\n"
+        "Thanks!\nCal"
+    )
+
+    subject = email_data.get("subject") or "Message from Cal Autobot"
+    if not subject.lower().startswith("re:"):
+        subject = f"Re: {subject}".strip()
+
+    try:
+        gmail_service.send_email(
+            recipient_email,
+            subject,
+            text_body=body,
+            thread_id=email_data.get("thread_id"),
+            reply_to_message_id=email_data.get("message_id"),
+        )
+    except Exception as exc:
+        logger.warning(
+            "Failed to send 'no events found' reply to %s: %s",
+            recipient_email,
+            exc,
+        )

@@ -25,7 +25,7 @@ Respond ONLY with a JSON object containing these keys:
 Guidelines:
 - Choose "schedule_meeting" when the sender asks the assistant to coordinate or reschedule a meeting/call/demo/sync and there are other human recipients in To/CC (besides the assistant aliases).
 - Choose "extract_event" when the email has no other human recipients and contains dates/times, such as itineraries, confirmations, agendas, schedules, any attachment (image, PDF), or other details/instructions that should be turned into calendar events.
-- Choose "no_action" when the message is spam, a generic greeting, or anything unrelated to meetings, calendar events, or has no dates/times. 
+- Choose "no_action" when the email is a generic greeting, or anything unrelated to meetings, calendar events, or has no dates/times. 
 - If there are no dates/times on the email and you truly don't know what the sender wants, prefer "no_action" to avoid false positives.
 """
 
@@ -66,29 +66,27 @@ def classify_email_task(email_metadata: Dict[str, Optional[str]]) -> str:
         logger.debug("Classifier heuristic detected attachments; routing to extract_event.")
         return "extract_event"
 
+    # If there are no external participants, default to event extraction.
+    if not external_participants:
+        logger.debug("Classifier heuristic found no external participants; routing to extract_event.")
+        return "extract_event"
+
     # Heuristic routing: if there are external participants beyond the assistant, schedule a meeting.
     if external_participants and any(
         keyword in body_text.lower()
-        for keyword in ["schedule", "meet", "availability", "reschedule", "coordinate"]
+        for keyword in [
+            "schedule",
+            "find a time",
+            "set up a time",
+            "meet",
+            "availability",
+            "reschedule",
+            "coordinate",]
     ):
         logger.debug(
             "Classifier heuristic routed to schedule_meeting based on participants: %s",
             external_participants,
         )
-        return "schedule_meeting"
-
-    # If the sender isn't a known assistant address but asks for help scheduling, escalate.
-    scheduling_keywords = [
-        "schedule",
-        "find a time",
-        "set up a time",
-        "meet",
-        "availability",
-        "reschedule",
-        "coordinate",
-    ]
-    if any(keyword in body_text.lower() for keyword in scheduling_keywords):
-        logger.debug("Classifier heuristic detected scheduling keywords.")
         return "schedule_meeting"
 
     # Run lightweight LLM classification for ambiguous cases.
