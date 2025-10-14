@@ -112,6 +112,7 @@ def process_single_email(email_data: Dict) -> bool:
             "from": sender_email,
             "to": email_data.get("to") or [],
             "cc": email_data.get("cc") or [],
+            "has_attachments": bool(attachments_info),
         }
         task_type = classify_email_task(classification_payload)
         logger.info(f"Classifier routed email {email_data.get('id')} to {task_type}")

@@ -162,6 +162,7 @@ def run_meeting_scheduler_agent(
     )
 
     payload = f"""
+Input: '''
 Meeting context:
 Subject: {meeting_context.get('subject') or '[no subject]'}
 Owner: {meeting_context.get('owner_email') or '[unknown]'}
@@ -177,7 +178,7 @@ Latest message from {latest_message.get('sender')} at {latest_message.get('times
 {latest_body}
 
 Available slots:
-{json.dumps(availability, indent=2)}
+{json.dumps(availability, indent=2)}'''
 """
 
     response = openai.chat.completions.create(

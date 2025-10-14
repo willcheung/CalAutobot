@@ -54,16 +54,22 @@ def classify_email_task(email_metadata: Dict[str, Optional[str]]) -> str:
     from_email = (email_metadata.get("from") or "").strip().lower()
     to_addresses = _normalized_addresses(email_metadata.get("to") or [])
     cc_addresses = _normalized_addresses(email_metadata.get("cc") or [])
+    has_attachments = bool(email_metadata.get("has_attachments"))
 
     participants = (to_addresses | cc_addresses) - {""}
     external_participants = {
         addr for addr in participants if addr not in ASSISTANT_EMAILS
     }
 
+    # If there are attachments, prefer event extraction.
+    if has_attachments:
+        logger.debug("Classifier heuristic detected attachments; routing to extract_event.")
+        return "extract_event"
+
     # Heuristic routing: if there are external participants beyond the assistant, schedule a meeting.
     if external_participants and any(
         keyword in body_text.lower()
-        for keyword in ["schedule", "meet", "availability", "reschedule", "coordinat"]
+        for keyword in ["schedule", "meet", "availability", "reschedule", "coordinate"]
     ):
         logger.debug(
             "Classifier heuristic routed to schedule_meeting based on participants: %s",
@@ -87,13 +93,14 @@ def classify_email_task(email_metadata: Dict[str, Optional[str]]) -> str:
 
     # Run lightweight LLM classification for ambiguous cases.
     prompt = f"""
-Subject: {subject or '[no subject]'}
+Email input:
+'''Subject: {subject or '[no subject]'}
 From: {from_email or '[unknown]'}
 To: {', '.join(sorted(to_addresses)) or '[none]'}
 Cc: {', '.join(sorted(cc_addresses)) or '[none]'}
 
 Body:
-{body_text[:2000]}
+{body_text}'''
 """
 
     try:

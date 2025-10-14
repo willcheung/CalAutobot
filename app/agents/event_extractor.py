@@ -104,9 +104,6 @@ def extract_events_from_text(text,
 
     try:
         logger.info(f"Extracting events from text of length {len(text)}")
-        # Display the prompt for debugging purposes
-        #logger.info(sys_prompt)
-        #logger.info(prompt)
 
         # Prepare messages for OpenAI API call
         messages = [{"role": "system", "content": sys_prompt}]
