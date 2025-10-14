@@ -225,7 +225,7 @@ class AttachmentProcessor:
             Dict: Processing results
         """
         from app.services.event_processing import process_text_to_events
-                from app.agents.event_extractor import validate_and_clean_event
+        from app.agents.event_extractor import validate_and_clean_event
         from datetime import datetime
         from app import db
         from app.models import Event
