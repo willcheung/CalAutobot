@@ -157,7 +157,13 @@ def process_single_email(email_data: Dict) -> bool:
                 else:
                     reply_subject = f"Re: {subject_prefix}".strip() or "Re: Message from Cal Autobot"
                 try:
-                    gmail_service.send_email(sender_email, reply_subject, auto_reply)
+                    gmail_service.send_email(
+                        sender_email,
+                        reply_subject,
+                        text_body=auto_reply,
+                        thread_id=email_data.get("thread_id"),
+                        reply_to_message_id=email_data.get("message_id"),
+                    )
                 except Exception as send_err:
                     logger.warning("Failed to send no-action reply to %s: %s", sender_email, send_err)
             else:

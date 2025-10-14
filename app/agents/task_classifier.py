@@ -23,10 +23,10 @@ Respond ONLY with a JSON object containing these keys:
 }
 
 Guidelines:
-- Choose "schedule_meeting" when the sender asks the assistant to coordinate or reschedule a meeting and there are other human recipients in To/CC (besides the assistant aliases).
-- Choose "extract_event" when the email contains itineraries, confirmations, agendas, or other details that should be turned into calendar events; a single-recipient message with a travel confirmation, PDF, or image attachment still counts.
-- Choose "no_action" when the message is marketing, spam, a generic greeting, or anything unrelated to meetings or calendar events. Also use this when you truly cannot tell what the sender wants.
-- If in doubt, prefer "no_action" to avoid false positives.
+- Choose "schedule_meeting" when the sender asks the assistant to coordinate or reschedule a meeting/call/demo/sync and there are other human recipients in To/CC (besides the assistant aliases).
+- Choose "extract_event" when the email has no other human recipients and contains dates/times, such as itineraries, confirmations, agendas, schedules, any attachment (image, PDF), or other details/instructions that should be turned into calendar events.
+- Choose "no_action" when the message is spam, a generic greeting, or anything unrelated to meetings, calendar events, or has no dates/times. 
+- If there are no dates/times on the email and you truly don't know what the sender wants, prefer "no_action" to avoid false positives.
 """
 
 

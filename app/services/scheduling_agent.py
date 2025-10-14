@@ -16,6 +16,7 @@ from app.agents.meeting_scheduler import (
     run_meeting_scheduler_agent,
 )
 from app.helpers.text_processing import sanitize_text_for_db
+from app.services.gmail_service import gmail_service
 
 logger = logging.getLogger(__name__)
 
@@ -219,6 +220,45 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         meeting_request.status = "proposed"
 
     db.session.commit()
+
+    reply_text = agent_result.get("reply")
+    if reply_text:
+        recipients = set()
+        sender_addr = (email_data.get("sender") or "").strip().lower()
+        if sender_addr:
+            recipients.add(sender_addr)
+        for field in ("to", "cc"):
+            for addr in email_data.get(field) or []:
+                clean = addr.strip()
+                if clean:
+                    recipients.add(clean)
+        for assistant in ASSISTANT_EMAILS:
+            recipients.discard(assistant)
+        if user.email in recipients:
+            pass
+        else:
+            recipients.add(user.email)
+
+        if recipients:
+            subject = email_data.get("subject") or "Meeting coordination"
+            if not subject.lower().startswith("re:"):
+                subject = f"Re: {subject}"
+
+            to_header = ", ".join(sorted(recipients))
+            try:
+                gmail_service.send_email(
+                    to_header,
+                    subject,
+                    text_body=reply_text,
+                    thread_id=email_data.get("thread_id"),
+                    reply_to_message_id=email_data.get("message_id"),
+                )
+            except Exception as send_exc:
+                logger.warning(
+                    "Failed to send scheduling reply for meeting_request %s: %s",
+                    meeting_request.id,
+                    send_exc,
+                )
 
     return {
         "meeting_request_id": meeting_request.id,

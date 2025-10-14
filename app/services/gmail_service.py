@@ -554,14 +554,25 @@ class GmailService:
             logger.error(f"Error marking email as read {message_id}: {str(e)}")
             return False
     
-    def send_email(self, to: str, subject: str, html_body: str) -> bool:
+    def send_email(
+        self,
+        to: str,
+        subject: str,
+        html_body: Optional[str] = None,
+        text_body: Optional[str] = None,
+        thread_id: Optional[str] = None,
+        reply_to_message_id: Optional[str] = None,
+    ) -> bool:
         """
         Send an email using Gmail API.
         
         Args:
             to (str): Recipient email address
             subject (str): Email subject
-            html_body (str): HTML email body
+            html_body (str, optional): HTML email body
+            text_body (str, optional): Plain text email body
+            thread_id (str, optional): Gmail thread ID for replying within a thread
+            reply_to_message_id (str, optional): Message-ID for In-Reply-To header
         
         Returns:
             bool: True if successful
@@ -575,23 +586,42 @@ class GmailService:
             # Create email message
             from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
-            
+
+            if not html_body and not text_body:
+                logger.error("Cannot send email: no body content provided")
+                return False
+
             message = MIMEMultipart('alternative')
             message['To'] = to
             message['From'] = 'Cal AutoBot <cal@calautobot.com>'
             message['Subject'] = subject
-            
-            # Add HTML body
-            html_part = MIMEText(html_body, 'html')
-            message.attach(html_part)
+
+            if reply_to_message_id:
+                message_id_value = reply_to_message_id
+                if not message_id_value.startswith("<"):
+                    message_id_value = f"<{message_id_value}>"
+                message['In-Reply-To'] = message_id_value
+                message['References'] = message_id_value
+
+            if text_body:
+                text_part = MIMEText(text_body, 'plain')
+                message.attach(text_part)
+
+            if html_body:
+                html_part = MIMEText(html_body, 'html')
+                message.attach(html_part)
             
             # Encode message
             raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
             
             # Send message
+            send_body = {'raw': raw_message}
+            if thread_id:
+                send_body['threadId'] = thread_id
+
             service.users().messages().send(
                 userId='me',
-                body={'raw': raw_message}
+                body=send_body
             ).execute()
             
             logger.info(f"Successfully sent email to {to}: {subject}")

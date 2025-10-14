@@ -19,7 +19,7 @@ Preferred communication style: Simple, everyday language.
     - **Provisional User System**: Emails to go@calautobot.com create provisional accounts capped at two processed messages; OAuth signup upgrades the account and auto-syncs stored events.
     - **AI Event Extraction**: Structured prompting, timezone-aware date resolution, emoji tagging, validation, and persistence via `process_text_to_events`.
     - **Task Classifier Agent**: Lightweight heuristic + LLM router that inspects email headers/body to decide between event extraction and meeting coordination.
-    - **Meeting Scheduler Agent**: Coordinates multi-party email threads, stores conversation context (`MeetingRequest`, `MeetingParticipant`, `MeetingMessage`), and proposes new times using hard-coded availability during testing. If the sender hasn’t onboarded yet, Cal responds with a provisional signup email and respects the two-message limit before sending the “limit reached” notice.
+    - **Meeting Scheduler Agent**: Coordinates multi-party email threads, stores conversation context (`MeetingRequest`, `MeetingParticipant`, `MeetingMessage`), proposes new times using hard-coded availability during testing, and replies directly in the original email thread. If the sender hasn’t onboarded yet, Cal responds with a provisional signup email and respects the two-message limit before sending the “limit reached” notice.
     - **Google Calendar Integration**: Manages calendar creation, event CRUD, webhook registration, and token refresh via `app/services/google_calendar.py`.
     - **Gmail Ingestion**: Polling (cron) and push (Pub/Sub) processors download messages, filter attachments, deduplicate events, and mark mail as read.
     - **Database Models**: `User`, `Event`, `TextInput`, `EmailAttachment`, `MeetingRequest`, `MeetingParticipant`, `MeetingMessage`, `GmailPushState`, and `CalWaitlist` capture user data, extraction history, conversations, and push state.
@@ -66,7 +66,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Project Layout Notes
 - `app/` is the main application package. Core modules (e.g., `models.py`, `services/event_processing.py`) plus agents (`app/agents/`), helpers, services, and blueprints live here. Templates and static assets are under `app/templates/` and `app/static/`.
-- `tools/` contains operational scripts such as the cron-friendly Gmail checker (`tools/check_emails.py`) and the developer-only agent CLI (`tools/agent_cli.py`).
+- `tools/` contains operational scripts such as the cron-friendly Gmail checker (`tools/check_emails.py`) and one-off utilities (migrations, webhook management).
 - Dependencies are managed via `pyproject.toml`/`uv.lock`; tests live in `tests/` with fixtures that create isolated SQLite databases.
 
 ## Documentation Practice
