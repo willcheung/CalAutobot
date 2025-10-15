@@ -404,10 +404,13 @@ def process_provisional_user_email(formatted_text: str, attachments_data: List[D
                     ).all()
                     all_events.extend(attachment_events)
         
-        # Send provisional summary email with ALL extracted events (email + attachments)
-        send_provisional_summary_email(sender_email, all_events)
+        events_count = len(all_events)
+
+        # Send provisional summary email only when we actually found events to share
+        if events_count > 0:
+            send_provisional_summary_email(sender_email, all_events)
         
-        return {"success": True, "events_count": len(all_events)}
+        return {"success": True, "events_count": events_count}
         
     except Exception as e:
         logger.error(f"Error processing email for provisional user {sender_email}: {str(e)}")
