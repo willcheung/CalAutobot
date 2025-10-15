@@ -562,6 +562,7 @@ class GmailService:
         text_body: Optional[str] = None,
         thread_id: Optional[str] = None,
         reply_to_message_id: Optional[str] = None,
+        cc: Optional[str] = None,
     ) -> bool:
         """
         Send an email using Gmail API.
@@ -595,6 +596,8 @@ class GmailService:
             message['To'] = to
             message['From'] = 'Cal AutoBot <cal@calautobot.com>'
             message['Subject'] = subject
+            if cc:
+                message['Cc'] = cc
 
             if reply_to_message_id:
                 message_id_value = reply_to_message_id
