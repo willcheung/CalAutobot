@@ -224,52 +224,42 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     reply_text = agent_result.get("reply")
     if reply_text:
-        # Build a stable recipient list: all participants, owner, and latest sender.
-        all_participants = {p.email for p in meeting_request.participants}
-        all_participants.add(user.email)
-
+        recipients = set()
         sender_addr = (email_data.get("sender") or "").strip().lower()
         if sender_addr:
-            all_participants.add(sender_addr)
-
+            recipients.add(sender_addr)
         for field in ("to", "cc"):
             for addr in email_data.get(field) or []:
                 clean = addr.strip()
                 if clean:
-                    all_participants.add(clean.lower())
-
+                    recipients.add(clean)
         for assistant in ASSISTANT_EMAILS:
-            all_participants.discard(assistant)
+            recipients.discard(assistant)
+        if user.email in recipients:
+            pass
+        else:
+            recipients.add(user.email)
 
-        owner_email = user.email
-        other_participants = sorted(addr for addr in all_participants if addr != owner_email)
+        if recipients:
+            subject = email_data.get("subject") or "Meeting coordination"
+            if not subject.lower().startswith("re:"):
+                subject = f"Re: {subject}"
 
-        to_header = owner_email
-        cc_recipients = other_participants
-        if not cc_recipients:
-            cc_recipients = []
-
-        cc_header = ", ".join(cc_recipients) if cc_recipients else None
-
-        subject = email_data.get("subject") or "Meeting coordination"
-        if not subject.lower().startswith("re:"):
-            subject = f"Re: {subject}"
-
-        try:
-            gmail_service.send_email(
-                to_header,
-                subject,
-                text_body=reply_text,
-                thread_id=email_data.get("thread_id"),
-                reply_to_message_id=email_data.get("message_id"),
-                cc=cc_header,
-            )
-        except Exception as send_exc:
-            logger.warning(
-                "Failed to send scheduling reply for meeting_request %s: %s",
-                meeting_request.id,
-                send_exc,
-            )
+            to_header = ", ".join(sorted(recipients))
+            try:
+                gmail_service.send_email(
+                    to_header,
+                    subject,
+                    text_body=reply_text,
+                    thread_id=email_data.get("thread_id"),
+                    reply_to_message_id=email_data.get("message_id"),
+                )
+            except Exception as send_exc:
+                logger.warning(
+                    "Failed to send scheduling reply for meeting_request %s: %s",
+                    meeting_request.id,
+                    send_exc,
+                )
 
     return {
         "meeting_request_id": meeting_request.id,

@@ -163,11 +163,12 @@ def run_meeting_scheduler_agent(
     current_date = meeting_context.get("current_date") or datetime.utcnow().date().isoformat()
     owner_email = meeting_context.get("owner_email") or "[unknown]"
     owner_name = meeting_context.get("owner_name") or owner_email
-    system_prompt = SCHEDULER_SYSTEM_PROMPT_TEMPLATE.format(
-        owner_name=owner_name,
-        owner_email=owner_email,
-        timezone=timezone,
-        current_date=current_date,
+    system_prompt = (
+        SCHEDULER_SYSTEM_PROMPT_TEMPLATE
+        .replace("{owner_name}", owner_name)
+        .replace("{owner_email}", owner_email)
+        .replace("{timezone}", timezone)
+        .replace("{current_date}", current_date)
     )
 
     payload = f"""
