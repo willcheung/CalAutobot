@@ -2,7 +2,7 @@ import logging
 import json
 from datetime import datetime
 from typing import List, Dict, Optional
-from app.models import User, Event, UserEmail, TextInput
+from app.models import User, Event, UserEmail, TextInput, MeetingRequest, MeetingMessage
 from app.services.event_processing import process_text_to_events
 from app.helpers.event_utils import format_event_for_api
 from app.helpers.domain_utils import get_base_url
@@ -75,6 +75,21 @@ def check_new_emails():
         logger.error(f"Error in Gmail email check after {duration:.2f}s: {str(e)}")
         sentry_sdk.capture_exception(e)
 
+def find_meeting_owner_by_thread(thread_id: Optional[str]) -> Optional[User]:
+    if not thread_id:
+        return None
+
+    meeting_request = (
+        MeetingRequest.query.join(MeetingMessage)
+        .filter(MeetingMessage.thread_id == thread_id)
+        .order_by(MeetingRequest.created_at.desc())
+        .first()
+    )
+    if meeting_request:
+        return meeting_request.user
+    return None
+
+
 def process_single_email(email_data: Dict) -> bool:
     """
     Process a single email from Gmail.
@@ -117,7 +132,28 @@ def process_single_email(email_data: Dict) -> bool:
         task_type = classify_email_task(classification_payload)
         logger.info(f"Classifier routed email {email_data.get('id')} to {task_type}")
 
+        thread_id = email_data.get("thread_id")
+        existing_owner = find_meeting_owner_by_thread(thread_id)
+
         user = db.session.query(User).filter_by(email=sender_email).first()
+
+        if existing_owner:
+            scheduling_payload = {
+                "sender": email_data.get("sender"),
+                "sender_name": email_data.get("sender_name"),
+                "subject": subject,
+                "body_text": body_text,
+                "body_html": email_data.get("body_html"),
+                "to": email_data.get("to") or [],
+                "cc": email_data.get("cc") or [],
+                "thread_id": thread_id,
+                "message_id": email_data.get("message_id"),
+                "received_at": email_data.get("received_at"),
+                "raw_headers": email_data.get("raw_headers"),
+                "attachments": attachments_info,
+            }
+            result = handle_scheduling_email(scheduling_payload, owner_user=existing_owner)
+            return result is not None
 
         if task_type == "schedule_meeting" or (task_type == "no_action" and (not user or user.google_id is None)):
             if not user:
