@@ -28,20 +28,26 @@ def _get_allowed_recipients() -> Set[str]:
     return {addr for addr in recipients if addr}
 
 
-def _recipient_is_allowed(recipient_header: Optional[str], allowed: Set[str]) -> bool:
-    if not allowed:
-        return True
-    if not recipient_header:
-        return False
-    # Gmail may return "Name <email>" or comma-separated values.
-    parts = [item.strip().lower() for item in recipient_header.replace(">", "").split(",")]
-    cleaned = []
+def _parse_recipients(header_value: Optional[str]) -> Set[str]:
+    if not header_value:
+        return set()
+    parts = [item.strip().lower() for item in header_value.replace(">", "").split(",")]
+    cleaned = set()
     for part in parts:
         if "<" in part:
-            cleaned.append(part.split("<")[-1].strip())
+            cleaned.add(part.split("<")[-1].strip())
         else:
-            cleaned.append(part.strip())
-    return any(recipient in allowed for recipient in cleaned if recipient)
+            cleaned.add(part.strip())
+    return {addr for addr in cleaned if addr}
+
+
+def _recipient_is_allowed(to_header: Optional[str], allowed: Set[str], cc_header: Optional[str] = None) -> bool:
+    if not allowed:
+        return True
+    addresses = _parse_recipients(to_header) | _parse_recipients(cc_header)
+    if not addresses:
+        return False
+    return any(addr in allowed for addr in addresses)
 
 
 def _acquire_state(email_address: str) -> GmailPushState:
@@ -220,13 +226,22 @@ def handle_history(
                 email_data = gmail_service.get_email_details(service, message_id)
                 if not email_data:
                     continue
-                if not _recipient_is_allowed(email_data.get("recipient"), allowed_recipients):
+
+                to_header = email_data.get("recipient")
+                cc_header = None
+                raw_headers = email_data.get("raw_headers")
+                if isinstance(raw_headers, dict):
+                    cc_header = raw_headers.get("cc")
+
+                if not _recipient_is_allowed(to_header, allowed_recipients, cc_header):
                     logger.debug(
-                        "Skipping Gmail message %s; recipient %s not allowed",
+                        "Skipping Gmail message %s; recipients %s/%s not allowed",
                         message_id,
-                        email_data.get("recipient"),
+                        to_header,
+                        cc_header,
                     )
                     continue
+
                 if process_single_email(email_data):
                     gmail_service.mark_as_read(email_data["id"])
             except Exception as exc:
