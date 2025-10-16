@@ -1,0 +1,66 @@
+from datetime import datetime
+
+import pytest
+
+from app import db
+from app.models import MeetingMessage, MeetingParticipant, MeetingRequest, TextInput, User
+from app.services.scheduling_agent import handle_scheduling_email
+
+
+def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
+    owner = User(
+        username="Owner",
+        email="owner@example.com",
+        timezone="UTC",
+        google_id="123",
+        google_token='{"access_token": "abc", "refresh_token": "def"}'
+    )
+    db.session.add(owner)
+    db.session.commit()
+
+    created_payloads = {}
+
+    def fake_create_event(user, data):
+        assert user.id == owner.id
+        created_payloads.update(data)
+        return "calendar-event-xyz"
+
+    monkeypatch.setattr("app.services.scheduling_agent.create_calendar_event", fake_create_event)
+
+    email_data = {
+        "sender": "owner@example.com",
+        "sender_name": "Owner",
+        "subject": "Project Sync",
+        "body_text": "Confirmed",
+        "body_html": "",
+        "to": ["owner@example.com"],
+        "cc": ["participant@example.com"],
+        "thread_id": "thread-1",
+        "message_id": "msg-1",
+        "received_at": datetime.utcnow(),
+        "raw_headers": {},
+        "attachments": [],
+    }
+
+    response = {
+        "meeting_request_id": None,
+        "reply": "",
+        "action": "confirm_slot",
+        "proposed_slots": [
+            {"start": "2025-02-01T10:00:00+00:00", "end": "2025-02-01T10:30:00+00:00"}
+        ],
+        "confirmed_slot": {
+            "start": "2025-02-01T10:00:00+00:00",
+            "end": "2025-02-01T10:30:00+00:00",
+        },
+        "notes": "",
+    }
+
+    monkeypatch.setattr("app.services.scheduling_agent.run_meeting_scheduler_agent", lambda *args, **kwargs: response)
+    monkeypatch.setattr("app.services.scheduling_agent.get_testing_availability", lambda *args, **kwargs: [])
+
+    handle_scheduling_email(email_data, owner)
+
+    assert created_payloads["event_name"] == "Project Sync"
+    assert created_payloads["start_datetime"] == "2025-02-01T10:00:00+00:00"
+    assert "owner@example.com" in created_payloads["attendees"]
