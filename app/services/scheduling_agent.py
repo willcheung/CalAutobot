@@ -314,10 +314,10 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                 text_body=reply_text,
                 thread_id=email_data.get("thread_id"),
                 reply_to_message_id=email_data.get("message_id"),
-                cc=cc_header,
+                cc_recipients=cc_recipients,
             )
         except Exception as send_exc:
-            logger.warning(
+            logger.error(
                 "Failed to send scheduling reply for meeting_request %s: %s",
                 meeting_request.id,
                 send_exc,

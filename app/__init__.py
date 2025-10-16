@@ -34,7 +34,7 @@ if sentry_dsn:
             SqlalchemyIntegration(),
             sentry_logging,
         ],
-        traces_sample_rate=0.1,
+        traces_sample_rate=1,
         send_default_pii=True,
         environment=os.environ.get("FLASK_ENV", "production"),
     )

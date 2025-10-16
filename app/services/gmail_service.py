@@ -1,7 +1,7 @@
 import os
 import logging
 import base64
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Iterable
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -562,6 +562,7 @@ class GmailService:
         text_body: Optional[str] = None,
         thread_id: Optional[str] = None,
         reply_to_message_id: Optional[str] = None,
+        cc_recipients: Optional[Iterable[str]] = None,
     ) -> bool:
         """
         Send an email using Gmail API.
@@ -595,6 +596,10 @@ class GmailService:
             message['To'] = to
             message['From'] = 'Cal AutoBot <cal@calautobot.com>'
             message['Subject'] = subject
+            if cc_recipients:
+                cc_header = ", ".join(sorted(addr for addr in cc_recipients if addr))
+                if cc_header:
+                    message['Cc'] = cc_header
 
             if reply_to_message_id:
                 message_id_value = reply_to_message_id

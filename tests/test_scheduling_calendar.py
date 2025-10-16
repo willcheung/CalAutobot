@@ -26,6 +26,13 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
         return "calendar-event-xyz"
 
     monkeypatch.setattr("app.services.scheduling_agent.create_calendar_event", fake_create_event)
+    captured_emails = []
+
+    def fake_send_email(to, subject, **kwargs):
+        captured_emails.append((to, subject, kwargs))
+        return True
+
+    monkeypatch.setattr("app.services.scheduling_agent.gmail_service.send_email", fake_send_email)
 
     email_data = {
         "sender": "owner@example.com",
@@ -64,3 +71,10 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     assert created_payloads["event_name"] == "Project Sync"
     assert created_payloads["start_datetime"] == "2025-02-01T10:00:00+00:00"
     assert "owner@example.com" in created_payloads["attendees"]
+    assert "participant@example.com" in created_payloads["attendees"]
+
+    assert captured_emails, "Expected scheduler to send a reply email"
+    to_header, subject, extra = captured_emails[-1]
+    assert to_header == "owner@example.com"
+    cc_list = sorted(extra.get("cc_recipients") or [])
+    assert cc_list == ["participant@example.com"]
