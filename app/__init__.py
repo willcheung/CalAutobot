@@ -12,34 +12,29 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-# Configure structured logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
-
 # Initialize Sentry for error tracking (only if DSN is provided)
 sentry_dsn = os.environ.get("SENTRY_DSN")
 if sentry_dsn:
     sentry_sdk.init(
         dsn=sentry_dsn,
-        integrations=[
-            FlaskIntegration(),
-            SqlalchemyIntegration(),
-        ],
         traces_sample_rate=1,
         # Enable logs to be sent to Sentry
         enable_logs=True,
         send_default_pii=True,
         environment=os.environ.get("FLASK_ENV", "production"),
     )
-    logger.info("Sentry error tracking initialized")
-else:
-    logger.info("No Sentry DSN provided, using local logging only")
+
+# Configure structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class Base(DeclarativeBase):
     pass
+
 
 db = SQLAlchemy(model_class=Base)
 
@@ -49,8 +44,10 @@ app = Flask(
     template_folder="templates",
     static_folder="static",
 )
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1) # needed for url_for to generate with https
+app.secret_key = os.environ.get("SESSION_SECRET",
+                                "dev-secret-key-change-in-production")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1,
+                        x_host=1)  # needed for url_for to generate with https
 
 # configure the database, relative to the app instance folder
 database_url = os.environ.get("DATABASE_URL")
@@ -89,6 +86,7 @@ else:
 # initialize the app with the extension, flask-sqlalchemy >= 3.0.x
 db.init_app(app)
 
+
 # Database health check function
 def check_db_connection():
     """Check if database connection is healthy and attempt to reconnect if needed"""
@@ -104,10 +102,12 @@ def check_db_connection():
             pass
         return False
 
+
 # Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'google_auth.login'
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -119,33 +119,43 @@ def load_user(user_id):
         sentry_sdk.capture_exception(e)
         return None
 
+
 # Global error handlers
 @app.errorhandler(404)
 def not_found_error(error):
     logger.warning(f"404 error: {request.url}")
-    return render_template('error.html', 
-                         error_code=404, 
-                         error_message="Page not found"), 404
+    return render_template('error.html',
+                           error_code=404,
+                           error_message="Page not found"), 404
+
 
 @app.errorhandler(405)
 def method_not_allowed_error(error):
     logger.error(f"❌ 405 Method Not Allowed: {request.method} {request.path}")
-    logger.error(f"❌ Available methods: {list(error.valid_methods) if hasattr(error, 'valid_methods') else 'Unknown'}")
+    logger.error(
+        f"❌ Available methods: {list(error.valid_methods) if hasattr(error, 'valid_methods') else 'Unknown'}"
+    )
     return jsonify({
-        'error': 'Method Not Allowed',
-        'method': request.method,
-        'path': request.path,
-        'valid_methods': list(error.valid_methods) if hasattr(error, 'valid_methods') else []
+        'error':
+        'Method Not Allowed',
+        'method':
+        request.method,
+        'path':
+        request.path,
+        'valid_methods':
+        list(error.valid_methods) if hasattr(error, 'valid_methods') else []
     }), 405
+
 
 @app.errorhandler(500)
 def internal_error(error):
     logger.error(f"500 error: {str(error)}")
     sentry_sdk.capture_exception(error)
     db.session.rollback()
-    return render_template('error.html', 
-                         error_code=500, 
-                         error_message="Internal server error"), 500
+    return render_template('error.html',
+                           error_code=500,
+                           error_message="Internal server error"), 500
+
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -156,14 +166,17 @@ def handle_exception(e):
     # Return JSON error for AJAX requests
     if request.is_json:
         return jsonify({
-            'error': 'An unexpected error occurred',
-            'message': str(e) if app.debug else 'Please try again later'
+            'error':
+            'An unexpected error occurred',
+            'message':
+            str(e) if app.debug else 'Please try again later'
         }), 500
 
     # Return HTML error page for regular requests
-    return render_template('error.html', 
-                         error_code=500, 
-                         error_message="An unexpected error occurred"), 500
+    return render_template('error.html',
+                           error_code=500,
+                           error_message="An unexpected error occurred"), 500
+
 
 with app.app_context():
     # Make sure to import the models here or their tables won't be created
@@ -183,7 +196,7 @@ with app.app_context():
     # Create all tables including the new UserEmail table
     db.create_all()
 
-    # Setup Chrome extension API routes  
+    # Setup Chrome extension API routes
     from app.routes.chrome_extension_api import setup_chrome_extension_routes
     setup_chrome_extension_routes(app)
 
