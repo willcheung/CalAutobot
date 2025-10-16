@@ -13,28 +13,31 @@
     <div class="card mb-4">
         <div class="card-body">
             <h5 class="card-title">Create new event type</h5>
-            <form method="post">
-                <div class="row g-3">
+            <form method="post" class="event-type-form">
+                <div class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label" for="title">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+                        <input type="text" class="form-control form-control-compact" id="title" name="title" required>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label" for="duration_minutes">Duration (minutes)</label>
-                        <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" value="30" min="5" step="5">
+                        <input type="number" class="form-control form-control-compact" id="duration_minutes" name="duration_minutes" value="30" min="5" step="5">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label" for="description">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" placeholder="Optional">
+                        <input type="text" class="form-control form-control-compact" id="description" name="description" placeholder="Optional">
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <div class="form-check">
+                    <div class="col-md-2">
+                        <label class="form-label" for="is_public">&nbsp;</label>
+                        <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="is_public" name="is_public" checked>
                             <label class="form-check-label" for="is_public">Public</label>
                         </div>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary mt-3">Create</button>
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary btn-compact">Create</button>
+                </div>
             </form>
         </div>
     </div>

@@ -58,7 +58,7 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     response = {
         "meeting_request_id": None,
-        "reply": "All set",
+        "reply": "",
         "action": "confirm_slot",
         "proposed_slots": [
             {"start": "2025-02-01T10:00:00+00:00", "end": "2025-02-01T10:30:00+00:00"}
@@ -75,10 +75,10 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     handle_scheduling_email(email_data, owner)
 
-    assert booking_call["user_id"] == owner.id
-    assert booking_call["title"] == "Project Sync"
-    assert booking_call["start"].isoformat() == "2025-02-01T10:00:00+00:00"
-    assert booking_call["invitee"] == "participant@example.com"
+    assert created_payloads["event_name"] == "Project Sync"
+    assert created_payloads["start_datetime"] == "2025-02-01T10:00:00+00:00"
+    assert "owner@example.com" in created_payloads["attendees"]
+    assert "participant@example.com" in created_payloads["attendees"]
 
     assert captured_emails, "Expected scheduler to send a reply email"
     to_header, subject, extra = captured_emails[-1]
