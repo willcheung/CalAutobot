@@ -11,8 +11,9 @@ from app.services.gmail_service import gmail_service
 
 logger = logging.getLogger(__name__)
 
-# Lock window keeps concurrent push deliveries from double-processing.
-LOCK_TIMEOUT_SECONDS = 120
+# Lock window keeps concurrent push deliveries from stepping on each other.
+# Keep it short so we rarely skip pushes yet still avoid parallel processing.
+LOCK_TIMEOUT_SECONDS = 5
 
 
 def _get_allowed_recipients() -> Set[str]:
