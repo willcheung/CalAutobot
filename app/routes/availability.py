@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime, time
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -53,8 +53,16 @@ def edit_availability():
         "Sunday",
     ]
 
+    time_options = []
+    for hour in range(24):
+        for minute in (0, 15, 30, 45):
+            value = f"{hour:02d}:{minute:02d}"
+            label = datetime.strptime(value, "%H:%M").strftime("%I:%M %p").lstrip("0")
+            time_options.append((value, label))
+
     return render_template(
         "availability/index.html",
         windows_by_day=windows_by_day,
         day_names=day_names,
+        time_options=time_options,
     )

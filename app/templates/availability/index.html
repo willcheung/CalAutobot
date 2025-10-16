@@ -22,20 +22,14 @@
 
                     <div class="availability-times">
                         <select class="form-select time-select" name="day-{{ weekday }}-start" aria-label="{{ day_name }} start time">
-                            {% for hour in range(0, 24) %}
-                                {% for minute in [0, 15, 30, 45] %}
-                                    {% set value = "%02d:%02d"|format(hour, minute) %}
-                                    <option value="{{ value }}" {% if (window and window.start_time.strftime('%H:%M') == value) or (not window and value == '09:00') %}selected{% endif %}>{{ (value|datetime('%H:%M')).strftime('%-I:%M %p') }}</option>
-                                {% endfor %}
+                            {% for value, label in time_options %}
+                                <option value="{{ value }}" {% if (window and window.start_time.strftime('%H:%M') == value) or (not window and value == '09:00') %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                         <span class="availability-separator">-</span>
                         <select class="form-select time-select" name="day-{{ weekday }}-end" aria-label="{{ day_name }} end time">
-                            {% for hour in range(0, 24) %}
-                                {% for minute in [0, 15, 30, 45] %}
-                                    {% set value = "%02d:%02d"|format(hour, minute) %}
-                                    <option value="{{ value }}" {% if (window and window.end_time.strftime('%H:%M') == value) or (not window and value == '17:00') %}selected{% endif %}>{{ (value|datetime('%H:%M')).strftime('%-I:%M %p') }}</option>
-                                {% endfor %}
+                            {% for value, label in time_options %}
+                                <option value="{{ value }}" {% if (window and window.end_time.strftime('%H:%M') == value) or (not window and value == '17:00') %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                     </div>
