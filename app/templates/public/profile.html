@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ user.username }} - Event Types{% endblock %}
+{% block title %}{{ user.display_name }} - Event Types{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <div class="public-profile-header card shadow-sm mb-4">
         <div class="card-body d-flex align-items-center gap-3">
-            <div class="profile-avatar">{{ user.username[:1] }}</div>
+            <div class="profile-avatar">{{ user.display_name[:1] }}</div>
             <div>
-                <h1 class="mb-1">{{ user.username }}</h1>
-                <p class="text-muted mb-0">{{ user.email }}</p>
+                <h1 class="mb-1">{{ user.display_name }}</h1>
+                <p class="text-muted mb-0">{{ user.display_name }}</p>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@
         <div class="card empty-state text-center py-5">
             <div class="card-body">
                 <h3>No event types setup</h3>
-                <p class="text-muted mb-0">{{ user.username }} has not created any public event types yet.</p>
+                <p class="text-muted mb-0">{{ user.display_name }} has not created any public event types yet.</p>
             </div>
         </div>
     {% endif %}

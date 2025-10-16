@@ -28,6 +28,7 @@ def profile_page(user_id):
         "public/profile.html",
         user=user,
         event_types=event_types,
+        display_sidebar=False,
     )
 
 
@@ -68,6 +69,7 @@ def event_type_page(user_id, slug):
             event_type=event_type,
             slot_start=slot_start,
             invitee_name=invitee_name,
+            display_sidebar=False,
         )
 
     date_str = request.args.get("date")
@@ -89,4 +91,5 @@ def event_type_page(user_id, slug):
         event_type=event_type,
         target_date=target_date,
         slots=slots_for_template,
+        display_sidebar=False,
     )

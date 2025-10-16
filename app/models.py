@@ -27,6 +27,14 @@ class User(UserMixin, db.Model):
     event_types = db.relationship('EventType', backref='user', lazy=True, cascade='all, delete-orphan')
     availability_windows = db.relationship('AvailabilityWindow', backref='user', lazy=True, cascade='all, delete-orphan')
 
+    @property
+    def display_name(self) -> str:
+        if self.username:
+            return self.username.strip()
+        if self.email:
+            return self.email.split("@")[0]
+        return "Guest"
+
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

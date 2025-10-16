@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-body">
                     <h2>{{ event_type.title }}</h2>
-                    <p class="text-muted mb-1">{{ user.username }}</p>
+                    <p class="text-muted mb-1">{{ user.display_name }}</p>
                     <p class="text-muted">Duration: {{ event_type.duration_minutes }} minutes</p>
                     {% if event_type.description %}<p>{{ event_type.description }}</p>{% endif %}
                 </div>
@@ -36,7 +36,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="invitee_name">Your name</label>
-                        <input type="text" class="form-control" id="invitee_name" name="invitee_name" value="{{ current_user.username if current_user.is_authenticated else '' }}" required>
+                        <input type="text" class="form-control" id="invitee_name" name="invitee_name" value="{{ current_user.display_name if current_user.is_authenticated else '' }}" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="invitee_email">Email</label>
