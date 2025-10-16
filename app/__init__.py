@@ -3,6 +3,7 @@ import logging
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -14,18 +15,24 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 # Configure structured logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 # Initialize Sentry for error tracking (only if DSN is provided)
 sentry_dsn = os.environ.get("SENTRY_DSN")
 if sentry_dsn:
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,
+        event_level=logging.ERROR,
+    )
+
     sentry_sdk.init(
         dsn=sentry_dsn,
         integrations=[
             FlaskIntegration(),
             SqlalchemyIntegration(),
+            sentry_logging,
         ],
         traces_sample_rate=0.1,
         send_default_pii=True,
