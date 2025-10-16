@@ -43,7 +43,18 @@ def edit_availability():
         if window.is_active:
             windows_by_day[window.weekday] = window
 
+    day_names = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+
     return render_template(
         "availability/index.html",
         windows_by_day=windows_by_day,
+        day_names=day_names,
     )

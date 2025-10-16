@@ -2,34 +2,66 @@
 {% block title %}Availability{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <h1>Weekly Availability</h1>
-    <form method="post" class="mt-4">
-        <div class="row row-cols-1 row-cols-md-2 g-3">
+    <div class="availability-panel card shadow-sm">
+        <div class="availability-header">
+            <div>
+                <h1 class="availability-title">Weekly Availability</h1>
+                <p class="text-muted mb-0">Set your default meeting hours by day.</p>
+            </div>
+        </div>
+
+        <form method="post" class="availability-body">
             {% for weekday in range(7) %}
                 {% set window = windows_by_day[weekday] %}
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <div class="form-check form-switch mb-3">
-                                <input class="form-check-input" type="checkbox" id="day-{{ weekday }}-enabled" name="day-{{ weekday }}-enabled" {% if window %}checked{% endif %}>
-                                <label class="form-check-label" for="day-{{ weekday }}-enabled">{{ ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][weekday] }}</label>
-                            </div>
-                            <div class="row g-2">
-                                <div class="col">
-                                    <label class="form-label" for="day-{{ weekday }}-start">Start</label>
-                                    <input type="time" class="form-control" id="day-{{ weekday }}-start" name="day-{{ weekday }}-start" value="{{ window.start_time.strftime('%H:%M') if window else '09:00' }}">
-                                </div>
-                                <div class="col">
-                                    <label class="form-label" for="day-{{ weekday }}-end">End</label>
-                                    <input type="time" class="form-control" id="day-{{ weekday }}-end" name="day-{{ weekday }}-end" value="{{ window.end_time.strftime('%H:%M') if window else '17:00' }}">
-                                </div>
-                            </div>
+                {% set day_name = day_names[weekday] %}
+                <div class="availability-row" data-day="{{ weekday }}">
+                    <div class="availability-toggle">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input availability-switch" type="checkbox" id="day-{{ weekday }}-enabled" name="day-{{ weekday }}-enabled" {% if window %}checked{% endif %}>
+                            <label class="form-check-label" for="day-{{ weekday }}-enabled">{{ day_name }}</label>
                         </div>
                     </div>
+
+                    <div class="availability-times">
+                        <input type="time" class="form-control time-input" name="day-{{ weekday }}-start" value="{{ window.start_time.strftime('%H:%M') if window else '09:00' }}" aria-label="{{ day_name }} start time" step="900">
+                        <span class="availability-separator">-</span>
+                        <input type="time" class="form-control time-input" name="day-{{ weekday }}-end" value="{{ window.end_time.strftime('%H:%M') if window else '17:00' }}" aria-label="{{ day_name }} end time" step="900">
+                    </div>
+
+                    <button type="button" class="btn btn-light btn-sm copy-timeslot-btn" data-day="{{ weekday }}" aria-label="Copy {{ day_name }} times">
+                        <i data-feather="copy"></i>
+                    </button>
                 </div>
             {% endfor %}
-        </div>
-        <button type="submit" class="btn btn-primary mt-3">Save availability</button>
-    </form>
+
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-primary">Save availability</button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<template id="copy-times-popover-template">
+    <div class="copy-times-popover card shadow-sm">
+        <div class="card-body">
+            <h6 class="mb-2">Copy times to</h6>
+            <div class="copy-times-list">
+                <div class="form-check">
+                    <input class="form-check-input copy-select-all" type="checkbox" id="copy-select-all">
+                    <label class="form-check-label" for="copy-select-all">Select All</label>
+                </div>
+                {% for weekday in range(7) %}
+                    <div class="form-check">
+                        <input class="form-check-input copy-target" type="checkbox" value="{{ weekday }}" id="copy-day-{{ weekday }}">
+                        <label class="form-check-label" for="copy-day-{{ weekday }}">{{ day_names[weekday] }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-link btn-sm copy-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm copy-apply">Apply</button>
+            </div>
+        </div>
+    </div>
+</template>
 {% endblock %}

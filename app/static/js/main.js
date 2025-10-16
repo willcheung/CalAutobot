@@ -121,6 +121,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load draft on page load
         loadDraft();
     }
+
+    initAvailabilityCopyPopover();
 });
 
 // Helper function to auto-resize textareas
@@ -200,6 +202,171 @@ function showToast(message, type = 'info') {
             toast.remove();
         }
     }, 5000);
+}
+
+function initAvailabilityCopyPopover() {
+    const template = document.getElementById('copy-times-popover-template');
+    const copyButtons = document.querySelectorAll('.copy-timeslot-btn');
+    if (!template || copyButtons.length === 0) {
+        return;
+    }
+
+    let popover;
+    let activeDay = null;
+    let currentButton = null;
+
+    function ensurePopover() {
+        if (popover) {
+            return popover;
+        }
+        const instance = template.content.firstElementChild.cloneNode(true);
+        document.body.appendChild(instance);
+        popover = instance;
+        popover.classList.add('d-none');
+
+        const cancelBtn = popover.querySelector('.copy-cancel');
+        const applyBtn = popover.querySelector('.copy-apply');
+        const selectAll = popover.querySelector('.copy-select-all');
+        const checkboxes = Array.from(popover.querySelectorAll('.copy-target'));
+
+        cancelBtn.addEventListener('click', closePopover);
+        applyBtn.addEventListener('click', () => applyCopy(checkboxes));
+
+        selectAll.addEventListener('change', () => {
+            checkboxes.forEach(cb => {
+                if (cb.disabled) {
+                    return;
+                }
+                cb.checked = selectAll.checked;
+            });
+        });
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const eligible = checkboxes.filter(item => !item.disabled);
+                if (eligible.length === 0) {
+                    selectAll.checked = false;
+                    return;
+                }
+                const allChecked = eligible.every(item => item.checked);
+                selectAll.checked = allChecked;
+            });
+        });
+
+        return popover;
+    }
+
+    function applyCopy(checkboxes) {
+        if (activeDay === null) {
+            closePopover();
+            return;
+        }
+
+        const sourceStart = document.querySelector(`[name="day-${activeDay}-start"]`);
+        const sourceEnd = document.querySelector(`[name="day-${activeDay}-end"]`);
+        if (!sourceStart || !sourceEnd) {
+            closePopover();
+            return;
+        }
+
+        checkboxes.forEach(cb => {
+            if (!cb.checked || cb.disabled) {
+                return;
+            }
+            const targetDay = parseInt(cb.value, 10);
+            if (Number.isNaN(targetDay)) {
+                return;
+            }
+            const startInput = document.querySelector(`[name="day-${targetDay}-start"]`);
+            const endInput = document.querySelector(`[name="day-${targetDay}-end"]`);
+            const toggle = document.getElementById(`day-${targetDay}-enabled`);
+            if (startInput && endInput) {
+                startInput.value = sourceStart.value;
+                endInput.value = sourceEnd.value;
+            }
+            if (toggle) {
+                toggle.checked = true;
+            }
+        });
+
+        closePopover();
+    }
+
+    function positionPopover(button) {
+        const instance = ensurePopover();
+        instance.classList.remove('d-none');
+        const rect = button.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+        const top = rect.bottom + scrollTop + 8;
+        let left = rect.left + scrollLeft - (instance.offsetWidth / 2) + (rect.width / 2);
+        const maxLeft = document.documentElement.clientWidth - instance.offsetWidth - 16;
+        left = Math.max(16, Math.min(left, maxLeft));
+
+        instance.style.top = `${top}px`;
+        instance.style.left = `${left}px`;
+    }
+
+    function closePopover() {
+        if (!popover) {
+            return;
+        }
+        popover.classList.add('d-none');
+        activeDay = null;
+        currentButton = null;
+    }
+
+    function updateCheckboxStates() {
+        const instance = ensurePopover();
+        const checkboxes = Array.from(instance.querySelectorAll('.copy-target'));
+        const selectAll = instance.querySelector('.copy-select-all');
+        checkboxes.forEach(cb => {
+            const value = parseInt(cb.value, 10);
+            if (value === activeDay) {
+                cb.disabled = true;
+                cb.checked = false;
+            } else {
+                cb.disabled = false;
+                cb.checked = false;
+            }
+        });
+        if (selectAll) {
+            selectAll.checked = false;
+        }
+    }
+
+    copyButtons.forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            const day = parseInt(button.dataset.day, 10);
+            if (Number.isNaN(day)) {
+                return;
+            }
+            activeDay = day;
+            currentButton = button;
+            ensurePopover();
+            updateCheckboxStates();
+            positionPopover(button);
+        });
+    });
+
+    document.addEventListener('click', event => {
+        if (!popover || popover.classList.contains('d-none')) {
+            return;
+        }
+        if (popover.contains(event.target) || (currentButton && currentButton.contains(event.target))) {
+            return;
+        }
+        closePopover();
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closePopover();
+        }
+    });
 }
 
 // Get or create toast container

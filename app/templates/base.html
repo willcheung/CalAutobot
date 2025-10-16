@@ -40,77 +40,68 @@
 <body>
     {% block banner %}{% endblock %}
     
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main_routes.index') }}">
-                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="calAutobot.com" class="me-2" width="32" height="32">
-                <span class="fw-semibold">Calendar Autobot</span>
-            </a>
-            
-            <div class="navbar-nav ms-auto d-flex flex-row">
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a class="sidebar-brand" href="{{ url_for('main_routes.index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="calAutobot.com" width="38" height="38">
+                    <span>Calendar Autobot</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
                 {% if current_user.is_authenticated %}
-                    <a class="nav-link me-2" href="{{ url_for('main_routes.dashboard') }}">
+                    <a class="sidebar-link" href="{{ url_for('main_routes.dashboard') }}">
                         <i data-feather="grid"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a class="nav-link me-2" href="{{ url_for('event_types_routes.list_event_types') }}">
+                    <a class="sidebar-link" href="{{ url_for('event_types_routes.list_event_types') }}">
                         <i data-feather="calendar"></i>
                         <span>Event Types</span>
                     </a>
-                    <a class="nav-link me-2" href="{{ url_for('availability_routes.edit_availability') }}">
+                    <a class="sidebar-link" href="{{ url_for('availability_routes.edit_availability') }}">
                         <i data-feather="clock"></i>
                         <span>Availability</span>
                     </a>
-                    <a class="nav-link me-2" href="{{ url_for('settings_routes.profile_settings') }}">
+                    <a class="sidebar-link" href="{{ url_for('settings_routes.profile_settings') }}">
                         <i data-feather="settings"></i>
                         <span>Settings</span>
                     </a>
-                    <!--<a class="nav-link me-2" href="{{ url_for('google_auth.login') }}" title="Refresh Google Calendar access">
-                        <i data-feather="refresh-cw"></i>
-                        <span>Refresh Google Access</span>
-                    </a>-->
-                    <a class="nav-link" href="{{ url_for('google_auth.logout') }}">
+                    <a class="sidebar-link sidebar-link-danger" href="{{ url_for('google_auth.logout') }}">
                         <i data-feather="log-out"></i>
                         <span>Logout</span>
                     </a>
                 {% else %}
-                    <a class="google-signin-btn me-2" href="#" onclick="startGoogleLogin(); return false;">
-                        <svg class="google-icon" viewBox="0 0 24 24" width="18" height="18">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Sign in with Google
+                    <a class="sidebar-cta" href="#" onclick="startGoogleLogin(); return false;">
+                        <span>Sign in with Google</span>
                     </a>
-                    <a class="chrome-extension-btn" href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank">
-                        <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                        Chrome Extension
+                    <a class="sidebar-cta" href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank">
+                        <span>Get Chrome Extension</span>
                     </a>
                 {% endif %}
-            </div>
-        </div>
-    </nav>
+            </nav>
+        </aside>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="layout-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="container mt-3">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+                {% endif %}
+            {% endwith %}
 
-    <!-- Main Content -->
-    <main class="main-content">
-        {% block content %}{% endblock %}
-    </main>
+            <!-- Main Content -->
+            <main class="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer mt-5">
