@@ -28,6 +28,7 @@ if sentry_dsn:
             SqlalchemyIntegration(),
         ],
         traces_sample_rate=0.1,
+        send_default_pii=True,
         environment=os.environ.get("FLASK_ENV", "production"),
     )
     logger.info("Sentry error tracking initialized")

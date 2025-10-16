@@ -209,10 +209,19 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         availability=availability,
     )
 
+    logger.info(
+        "Scheduler agent result for meeting_request %s: action=%s proposed=%s confirmed=%s",
+        meeting_request.id,
+        agent_result.get("action"),
+        agent_result.get("proposed_slots"),
+        agent_result.get("confirmed_slot"),
+    )
+
     action = agent_result.get("action")
     meeting_request.proposed_slots = agent_result.get("proposed_slots")
     meeting_request.confirmed_slot = agent_result.get("confirmed_slot")
     text_input.processing_status = "completed"
+    meeting_request.current_step = action
 
     if action == "confirm_slot" and meeting_request.confirmed_slot:
         meeting_request.status = "confirmed"
@@ -262,9 +271,10 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                         calendar_err,
                     )
             else:
-                logger.warning(
-                    "Confirmed slot missing start/end for meeting_request %s; skipping calendar creation",
+                logger.error(
+                    "Confirmed slot missing start/end for meeting_request %s; payload=%s",
                     meeting_request.id,
+                    event_payload,
                 )
 
     db.session.commit()
