@@ -223,16 +223,9 @@
     background: #ffffff;
 }
 
-.availability-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 24px 28px 8px;
-}
 
-.availability-title {
-    font-size: 1.5rem;
-    margin-bottom: 0.25rem;
+.availability-header {
+    padding: 24px 28px 8px;
 }
 
 .availability-body {
@@ -242,8 +235,8 @@
 .availability-row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px 8px;
+    gap: 12px;
+    padding: 10px 4px;
     border-bottom: 1px solid #edf0f5;
 }
 
@@ -252,13 +245,13 @@
 }
 
 .availability-toggle {
-    min-width: 150px;
+    min-width: 135px;
 }
 
 .availability-times {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     flex: 1;
 }
 
@@ -267,16 +260,19 @@
     color: #5a6473;
 }
 
-.time-input {
-    max-width: 140px;
+.time-select {
+    max-width: 132px;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.95rem;
 }
 
 .copy-timeslot-btn {
-    border-radius: 50%;
+    border-radius: 12px;
     border: 1px solid #dbe0e7;
     background: #f7f8fa;
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1458,4 +1454,27 @@ code, pre {
         box-shadow: none;
         border: 1px solid var(--border-color);
     }
+}
+.public-profile-header {
+    border: none;
+    border-radius: 16px;
+}
+
+.profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #fff;
+    font-size: 1.25rem;
+}
+
+.empty-state {
+    border: none;
+    border-radius: 16px;
+    background: #f5f7fb;
 }

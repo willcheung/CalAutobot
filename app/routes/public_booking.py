@@ -23,8 +23,6 @@ def profile_page(user_id):
         .order_by(EventType.duration_minutes.asc())
         .all()
     )
-    if not event_types:
-        abort(404)
 
     return render_template(
         "public/profile.html",
