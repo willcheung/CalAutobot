@@ -16,6 +16,7 @@ from app.agents.meeting_scheduler import (
     run_meeting_scheduler_agent,
 )
 from app.helpers.text_processing import sanitize_text_for_db
+from app.services.google_calendar import create_calendar_event
 from app.services.gmail_service import gmail_service
 
 logger = logging.getLogger(__name__)
@@ -220,46 +221,97 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     else:
         meeting_request.status = "proposed"
 
+    calendar_event_id = None
+    if action == "confirm_slot" and meeting_request.confirmed_slot:
+        confirmed_info = meeting_request.confirmed_slot or {}
+        existing_event_id = None
+        if isinstance(confirmed_info, dict):
+            existing_event_id = confirmed_info.get("google_event_id")
+
+        if not existing_event_id:
+            attendees = {p.email for p in meeting_request.participants if p.email}
+            attendees.add(user.email)
+            attendees = sorted(attendees)
+
+            description = _build_calendar_description(history, user.username or user.email, user.email)
+            event_payload = {
+                "event_name": meeting_request.subject or "Meeting",
+                "event_description": description,
+                "start_datetime": confirmed_info.get("start"),
+                "end_datetime": confirmed_info.get("end"),
+                "location": None,
+                "attendees": attendees,
+            }
+
+            if event_payload["start_datetime"] and event_payload["end_datetime"]:
+                try:
+                    calendar_event_id = create_calendar_event(user, event_payload)
+                    if calendar_event_id:
+                        logger.info(
+                            "Scheduler created calendar event %s for meeting_request %s",
+                            calendar_event_id,
+                            meeting_request.id,
+                        )
+                        updated_confirmed = dict(confirmed_info)
+                        updated_confirmed["google_event_id"] = calendar_event_id
+                        meeting_request.confirmed_slot = updated_confirmed
+                except Exception as calendar_err:
+                    logger.warning(
+                        "Failed to create calendar event for meeting_request %s: %s",
+                        meeting_request.id,
+                        calendar_err,
+                    )
+            else:
+                logger.warning(
+                    "Confirmed slot missing start/end for meeting_request %s; skipping calendar creation",
+                    meeting_request.id,
+                )
+
     db.session.commit()
 
     reply_text = agent_result.get("reply")
     if reply_text:
-        recipients = set()
+        all_participants = {p.email for p in meeting_request.participants}
+        all_participants.add(user.email)
+
         sender_addr = (email_data.get("sender") or "").strip().lower()
         if sender_addr:
-            recipients.add(sender_addr)
+            all_participants.add(sender_addr)
+
         for field in ("to", "cc"):
             for addr in email_data.get(field) or []:
                 clean = addr.strip()
                 if clean:
-                    recipients.add(clean)
+                    all_participants.add(clean.lower())
+
         for assistant in ASSISTANT_EMAILS:
-            recipients.discard(assistant)
-        if user.email in recipients:
-            pass
-        else:
-            recipients.add(user.email)
+            all_participants.discard(assistant)
 
-        if recipients:
-            subject = email_data.get("subject") or "Meeting coordination"
-            if not subject.lower().startswith("re:"):
-                subject = f"Re: {subject}"
+        owner_email = user.email
+        other_participants = sorted(addr for addr in all_participants if addr != owner_email)
 
-            to_header = ", ".join(sorted(recipients))
-            try:
-                gmail_service.send_email(
-                    to_header,
-                    subject,
-                    text_body=reply_text,
-                    thread_id=email_data.get("thread_id"),
-                    reply_to_message_id=email_data.get("message_id"),
-                )
-            except Exception as send_exc:
-                logger.warning(
-                    "Failed to send scheduling reply for meeting_request %s: %s",
-                    meeting_request.id,
-                    send_exc,
-                )
+        to_header = owner_email
+        cc_header = ", ".join(other_participants) if other_participants else None
+
+        subject = email_data.get("subject") or "Meeting coordination"
+        if not subject.lower().startswith("re:"):
+            subject = f"Re: {subject}"
+
+        try:
+            gmail_service.send_email(
+                to_header,
+                subject,
+                text_body=reply_text,
+                thread_id=email_data.get("thread_id"),
+                reply_to_message_id=email_data.get("message_id"),
+                cc=cc_header,
+            )
+        except Exception as send_exc:
+            logger.warning(
+                "Failed to send scheduling reply for meeting_request %s: %s",
+                meeting_request.id,
+                send_exc,
+            )
 
     return {
         "meeting_request_id": meeting_request.id,
@@ -269,3 +321,23 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         "confirmed_slot": meeting_request.confirmed_slot,
         "notes": agent_result.get("notes"),
     }
+def _build_calendar_description(history: List[Dict[str, str]], owner_name: str, owner_email: str) -> str:
+    if not history:
+        return f"Coordinated by Cal on behalf of {owner_name} ({owner_email})."
+
+    lines = [
+        f"Coordinated by Cal on behalf of {owner_name} ({owner_email}).",
+        "",
+        "Conversation summary:" ,
+    ]
+
+    for entry in history[-5:]:
+        sender = entry.get("sender") or "unknown"
+        timestamp = entry.get("timestamp") or ""
+        body = (entry.get("body") or "").strip()
+        lines.append(f"- {timestamp} — {sender} wrote:")
+        if body:
+            lines.append(body)
+        lines.append("")
+
+    return "\n".join(lines).strip()

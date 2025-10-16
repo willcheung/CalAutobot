@@ -298,6 +298,14 @@ def create_calendar_event(user, event_data):
         if event_data.get('location'):
             calendar_event["location"] = event_data['location']
 
+        # Add attendees if provided
+        attendees = event_data.get('attendees') or []
+        if attendees:
+            calendar_event["attendees"] = [
+                {"email": attendee_email}
+                for attendee_email in attendees
+            ]
+
         # Make API request to Google Calendar
         headers = {
             'Authorization': f'Bearer {access_token}',
