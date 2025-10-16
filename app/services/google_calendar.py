@@ -301,10 +301,12 @@ def create_calendar_event(user, event_data):
         # Add attendees if provided
         attendees = event_data.get('attendees') or []
         if attendees:
-            calendar_event["attendees"] = [
-                {"email": attendee_email}
-                for attendee_email in attendees
-            ]
+            calendar_event["attendees"] = []
+            for attendee_email in attendees:
+                attendee_entry = {"email": attendee_email}
+                if attendee_email.lower() == (user.email or "").lower():
+                    attendee_entry["responseStatus"] = "accepted"
+                calendar_event["attendees"].append(attendee_entry)
 
         # Make API request to Google Calendar
         headers = {
@@ -316,6 +318,7 @@ def create_calendar_event(user, event_data):
         response = requests.post(
             f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events',
             headers=headers,
+            params={"sendUpdates": "all"},
             data=json.dumps(calendar_event),
             timeout=30
         )
