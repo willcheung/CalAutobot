@@ -1497,3 +1497,27 @@ code, pre {
 .event-type-form .form-check-label {
     font-size: 0.95rem;
 }
+
+.visibility-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid #dbe0e7;
+    background: #f7f8fa;
+    border-radius: 12px;
+    color: #333;
+}
+
+.visibility-toggle .visibility-pill {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.visibility-toggle[data-state="hidden"] {
+    background: #f1f2f6;
+}

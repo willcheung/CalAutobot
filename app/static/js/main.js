@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     initAvailabilityCopyPopover();
+    initVisibilityToggle();
 });
 
 // Helper function to auto-resize textareas
@@ -366,6 +367,37 @@ function initAvailabilityCopyPopover() {
         if (event.key === 'Escape') {
             closePopover();
         }
+    });
+}
+
+function initVisibilityToggle() {
+    const toggles = document.querySelectorAll('.visibility-toggle');
+    if (toggles.length === 0) {
+        return;
+    }
+
+    toggles.forEach(toggle => {
+        const hiddenInput = toggle.querySelector('input[type="hidden"]');
+        const pill = toggle.querySelector('.visibility-pill');
+        function updateState(isPublic) {
+            toggle.dataset.state = isPublic ? 'public' : 'hidden';
+            if (pill) {
+                pill.textContent = isPublic ? 'Public' : 'Hidden';
+            }
+            toggle.setAttribute('title', isPublic ? 'Hide from profile' : 'Show on profile');
+            if (hiddenInput) {
+                hiddenInput.value = isPublic ? 'true' : 'false';
+            }
+        }
+
+        const initial = toggle.dataset.initial === 'public';
+        updateState(initial);
+
+        toggle.addEventListener('click', event => {
+            event.preventDefault();
+            const isPublic = hiddenInput.value !== 'true';
+            updateState(isPublic);
+        });
     });
 }
 
