@@ -109,6 +109,18 @@ login_manager.init_app(app)
 login_manager.login_view = 'google_auth.login'
 
 
+# Custom Jinja2 filters
+@app.template_filter('datetime')
+def datetime_filter(time_str, format='%H:%M'):
+    """Convert a time string to a datetime object for formatting"""
+    from datetime import datetime
+    try:
+        return datetime.strptime(time_str, format)
+    except Exception as e:
+        logger.warning(f"Error parsing time string '{time_str}': {e}")
+        return datetime.strptime('00:00', '%H:%M')
+
+
 @login_manager.user_loader
 def load_user(user_id):
     from app.models import User
