@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Event Types{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Event Types</h1>
+        <a href="{{ url_for('public_booking.profile_page', user_id=current_user.id) }}" class="btn btn-outline-secondary" target="_blank">View public page</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Create new event type</h5>
+            <form method="post">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="title">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="duration_minutes">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" value="30" min="5" step="5">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="description">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" placeholder="Optional">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_public" name="is_public" checked>
+                            <label class="form-check-label" for="is_public">Public</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Create</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Existing event types</h5>
+            {% if event_types %}
+                <div class="list-group">
+                    {% for item in event_types %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ item.title }} <small class="text-muted">({{ item.duration_minutes }} minutes)</small></h6>
+                                <div>
+                                    <span class="badge bg-light text-dark">
+                                        <a href="{{ url_for('public_booking.event_type_page', user_id=current_user.id, slug=item.slug) }}" target="_blank" class="text-decoration-none">Public link</a>
+                                    </span>
+                                    {% if not item.is_public %}<span class="badge bg-secondary">Private</span>{% endif %}
+                                    {% if not item.is_active %}<span class="badge bg-warning text-dark">Inactive</span>{% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('event_types_routes.edit_event_type', event_type_id=item.id) }}">Edit</a>
+                                <form class="d-inline" method="post" action="{{ url_for('event_types_routes.toggle_event_type', event_type_id=item.id) }}">
+                                    <input type="hidden" name="is_active" value="{% if item.is_active %}false{% else %}true{% endif %}">
+                                    <button class="btn btn-sm btn-outline-secondary" type="submit">
+                                        {% if item.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </form>
+                                <form class="d-inline" method="post" action="{{ url_for('event_types_routes.delete_event_type', event_type_id=item.id) }}" onsubmit="return confirm('Delete this event type?');">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No event types yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

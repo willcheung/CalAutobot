@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Availability{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Weekly Availability</h1>
+    <form method="post" class="mt-4">
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            {% for weekday in range(7) %}
+                {% set window = windows_by_day[weekday] %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="day-{{ weekday }}-enabled" name="day-{{ weekday }}-enabled" {% if window %}checked{% endif %}>
+                                <label class="form-check-label" for="day-{{ weekday }}-enabled">{{ ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][weekday] }}</label>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <label class="form-label" for="day-{{ weekday }}-start">Start</label>
+                                    <input type="time" class="form-control" id="day-{{ weekday }}-start" name="day-{{ weekday }}-start" value="{{ window.start_time.strftime('%H:%M') if window else '09:00' }}">
+                                </div>
+                                <div class="col">
+                                    <label class="form-label" for="day-{{ weekday }}-end">End</label>
+                                    <input type="time" class="form-control" id="day-{{ weekday }}-end" name="day-{{ weekday }}-end" value="{{ window.end_time.strftime('%H:%M') if window else '17:00' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Save availability</button>
+    </form>
+</div>
+{% endblock %}

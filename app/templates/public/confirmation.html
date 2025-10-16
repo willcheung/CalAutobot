@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Meeting Confirmed{% endblock %}
+{% block content %}
+<div class="container mt-4 text-center">
+    <div class="card mx-auto" style="max-width: 480px;">
+        <div class="card-body">
+            <h2 class="card-title">You're booked!</h2>
+            <p class="card-text">{{ event_type.title }} with {{ user.username }}</p>
+            <p class="card-text"><strong>{{ slot_start.strftime('%A, %B %d %Y at %I:%M %p') }}</strong></p>
+            <p class="card-text">Invitee: {{ invitee_name }}</p>
+            <a class="btn btn-primary" href="{{ url_for('public_booking.profile_page', user_id=user.id) }}">Back to event types</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
