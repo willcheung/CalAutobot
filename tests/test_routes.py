@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from uuid import uuid4
 
 from app import db
 from app.models import User
@@ -11,7 +12,7 @@ def login(client, user_id):
 
 
 def test_extract_events_route_success(monkeypatch, client, app_context):
-    user = User(username="route-user", email="route@example.com", timezone="UTC")
+    user = User(username="route-user", email=f"route-{uuid4().hex}@example.com", timezone="UTC")
     db.session.add(user)
     db.session.commit()
 
@@ -46,7 +47,7 @@ def test_extract_events_route_success(monkeypatch, client, app_context):
 
 
 def test_api_extract_events_returns_payload(monkeypatch, client, app_context):
-    user = User(username="api-user", email="api@example.com", timezone="UTC")
+    user = User(username="api-user", email=f"api-{uuid4().hex}@example.com", timezone="UTC")
     db.session.add(user)
     db.session.commit()
 

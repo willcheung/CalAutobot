@@ -1,4 +1,5 @@
 from datetime import datetime
+from types import SimpleNamespace
 
 import pytest
 
@@ -18,14 +19,20 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     db.session.add(owner)
     db.session.commit()
 
-    created_payloads = {}
+    booking_call = {}
 
-    def fake_create_event(user, data):
-        assert user.id == owner.id
-        created_payloads.update(data)
-        return "calendar-event-xyz"
+    def fake_create_booking_event(user, event_type, start_dt, invitee_name, invitee_email, notes):
+        booking_call.update(
+            {
+                "user_id": user.id,
+                "title": event_type.title,
+                "start": start_dt,
+                "invitee": invitee_email,
+            }
+        )
+        return SimpleNamespace(google_event_id="calendar-event-xyz")
 
-    monkeypatch.setattr("app.services.scheduling_agent.create_calendar_event", fake_create_event)
+    monkeypatch.setattr("app.services.scheduling_agent.create_booking_event", fake_create_booking_event)
     captured_emails = []
 
     def fake_send_email(to, subject, **kwargs):
@@ -51,7 +58,7 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     response = {
         "meeting_request_id": None,
-        "reply": "",
+        "reply": "All set",
         "action": "confirm_slot",
         "proposed_slots": [
             {"start": "2025-02-01T10:00:00+00:00", "end": "2025-02-01T10:30:00+00:00"}
@@ -68,10 +75,10 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     handle_scheduling_email(email_data, owner)
 
-    assert created_payloads["event_name"] == "Project Sync"
-    assert created_payloads["start_datetime"] == "2025-02-01T10:00:00+00:00"
-    assert "owner@example.com" in created_payloads["attendees"]
-    assert "participant@example.com" in created_payloads["attendees"]
+    assert booking_call["user_id"] == owner.id
+    assert booking_call["title"] == "Project Sync"
+    assert booking_call["start"].isoformat() == "2025-02-01T10:00:00+00:00"
+    assert booking_call["invitee"] == "participant@example.com"
 
     assert captured_emails, "Expected scheduler to send a reply email"
     to_header, subject, extra = captured_emails[-1]

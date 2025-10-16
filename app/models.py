@@ -24,6 +24,8 @@ class User(UserMixin, db.Model):
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
     text_inputs = db.relationship('TextInput', backref='user', lazy=True, cascade='all, delete-orphan')
     additional_emails = db.relationship('UserEmail', backref='user', lazy=True, cascade='all, delete-orphan')
+    event_types = db.relationship('EventType', backref='user', lazy=True, cascade='all, delete-orphan')
+    availability_windows = db.relationship('AvailabilityWindow', backref='user', lazy=True, cascade='all, delete-orphan')
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -262,3 +264,33 @@ class CalWaitlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class EventType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    slug = db.Column(db.String(80), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    duration_minutes = db.Column(db.Integer, nullable=False, default=30)
+    is_active = db.Column(db.Boolean, default=True)
+    is_public = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'slug', name='uq_event_type_user_slug'),)
+
+
+class AvailabilityWindow(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    weekday = db.Column(db.Integer, nullable=False)  # 0 = Monday
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.CheckConstraint('weekday >= 0 AND weekday <= 6', name='ck_availability_weekday_range'),
+    )

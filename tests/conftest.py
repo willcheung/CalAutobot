@@ -5,8 +5,7 @@ import pytest
 
 # Ensure the application boots against a local SQLite database during import-time setup.
 DEFAULT_TEST_DB = pathlib.Path("pytest_bootstrap.db")
-if "DATABASE_URL" not in os.environ:
-    os.environ["DATABASE_URL"] = f"sqlite:///{DEFAULT_TEST_DB}"
+os.environ["DATABASE_URL"] = f"sqlite:///{DEFAULT_TEST_DB}"
 
 from app import app as flask_app, db  # noqa: E402
 

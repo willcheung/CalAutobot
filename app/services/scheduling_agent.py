@@ -1,6 +1,7 @@
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from typing import Dict, List, Optional
 
 from app import db
@@ -10,13 +11,15 @@ from app.models import (
     MeetingRequest,
     TextInput,
     User,
+    EventType,
 )
 from app.agents.meeting_scheduler import (
     get_testing_availability,
     run_meeting_scheduler_agent,
 )
 from app.helpers.text_processing import sanitize_text_for_db
-from app.services.google_calendar import create_calendar_event
+from app.services import availability as availability_service
+from app.services.public_booking import create_booking_event
 from app.services.gmail_service import gmail_service
 
 logger = logging.getLogger(__name__)
@@ -201,7 +204,28 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         "body": meeting_message.body_text or "",
     }
 
-    availability = get_testing_availability(user.timezone or "UTC")
+    availability = []
+    default_event_type = (
+        EventType.query.filter_by(user_id=user.id, is_active=True)
+        .order_by(EventType.duration_minutes.asc())
+        .first()
+    )
+
+    if default_event_type:
+        start_date = datetime.utcnow().date()
+        tz = availability_service.get_timezone(user)
+        for offset in range(7):
+            day = start_date + timedelta(days=offset)
+            slots = availability_service.get_slots_for_date(user, default_event_type, day)
+            for slot in slots:
+                availability.append({"start": slot.start.isoformat(), "end": slot.end.isoformat()})
+                if len(availability) >= 8:
+                    break
+            if len(availability) >= 8:
+                break
+
+    if not availability:
+        availability = get_testing_availability(user.timezone or "UTC")
     agent_result = run_meeting_scheduler_agent(
         agent_input,
         history,
@@ -238,44 +262,94 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             existing_event_id = confirmed_info.get("google_event_id")
 
         if not existing_event_id:
-            attendees = {p.email for p in meeting_request.participants if p.email}
-            attendees.add(user.email)
-            attendees = sorted(attendees)
+            start_iso = confirmed_info.get("start")
+            end_iso = confirmed_info.get("end")
 
-            description = _build_calendar_description(history, user.username or user.email, user.email)
-            event_payload = {
-                "event_name": meeting_request.subject or "Meeting",
-                "event_description": description,
-                "start_datetime": confirmed_info.get("start"),
-                "end_datetime": confirmed_info.get("end"),
-                "location": None,
-                "attendees": attendees,
-            }
-
-            if event_payload["start_datetime"] and event_payload["end_datetime"]:
-                try:
-                    calendar_event_id = create_calendar_event(user, event_payload)
-                    if calendar_event_id:
-                        logger.info(
-                            "Scheduler created calendar event %s for meeting_request %s",
-                            calendar_event_id,
-                            meeting_request.id,
-                        )
-                        updated_confirmed = dict(confirmed_info)
-                        updated_confirmed["google_event_id"] = calendar_event_id
-                        meeting_request.confirmed_slot = updated_confirmed
-                except Exception as calendar_err:
-                    logger.warning(
-                        "Failed to create calendar event for meeting_request %s: %s",
-                        meeting_request.id,
-                        calendar_err,
-                    )
+            if not start_iso or not end_iso:
+                logger.error("Confirmed slot missing start for meeting_request %s", meeting_request.id)
             else:
-                logger.error(
-                    "Confirmed slot missing start/end for meeting_request %s; payload=%s",
-                    meeting_request.id,
-                    event_payload,
-                )
+                try:
+                    slot_start = datetime.fromisoformat(start_iso)
+                    slot_end = datetime.fromisoformat(end_iso)
+                except ValueError:
+                    logger.error("Invalid ISO format for confirmed slot: %s", start_iso)
+                    slot_start = None
+                    slot_end = None
+
+                if slot_start is not None and slot_end is not None:
+                    tz = availability_service.get_timezone(user)
+                    if slot_start.tzinfo is None:
+                        slot_start = tz.localize(slot_start)
+                    else:
+                        slot_start = slot_start.astimezone(tz)
+
+                    if slot_end.tzinfo is None:
+                        slot_end = tz.localize(slot_end)
+                    else:
+                        slot_end = slot_end.astimezone(tz)
+
+                    duration_minutes = int((slot_end - slot_start).total_seconds() // 60)
+                    selected_event_type = (
+                        EventType.query.filter_by(
+                            user_id=user.id,
+                            duration_minutes=duration_minutes,
+                            is_active=True,
+                        )
+                        .first()
+                        or default_event_type
+                    )
+
+                    invitee = next(
+                        (p for p in meeting_request.participants if p.email and p.email.lower() != (user.email or "").lower()),
+                        None,
+                    )
+                    invitee_email = invitee.email if invitee else None
+                    invitee_name = invitee.name or invitee_email if invitee else None
+
+                    if not invitee_email:
+                        for field in ("to", "cc"):
+                            for addr in email_data.get(field) or []:
+                                cleaned = (addr or "").strip().lower()
+                                if not cleaned:
+                                    continue
+                                if cleaned == (user.email or "").lower() or cleaned in ASSISTANT_EMAILS:
+                                    continue
+                                invitee_email = cleaned
+                                invitee_name = cleaned
+                                break
+                            if invitee_email:
+                                break
+
+                    if not invitee_email:
+                        invitee_email = user.email
+                        invitee_name = user.username
+
+                    booking_event_type = selected_event_type or SimpleNamespace(
+                        title=meeting_request.subject or "Meeting",
+                        description=None,
+                        duration_minutes=duration_minutes or 30,
+                    )
+
+                    try:
+                        created_event = create_booking_event(
+                            user,
+                            booking_event_type,
+                            slot_start,
+                            invitee_name,
+                            invitee_email,
+                            _build_calendar_description(history, user.username or user.email, user.email),
+                        )
+                        calendar_event_id = created_event.google_event_id
+                        if calendar_event_id:
+                            updated_confirmed = dict(confirmed_info)
+                            updated_confirmed["google_event_id"] = calendar_event_id
+                            meeting_request.confirmed_slot = updated_confirmed
+                    except Exception as calendar_err:
+                        logger.warning(
+                            "Failed to create calendar event for meeting_request %s: %s",
+                            meeting_request.id,
+                            calendar_err,
+                        )
 
     db.session.commit()
 
