@@ -301,7 +301,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         other_participants = sorted(addr for addr in all_participants if addr != owner_email)
 
         to_header = owner_email
-        cc_header = ", ".join(other_participants) if other_participants else None
+        cc_recipients = other_participants if other_participants else None
 
         subject = email_data.get("subject") or "Meeting coordination"
         if not subject.lower().startswith("re:"):
