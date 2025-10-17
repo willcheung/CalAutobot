@@ -313,7 +313,7 @@ def extract_events():
 
         if events_count > 0:
             if synced_count > 0:
-                flash(f"Successfully extracted {events_count} event(s) and synced {synced_count} to your Calendar Autobot calendar!", "success")
+                flash(f"Successfully extracted {events_count} event(s) and synced {synced_count} to your Cal Event Extraction calendar!", "success")
             else:
                 flash(f"Successfully extracted {events_count} event(s)! Events are ready for manual sync.", "success")
         else:

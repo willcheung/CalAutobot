@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup webhooks for existing users who have Calendar Autobot calendars but no webhooks.
+Setup webhooks for existing users who have Cal Event Extraction calendars but no webhooks.
 This script retroactively adds webhook functionality to users who created calendars
 before the webhook system was implemented.
 """
@@ -21,14 +21,14 @@ logger = logging.getLogger(__name__)
 
 def find_users_needing_webhooks():
     """
-    Find users who have Calendar Autobot calendars but no webhook setup.
+    Find users who have Cal Event Extraction calendars but no webhook setup.
     
     Returns:
         list: List of User objects who need webhook setup
     """
     try:
         with app.app_context():
-            # Find users with Calendar Autobot calendars but no webhook
+            # Find users with Cal Event Extraction calendars but no webhook
             users_needing_webhooks = User.query.filter(
                 User.textbot_calendar_id.isnot(None),  # Has a calendar
                 User.webhook_channel_id.is_(None)      # But no webhook
@@ -167,7 +167,7 @@ def check_webhook_status():
             for user in users_needing_webhooks:
                 logger.info(f"  ⚠ {user.email} - Has calendar: {user.textbot_calendar_id[:20]}...")
             
-            logger.info(f"\nUsers without Calendar Autobot: {len(users_no_calendar)}")
+            logger.info(f"\nUsers without Cal Event Extraction calendar: {len(users_no_calendar)}")
             logger.info("  (These users don't need webhooks yet)")
             
     except Exception as e:

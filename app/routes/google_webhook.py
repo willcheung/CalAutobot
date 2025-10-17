@@ -40,7 +40,7 @@ def handle_google_calendar_webhook():
     """
     Handle Google Calendar push notifications.
     
-    This endpoint receives notifications when events in a user's Calendar Autobot
+    This endpoint receives notifications when events in a user's Cal Event Extraction
     calendar are created, updated, or deleted. We primarily focus on deletions
     to sync with our local database.
     """
@@ -167,7 +167,7 @@ def process_calendar_deletions_for_user(user):
             logger.error(f"Could not refresh token for user: {user.email}")
             return
         
-        # Get all events from the user's Calendar Autobot calendar
+        # Get all events from the user's Cal Event Extraction calendar
         headers = {
             'Authorization': f'Bearer {access_token}',
             'Content-Type': 'application/json'
@@ -175,7 +175,7 @@ def process_calendar_deletions_for_user(user):
         
         calendar_id = user.textbot_calendar_id
         if not calendar_id:
-            logger.warning(f"User {user.email} has no Calendar Autobot calendar ID")
+            logger.warning(f"User {user.email} has no Cal Event Extraction calendar ID")
             return
         
         # Fetch current events from Google Calendar with timeout
@@ -254,7 +254,7 @@ def process_calendar_deletions_for_user(user):
 @google_webhook.route("/webhook/google-calendar/setup", methods=["POST"])
 def setup_calendar_webhook():
     """
-    Set up a webhook subscription for a user's Calendar Autobot calendar.
+    Set up a webhook subscription for a user's Cal Event Extraction calendar.
     This should be called after creating the calendar for a user.
     """
     try:
@@ -270,7 +270,7 @@ def setup_calendar_webhook():
         # Get user's calendar ID
         calendar_id = current_user.textbot_calendar_id
         if not calendar_id:
-            return jsonify({"error": "No Calendar Autobot calendar found for user"}), 400
+            return jsonify({"error": "No Cal Event Extraction calendar found for user"}), 400
         
         # Get a fresh access token
         access_token = refresh_google_token(current_user)

@@ -39,10 +39,10 @@
 
                 {% if writable_calendars %}
                     <div class="mb-3">
-                        <label class="form-label" for="default_calendar_id">Add events to</label>
-                        <select class="form-select form-control-compact" id="default_calendar_id" name="default_calendar_id">
+                        <label class="form-label" for="booking_calendar_id">Add events to</label>
+                        <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id">
                             {% for calendar in writable_calendars %}
-                                <option value="{{ calendar.id }}" {% if calendar.id == default_calendar_id %}selected{% endif %}>
+                                <option value="{{ calendar.id }}" {% if calendar.id == booking_calendar_id %}selected{% endif %}>
                                     {{ calendar.name }}
                                 </option>
                             {% endfor %}
@@ -50,9 +50,28 @@
                         <div class="form-text">
                             You can override this on a per-event basis in Advanced settings in each event type.
                         </div>
-                        {% if default_calendar_missing %}
+                        {% if booking_calendar_missing %}
                             <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
                                 Your previously selected calendar is no longer available. Please choose another calendar for new bookings.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="extraction_calendar_id">Free tool: Add event extraction to</label>
+                        <select class="form-select form-control-compact" id="extraction_calendar_id" name="extraction_calendar_id">
+                            {% for calendar in writable_calendars %}
+                                <option value="{{ calendar.id }}" {% if calendar.id == extraction_calendar_id %}selected{% endif %}>
+                                    {{ calendar.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Extraction uses the Cal Event Extraction calendar by default so AI-added events stay separate from your primary booking calendars.
+                        </div>
+                        {% if extraction_calendar_missing %}
+                            <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
+                                We cannot find your extraction calendar. Pick another calendar to continue saving AI-created events.
                             </div>
                         {% endif %}
                     </div>
@@ -83,7 +102,7 @@
                 {% if calendars %}
                     <div class="calendar-list">
                         {% for calendar in calendars %}
-                            <div class="calendar-entry {% if calendar.id == default_calendar_id %}calendar-entry-primary{% endif %}">
+                            <div class="calendar-entry {% if calendar.id == primary_calendar_id %}calendar-entry-primary{% endif %}">
                                 <div class="calendar-entry-meta">
                                     <div class="calendar-entry-icon">
                                         <span>{{ (calendar.name[0] if calendar.name else 'C') | upper }}</span>
@@ -91,8 +110,14 @@
                                     <div>
                                         <div class="calendar-entry-name">
                                             {{ calendar.name }}
-                                            {% if calendar.id == default_calendar_id %}
-                                                <span class="badge bg-light text-dark ms-2">Default</span>
+                                            {% if calendar.id == primary_calendar_id %}
+                                                <span class="badge bg-light text-dark ms-2">Primary</span>
+                                            {% endif %}
+                                            {% if calendar.is_booking_destination %}
+                                                <span class="badge bg-primary text-white ms-2">Bookings</span>
+                                            {% endif %}
+                                            {% if calendar.is_extraction_destination %}
+                                                <span class="badge bg-secondary text-white ms-2">Extraction</span>
                                             {% endif %}
                                         </div>
                                         <div class="calendar-entry-email text-muted">{{ calendar.email }}</div>

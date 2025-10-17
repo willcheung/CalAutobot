@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     google_token = db.Column(db.Text, nullable=True)
     google_refresh_token = db.Column(db.Text, nullable=True)  # Store refresh token separately
     textbot_calendar_id = db.Column(db.String(100), nullable=True)  # Store Cal Pilot calendar ID
+    default_booking_calendar_id = db.Column(db.String(255), nullable=True)
     timezone = db.Column(db.String(50), default='UTC')  # User's timezone
     email_count = db.Column(db.Integer, default=0)  # Track emails sent for provisional users
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

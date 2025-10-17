@@ -15,7 +15,7 @@ import json
 from datetime import datetime, timedelta
 
 def create_test_user_with_calendar():
-    """Create a test user with a Calendar Autobot calendar for webhook testing"""
+    """Create a test user with a Cal Event Extraction calendar for webhook testing"""
     try:
         with app.app_context():
             # Check if test user already exists

@@ -217,7 +217,7 @@ def get_or_create_textbot_calendar(user, access_token):
         access_token: Valid Google access token
 
     Returns:
-        str: Calendar ID for the Calendar Autobot calendar
+        str: Calendar ID for the Cal Event Extraction calendar
     """
     from app import db
 
@@ -228,7 +228,7 @@ def get_or_create_textbot_calendar(user, access_token):
 
     # Check if user already has a stored calendar ID and validate it
     if user.textbot_calendar_id:
-        logger.info(f"Validating stored Calendar Autobot calendar ID: {user.textbot_calendar_id}")
+        logger.info(f"Validating stored Cal Event Extraction calendar ID: {user.textbot_calendar_id}")
 
         try:
             # Test if the stored calendar ID is still valid
@@ -250,10 +250,10 @@ def get_or_create_textbot_calendar(user, access_token):
             user.textbot_calendar_id = None  # Clear invalid ID
 
     try:
-        # Create new Calendar Autobot calendar since user doesn't have one stored or it's invalid
-        logger.info("Creating new Calendar Autobot calendar for user")
+        # Create new Cal Event Extraction calendar since user doesn't have one stored or it's invalid
+        logger.info("Creating new Cal Event Extraction calendar for user")
         calendar_data = {
-            'summary': 'Calendar Autobot',
+            'summary': 'Cal Event Extraction',
             'description': 'AI-generated calendar events from email extraction',
             'timeZone': user.timezone
         }
@@ -273,7 +273,7 @@ def get_or_create_textbot_calendar(user, access_token):
             user.textbot_calendar_id = calendar_id
             db.session.commit()
 
-            logger.info(f"Successfully created and stored Calendar Autobot calendar with ID: {calendar_id}")
+            logger.info(f"Successfully created and stored Cal Event Extraction calendar with ID: {calendar_id}")
             
             # Set up webhook for this calendar
             try:
@@ -284,14 +284,14 @@ def get_or_create_textbot_calendar(user, access_token):
             
             return calendar_id
         else:
-            logger.error(f"Failed to create Calendar Autobot calendar: {response.status_code} - {response.text}")
-            raise Exception("Failed to create Calendar Autobot calendar")
+            logger.error(f"Failed to create Cal Event Extraction calendar: {response.status_code} - {response.text}")
+            raise Exception("Failed to create Cal Event Extraction calendar")
 
     except requests.exceptions.Timeout:
-        logger.error("Timeout while creating Calendar Autobot calendar")
+        logger.error("Timeout while creating Cal Event Extraction calendar")
         raise Exception("Calendar operation timed out. Please try again.")
     except Exception as e:
-        logger.error(f"Error creating Calendar Autobot calendar: {str(e)}")
+        logger.error(f"Error creating Cal Event Extraction calendar: {str(e)}")
         raise Exception("Failed to create calendar. Please try again.")
 
 def create_calendar_event(user, event_data):
@@ -309,7 +309,7 @@ def create_calendar_event(user, event_data):
         logger.info(f"Creating calendar event: {event_data.get('event_name', 'Unnamed Event')}")
         access_token = refresh_google_token(user)
 
-        # Get or create the Calendar Autobot calendar
+        # Get or create the Cal Event Extraction calendar
         calendar_id = get_or_create_textbot_calendar(user, access_token)
 
 
@@ -447,7 +447,7 @@ def update_calendar_event(user, google_event_id, event_data):
             logger.error("No access token in stored data")
             return False
 
-        # Get the Calendar Autobot calendar ID (optimized approach)
+        # Get the Cal Event Extraction calendar ID (optimized approach)
         calendar_id = user.textbot_calendar_id
         if not calendar_id:
             # Need to get/create calendar, which requires valid token
@@ -569,7 +569,7 @@ def delete_calendar_event(user, google_event_id):
             logger.error("No access token in stored data")
             return False
 
-        # Get the Calendar Autobot calendar ID (may need token for validation)
+        # Get the Cal Event Extraction calendar ID (may need token for validation)
         calendar_id = user.textbot_calendar_id
         if not calendar_id:
             # Need to get/create calendar, which requires valid token
