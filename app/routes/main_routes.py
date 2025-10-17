@@ -269,7 +269,7 @@ def gmail_renew_watch_webhook():
 def index():
     if current_user.is_authenticated:
         return redirect(url_for("main_routes.dashboard"))
-    return render_template("index.html")
+    return render_template("index.html", show_landing_header=True)
 
 @main_routes.route("/signup")
 def signup():

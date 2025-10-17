@@ -1,0 +1,14 @@
+<div class="settings-nav">
+    <a
+        class="settings-nav-link {% if active_tab == 'calendars' %}active{% endif %}"
+        href="{{ url_for('settings_routes.calendar_settings') }}"
+    >
+        Calendars
+    </a>
+    <a
+        class="settings-nav-link {% if active_tab == 'profile' %}active{% endif %}"
+        href="{{ url_for('settings_routes.profile_settings') }}"
+    >
+        Profile
+    </a>
+</div>

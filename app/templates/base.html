@@ -40,6 +40,21 @@
 <body>
     {% set display_sidebar = display_sidebar if display_sidebar is defined else current_user.is_authenticated %}
     {% block banner %}{% endblock %}
+
+    {% if not current_user.is_authenticated and show_landing_header|default(False) %}
+    <header class="landing-header">
+        <div class="container landing-header-container">
+            <a class="landing-brand" href="{{ url_for('main_routes.index') }}">
+                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="CalAutobot logo" width="36" height="36">
+                <span>CalAutobot</span>
+            </a>
+            <nav class="landing-nav">
+                <a class="landing-link" href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" rel="noopener">Chrome Extension</a>
+                <a class="landing-link landing-link-primary" href="#" onclick="startGoogleLogin(); return false;">Sign in with Google</a>
+            </nav>
+        </div>
+    </header>
+    {% endif %}
     
     <div class="layout">
         {% if display_sidebar %}
@@ -65,7 +80,7 @@
                             <i data-feather="clock"></i>
                             <span>Availability</span>
                         </a>
-                        <a class="sidebar-link" href="{{ url_for('settings_routes.profile_settings') }}">
+                        <a class="sidebar-link" href="{{ url_for('settings_routes.calendar_settings') }}">
                             <i data-feather="settings"></i>
                             <span>Settings</span>
                         </a>

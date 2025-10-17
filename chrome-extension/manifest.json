@@ -18,7 +18,7 @@
     "client_id": "609660480116-tnd7the9ooj8sd6rt4grjj7hcpt5frjf.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/calendar.app.created"
+      "https://www.googleapis.com/auth/calendar"
     ]
   },
   "action": {

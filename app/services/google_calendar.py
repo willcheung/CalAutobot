@@ -39,6 +39,68 @@ def check_user_has_calendar_scope(user):
         logger.error(f"Error checking calendar scope: {str(e)}")
         return False
 
+def fetch_user_calendar_list(user, min_access_role="reader"):
+    """
+    Fetch the list of calendars the user has granted access to.
+
+    Args:
+        user: User object with Google token
+        min_access_role: Minimum access level to include in results
+
+    Returns:
+        list: List of calendar dicts from Google Calendar API
+    """
+    access_token = refresh_google_token(user)
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': 'application/json',
+    }
+
+    calendars = []
+    page_token = None
+
+    try:
+        while True:
+            params = {
+                'minAccessRole': min_access_role,
+                'showDeleted': 'false',
+                'maxResults': 250,
+            }
+            if page_token:
+                params['pageToken'] = page_token
+
+            response = requests.get(
+                'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+                headers=headers,
+                params=params,
+                timeout=15,
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                calendars.extend(data.get('items', []))
+                page_token = data.get('nextPageToken')
+                if not page_token:
+                    break
+            elif response.status_code == 401:
+                logger.error("Google Calendar authentication failed when listing calendars")
+                raise Exception("Google Calendar authentication failed. Please sign in again.")
+            elif response.status_code == 403:
+                logger.error("Permission denied when fetching calendar list")
+                raise Exception("Permission denied. Please re-connect Google Calendar access.")
+            else:
+                logger.error(f"Failed to fetch calendar list: {response.status_code} - {response.text}")
+                raise Exception("Unable to fetch calendars from Google. Please try again.")
+    except requests.exceptions.Timeout:
+        logger.error("Timeout while fetching user calendar list")
+        raise Exception("Google Calendar request timed out. Please try again.")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Network error fetching calendar list: {str(e)}")
+        raise Exception("Network error fetching calendars. Please check your connection.")
+
+    return calendars
+
 def refresh_google_token(user):
     """
     Refresh Google OAuth token if needed.

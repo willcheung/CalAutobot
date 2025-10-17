@@ -1,27 +1,55 @@
 {% extends "base.html" %}
 {% block title %}Profile Settings{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <h1>Profile Settings</h1>
-    <form method="post" class="mt-3 settings-form">
-        <div class="mb-3">
-            <label class="form-label" for="handle">Public handle</label>
-            <input type="text" class="form-control form-control-compact" id="handle" name="handle" value="{{ current_user.handle or '' }}" required>
-            <div class="form-text">Used in your public booking URL (e.g. {{ request.url_root.rstrip('/') }}/u/{{ current_user.handle or 'your-handle' }}).</div>
+<div class="container mt-4 settings-container">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Profile</h1>
+            <p class="text-muted mb-0">Update the booking link and details guests see when scheduling with you.</p>
         </div>
-        <div class="mb-3">
-            <label class="form-label" for="display_name">Display name</label>
-            <input type="text" class="form-control form-control-compact" id="display_name" name="display_name" value="{{ current_user.username }}" required>
+    </div>
+
+    {% set active_tab = "profile" %}
+    {% include "settings/_nav.html" %}
+
+    <div class="settings-section card shadow-sm">
+        <div class="card-body">
+            <form method="post" class="settings-form">
+                <div class="mb-3">
+                    <label class="form-label" for="handle">Public URL</label>
+                    <div class="input-group">
+                        <span class="input-group-text form-control-compact-prefix">CalAutobot.com/u/</span>
+                        <input
+                            type="text"
+                            class="form-control form-control-compact"
+                            id="handle"
+                            name="handle"
+                            value="{{ current_user.handle or '' }}"
+                            aria-describedby="handle-help"
+                            required
+                        >
+                    </div>
+                    <div id="handle-help" class="form-text">
+                        Tip: Share <code>CalAutobot.com/u/{{ current_user.handle or 'your-handle' }}</code> with guests to book time.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="display_name">Full name</label>
+                    <input type="text" class="form-control form-control-compact" id="display_name" name="display_name" value="{{ current_user.username }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="timezone">Timezone</label>
+                    <select class="form-select form-control-compact" id="timezone" name="timezone">
+                        {% for tz in timezones %}
+                            <option value="{{ tz }}" {% if current_user.timezone == tz %}selected{% endif %}>{{ tz }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-compact">Save settings</button>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            <label class="form-label" for="timezone">Timezone</label>
-            <select class="form-select form-control-compact" id="timezone" name="timezone">
-                {% for tz in timezones %}
-                    <option value="{{ tz }}" {% if current_user.timezone == tz %}selected{% endif %}>{{ tz }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary btn-compact">Save settings</button>
-    </form>
+    </div>
 </div>
 {% endblock %}

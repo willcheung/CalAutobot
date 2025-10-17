@@ -2,54 +2,124 @@
 {% block title %}Book {{ event_type.title }}{% endblock %}
 {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-lg-5 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h2>{{ event_type.title }}</h2>
-                    <p class="text-muted mb-1">{{ user.display_name }}</p>
-                    <p class="text-muted">Duration: {{ event_type.duration_minutes }} minutes</p>
-                    {% if event_type.description %}<p>{{ event_type.description }}</p>{% endif %}
+    <div class="public-booking-container">
+        <div class="booking-layout">
+            <aside class="booking-sidebar">
+                <div class="booking-host">
+                    <div class="booking-host-avatar">{{ user.display_name[:1] }}</div>
+                    <div>
+                        <h2 class="booking-title mb-1">{{ event_type.title }}</h2>
+                        <p class="booking-host-name mb-0">{{ user.display_name }}</p>
+                    </div>
+                </div>
+                <div class="booking-meta mt-4">
+                    <div class="booking-meta-item">
+                        <span class="booking-meta-icon">⏱</span>
+                        <span>{{ event_type.duration_minutes }} minute meeting</span>
+                    </div>
+                    <div class="booking-meta-item">
+                        <span class="booking-meta-icon">📍</span>
+                        <span>{{ timezone_label }}</span>
+                    </div>
+                    {% if event_type.description %}
+                    <div class="booking-meta-item booking-description mt-3">
+                        {{ event_type.description }}
+                    </div>
+                    {% endif %}
+                </div>
+                <a href="{{ url_for('public_booking.profile_page', handle=user.handle) }}" class="booking-back-link mt-auto">← Back to event types</a>
+            </aside>
+            <div class="booking-calendar">
+                <div class="calendar-header">
+                    <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ prev_month_date }}" aria-label="Previous month">
+                        ‹
+                    </a>
+                    <div class="calendar-title">{{ month_label }}</div>
+                    <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ next_month_date }}" aria-label="Next month">
+                        ›
+                    </a>
+                </div>
+                <div class="calendar-weekdays">
+                    {% for weekday in weekday_labels %}
+                        <div class="calendar-weekday">{{ weekday }}</div>
+                    {% endfor %}
+                </div>
+                <div class="calendar-grid">
+                    {% for week in calendar_weeks %}
+                        {% for day in week %}
+                            <a
+                                class="calendar-day
+                                    {% if not day.in_month %} calendar-day--muted{% endif %}
+                                    {% if day.is_available %} calendar-day--available{% endif %}
+                                    {% if day.is_today %} calendar-day--today{% endif %}
+                                    {% if day.is_selected %} calendar-day--selected{% endif %}"
+                                href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ day.iso }}"
+                                aria-current="{% if day.is_selected %}date{% else %}false{% endif %}"
+                            >
+                                <span>{{ day.day }}</span>
+                            </a>
+                        {% endfor %}
+                    {% endfor %}
                 </div>
             </div>
-        </div>
-        <div class="col-lg-7">
-            <form method="post" class="card">
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label" for="date">Choose a date</label>
-                        <input type="date" class="form-control" id="date" name="date" value="{{ target_date.isoformat() }}" onchange="if(this.form) { window.location='{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date=' + this.value; }">
+            <div class="booking-slots">
+                <div class="slots-header">
+                    <div>
+                        <div class="slots-day">{{ target_date.strftime('%A') }}</div>
+                        <div class="slots-date">{{ target_date.strftime('%B') }} {{ target_date.day }}</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Available times</label>
+                    <div class="slots-timezone">{{ timezone_label }}</div>
+                </div>
+                <form method="post" class="booking-form mt-3">
+                    <div class="slots-list">
                         {% if slots %}
-                            <div class="d-flex flex-wrap gap-2">
-                                {% for slot in slots %}
-                                    <label class="btn btn-outline-primary">
-                                        <input type="radio" name="slot" value="{{ slot.start_iso }}" class="me-2">{{ slot.start_display }}
-                                    </label>
-                                {% endfor %}
-                            </div>
+                            {% for slot in slots %}
+                                <input
+                                    type="radio"
+                                    class="slot-input"
+                                    name="slot"
+                                    id="slot-{{ loop.index }}"
+                                    value="{{ slot.start_iso }}"
+                                    {% if loop.first %}required{% endif %}
+                                >
+                                <label class="slot-option" for="slot-{{ loop.index }}">
+                                    <span class="slot-dot"></span>
+                                    <span class="slot-time">{{ slot.start_display }}</span>
+                                </label>
+                            {% endfor %}
                         {% else %}
-                            <p class="text-muted">No availability for this day.</p>
+                            <p class="text-muted mb-0">No availability for this day. Please choose another date.</p>
                         {% endif %}
                     </div>
-                    <div class="mb-3">
+                    <div class="booking-form-fields mt-4">
                         <label class="form-label" for="invitee_name">Your name</label>
-                        <input type="text" class="form-control" id="invitee_name" name="invitee_name" value="{{ current_user.display_name if current_user.is_authenticated else '' }}" required>
+                        <input
+                            type="text"
+                            class="form-control booking-input"
+                            id="invitee_name"
+                            name="invitee_name"
+                            value="{{ current_user.display_name if current_user.is_authenticated else '' }}"
+                            required
+                        >
                     </div>
-                    <div class="mb-3">
+                    <div class="booking-form-fields mt-3">
                         <label class="form-label" for="invitee_email">Email</label>
-                        <input type="email" class="form-control" id="invitee_email" name="invitee_email" value="{{ current_user.email if current_user.is_authenticated else '' }}" required>
+                        <input
+                            type="email"
+                            class="form-control booking-input"
+                            id="invitee_email"
+                            name="invitee_email"
+                            value="{{ current_user.email if current_user.is_authenticated else '' }}"
+                            required
+                        >
                     </div>
-                    <div class="mb-3">
+                    <div class="booking-form-fields mt-3">
                         <label class="form-label" for="notes">Notes</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        <textarea class="form-control booking-input" id="notes" name="notes" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary" {% if not slots %}disabled{% endif %}>Confirm</button>
-                    <a href="{{ url_for('public_booking.profile_page', handle=user.handle) }}" class="btn btn-link">Back</a>
-                </div>
-            </form>
+                    <button type="submit" class="btn btn-primary w-100 mt-4" {% if not slots %}disabled{% endif %}>Confirm booking</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

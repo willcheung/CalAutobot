@@ -1,4 +1,5 @@
-from datetime import datetime
+import calendar
+from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, flash, redirect, render_template, request
 from sqlalchemy import func
@@ -96,12 +97,49 @@ def _render_event_type_page(user: User, slug: str):
     slots = availability_service.get_slots_for_date(user, event_type, target_date)
     slots_for_template = availability_service.format_slots_for_template(slots)
 
+    month_start = target_date.replace(day=1)
+    today = datetime.now(tz).date()
+    month_calendar = calendar.Calendar(firstweekday=6).monthdatescalendar(
+        month_start.year, month_start.month
+    )
+
+    availability_cache = {target_date: len(slots) > 0}
+    calendar_weeks = []
+
+    for week in month_calendar:
+        week_cells = []
+        for day in week:
+            if day not in availability_cache and day >= today:
+                day_slots = availability_service.get_slots_for_date(user, event_type, day)
+                availability_cache[day] = len(day_slots) > 0
+
+            week_cells.append(
+                {
+                    "iso": day.isoformat(),
+                    "day": day.day,
+                    "in_month": day.month == month_start.month,
+                    "is_today": day == today,
+                    "is_selected": day == target_date,
+                    "is_available": availability_cache.get(day, False),
+                }
+            )
+        calendar_weeks.append(week_cells)
+
+    prev_month = (month_start - timedelta(days=1)).replace(day=1)
+    next_month = (month_start + timedelta(days=32)).replace(day=1)
+
     return render_template(
         "public/event_type.html",
         user=user,
         event_type=event_type,
         target_date=target_date,
         slots=slots_for_template,
+        calendar_weeks=calendar_weeks,
+        month_label=target_date.strftime("%B %Y"),
+        weekday_labels=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        prev_month_date=prev_month.isoformat(),
+        next_month_date=next_month.isoformat(),
+        timezone_label=tz.zone,
         display_sidebar=False,
     )
 

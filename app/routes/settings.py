@@ -3,6 +3,8 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
+from app.models import UserCalendar
+from app.services.google_calendar import fetch_user_calendar_list
 from app.services.users import assign_unique_handle, is_handle_available, normalize_handle
 
 settings_routes = Blueprint("settings_routes", __name__)
@@ -44,4 +46,145 @@ def profile_settings():
     return render_template(
         "settings/profile.html",
         timezones=timezones,
+    )
+
+
+@settings_routes.route("/settings/calendars", methods=["GET", "POST"])
+@login_required
+def calendar_settings():
+    calendar_error = None
+    calendar_items = []
+
+    try:
+        calendar_items = fetch_user_calendar_list(current_user)
+    except Exception as exc:
+        calendar_error = str(exc)
+
+    calendars_by_id = {cal.calendar_id: cal for cal in current_user.calendars}
+    seen_calendar_ids = set()
+    pending_changes = False
+
+    if not calendar_error:
+        for item in calendar_items:
+            calendar_id = item.get("id")
+            if not calendar_id:
+                continue
+
+            seen_calendar_ids.add(calendar_id)
+            existing = calendars_by_id.get(calendar_id)
+            is_primary = bool(item.get("primary"))
+            calendar_name = item.get("summary") or calendar_id
+            access_role = item.get("accessRole")
+            calendar_email = item.get("id")
+
+            if not existing:
+                existing = UserCalendar(
+                    user=current_user,
+                    calendar_id=calendar_id,
+                    calendar_name=calendar_name,
+                    calendar_email=calendar_email,
+                    access_role=access_role,
+                    is_primary=is_primary,
+                    is_selected_for_conflicts=is_primary,
+                )
+                db.session.add(existing)
+                calendars_by_id[calendar_id] = existing
+                pending_changes = True
+            else:
+                if existing.calendar_name != calendar_name:
+                    existing.calendar_name = calendar_name
+                    pending_changes = True
+                if existing.calendar_email != calendar_email:
+                    existing.calendar_email = calendar_email
+                    pending_changes = True
+                if existing.access_role != access_role:
+                    existing.access_role = access_role
+                    pending_changes = True
+                if existing.is_primary != is_primary:
+                    existing.is_primary = is_primary
+                    if is_primary and not existing.is_selected_for_conflicts:
+                        existing.is_selected_for_conflicts = True
+                    pending_changes = True
+
+        # Remove calendars the user no longer has access to
+        for calendar in list(current_user.calendars):
+            if calendar.calendar_id not in seen_calendar_ids:
+                db.session.delete(calendar)
+                calendars_by_id.pop(calendar.calendar_id, None)
+                pending_changes = True
+
+        # Default to primary calendar if no destination configured
+        if not current_user.textbot_calendar_id:
+            primary_calendar = next(
+                (cal for cal in calendars_by_id.values() if cal.is_primary),
+                None,
+            )
+            if primary_calendar:
+                current_user.textbot_calendar_id = primary_calendar.calendar_id
+                if not primary_calendar.is_selected_for_conflicts:
+                    primary_calendar.is_selected_for_conflicts = True
+                pending_changes = True
+
+    if request.method == "POST" and not calendar_error:
+        selected_calendar_id = request.form.get("default_calendar_id") or None
+        conflict_calendar_ids = set(request.form.getlist("conflict_calendar_ids"))
+
+        # Filter to calendars currently available
+        valid_calendar_ids = set(calendars_by_id.keys())
+        conflict_calendar_ids &= valid_calendar_ids
+
+        if selected_calendar_id and selected_calendar_id not in valid_calendar_ids:
+            flash("Selected calendar is not available.", "danger")
+        else:
+            if selected_calendar_id:
+                current_user.textbot_calendar_id = selected_calendar_id
+            elif current_user.textbot_calendar_id and current_user.textbot_calendar_id not in valid_calendar_ids:
+                current_user.textbot_calendar_id = None
+
+            for calendar_id, calendar in calendars_by_id.items():
+                calendar.is_selected_for_conflicts = calendar_id in conflict_calendar_ids
+
+            pending_changes = True
+            db.session.commit()
+            flash("Calendar preferences updated.", "success")
+            return redirect(url_for("settings_routes.calendar_settings"))
+
+    if pending_changes:
+        db.session.commit()
+
+    calendar_preferences = []
+    for calendar_id, calendar in calendars_by_id.items():
+        calendar_preferences.append(
+            {
+                "id": calendar_id,
+                "name": calendar.calendar_name,
+                "email": calendar.calendar_email,
+                "is_primary": calendar.is_primary,
+                "access_role": calendar.access_role,
+                "can_add_events": calendar.access_role in {"owner", "writer"},
+                "selected_for_conflicts": calendar.is_selected_for_conflicts,
+            }
+        )
+
+    calendar_preferences.sort(
+        key=lambda cal: (not cal["is_primary"], cal["name"].lower())
+    )
+
+    writable_calendars = [
+        cal for cal in calendar_preferences if cal["can_add_events"]
+    ]
+    default_calendar_missing = bool(
+        current_user.textbot_calendar_id
+        and not any(
+            cal["id"] == current_user.textbot_calendar_id for cal in writable_calendars
+        )
+    )
+
+    return render_template(
+        "settings/calendar.html",
+        calendar_error=calendar_error,
+        calendars=calendar_preferences,
+        default_calendar_id=current_user.textbot_calendar_id,
+        writable_calendars=writable_calendars,
+        default_calendar_missing=default_calendar_missing,
     )

@@ -27,6 +27,7 @@ class User(UserMixin, db.Model):
     additional_emails = db.relationship('UserEmail', backref='user', lazy=True, cascade='all, delete-orphan')
     event_types = db.relationship('EventType', backref='user', lazy=True, cascade='all, delete-orphan')
     availability_windows = db.relationship('AvailabilityWindow', backref='user', lazy=True, cascade='all, delete-orphan')
+    calendars = db.relationship('UserCalendar', backref='user', lazy=True, cascade='all, delete-orphan')
 
     @property
     def display_name(self) -> str:
@@ -74,6 +75,24 @@ class UserEmail(db.Model):
     
     # Add unique constraint on email to prevent duplicates across users
     __table_args__ = (db.UniqueConstraint('email', name='unique_user_email'),)
+
+class UserCalendar(db.Model):
+    __tablename__ = "user_calendars"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    calendar_id = db.Column(db.String(255), nullable=False)
+    calendar_name = db.Column(db.String(255), nullable=False)
+    calendar_email = db.Column(db.String(255), nullable=True)
+    access_role = db.Column(db.String(50), nullable=True)
+    is_primary = db.Column(db.Boolean, default=False)
+    is_selected_for_conflicts = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'calendar_id', name='uq_user_calendar'),
+    )
 
 class TextInput(db.Model):
     id = db.Column(db.Integer, primary_key=True)

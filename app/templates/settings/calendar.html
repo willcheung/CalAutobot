@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Calendar Settings{% endblock %}
+{% block content %}
+<div class="container mt-4 settings-container">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Calendars</h1>
+            <p class="text-muted mb-0">Configure how your event types interact with your calendars.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-compact" disabled>
+                + Add Calendar
+            </button>
+        </div>
+    </div>
+
+    {% set active_tab = "calendars" %}
+    {% include "settings/_nav.html" %}
+
+    {% if calendar_error %}
+        <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+            {{ calendar_error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    <form method="post" class="calendar-settings-form">
+        <div class="settings-section card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <h5 class="card-title mb-1">Add to calendar</h5>
+                        <p class="text-muted small mb-0">Select where to add events when you're booked.</p>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                        + Add Calendar
+                    </button>
+                </div>
+
+                {% if writable_calendars %}
+                    <div class="mb-3">
+                        <label class="form-label" for="default_calendar_id">Add events to</label>
+                        <select class="form-select form-control-compact" id="default_calendar_id" name="default_calendar_id">
+                            {% for calendar in writable_calendars %}
+                                <option value="{{ calendar.id }}" {% if calendar.id == default_calendar_id %}selected{% endif %}>
+                                    {{ calendar.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            You can override this on a per-event basis in Advanced settings in each event type.
+                        </div>
+                        {% if default_calendar_missing %}
+                            <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
+                                Your previously selected calendar is no longer available. Please choose another calendar for new bookings.
+                            </div>
+                        {% endif %}
+                    </div>
+                {% elif calendars %}
+                    <div class="alert alert-light mb-0">
+                        We currently have view-only access to your calendars. Please re-connect your Google account with calendar write access to add events.
+                    </div>
+                {% else %}
+                    <div class="alert alert-light mb-0">
+                        Connect your Google Calendar to choose where new bookings are saved.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="settings-section card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                    <div>
+                        <h5 class="card-title mb-1">Check for conflicts</h5>
+                        <p class="text-muted small mb-0">Select which calendars you want to check for conflicts to prevent double bookings.</p>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                        + Add
+                    </button>
+                </div>
+
+                {% if calendars %}
+                    <div class="calendar-list">
+                        {% for calendar in calendars %}
+                            <div class="calendar-entry {% if calendar.id == default_calendar_id %}calendar-entry-primary{% endif %}">
+                                <div class="calendar-entry-meta">
+                                    <div class="calendar-entry-icon">
+                                        <span>{{ (calendar.name[0] if calendar.name else 'C') | upper }}</span>
+                                    </div>
+                                    <div>
+                                        <div class="calendar-entry-name">
+                                            {{ calendar.name }}
+                                            {% if calendar.id == default_calendar_id %}
+                                                <span class="badge bg-light text-dark ms-2">Default</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="calendar-entry-email text-muted">{{ calendar.email }}</div>
+                                        {% if not calendar.can_add_events %}
+                                            <div class="calendar-entry-access text-muted">View-only access</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch calendar-entry-switch">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        role="switch"
+                                        id="conflict-{{ loop.index }}"
+                                        name="conflict_calendar_ids"
+                                        value="{{ calendar.id }}"
+                                        {% if calendar.selected_for_conflicts %}checked{% endif %}
+                                    >
+                                    <label class="form-check-label" for="conflict-{{ loop.index }}"></label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-light mb-0">
+                        Once calendars are connected, choose which ones to scan for conflicts.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="text-end">
+            <button type="submit" class="btn btn-primary btn-compact">Save changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
