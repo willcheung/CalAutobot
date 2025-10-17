@@ -5,6 +5,11 @@
     <h1>Profile Settings</h1>
     <form method="post" class="mt-3 settings-form">
         <div class="mb-3">
+            <label class="form-label" for="handle">Public handle</label>
+            <input type="text" class="form-control form-control-compact" id="handle" name="handle" value="{{ current_user.handle or '' }}" required>
+            <div class="form-text">Used in your public booking URL (e.g. {{ request.url_root.rstrip('/') }}/u/{{ current_user.handle or 'your-handle' }}).</div>
+        </div>
+        <div class="mb-3">
             <label class="form-label" for="display_name">Display name</label>
             <input type="text" class="form-control form-control-compact" id="display_name" name="display_name" value="{{ current_user.username }}" required>
         </div>

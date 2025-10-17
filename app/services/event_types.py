@@ -7,7 +7,7 @@ from app.models import EventType
 SLUG_PATTERN = re.compile(r"[^a-z0-9]+")
 
 
-def _slugify(value: str) -> str:
+def slugify(value: str) -> str:
     base = (value or "").strip().lower()
     base = SLUG_PATTERN.sub("-", base).strip("-")
     return base or "event"
@@ -15,7 +15,7 @@ def _slugify(value: str) -> str:
 
 def generate_unique_slug(user_id: int, title: str, candidate: Optional[str] = None) -> str:
     """Generate a slug unique per user."""
-    base_slug = _slugify(candidate or title)
+    base_slug = slugify(candidate or title)
     existing_rows = (
         EventType.query.filter_by(user_id=user_id)
         .with_entities(EventType.slug)

@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label" for="date">Choose a date</label>
-                        <input type="date" class="form-control" id="date" name="date" value="{{ target_date.isoformat() }}" onchange="if(this.form) { window.location='{{ url_for('public_booking.event_type_page', user_id=user.id, slug=event_type.slug) }}?date=' + this.value; }">
+                        <input type="date" class="form-control" id="date" name="date" value="{{ target_date.isoformat() }}" onchange="if(this.form) { window.location='{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date=' + this.value; }">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Available times</label>
@@ -47,7 +47,7 @@
                         <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary" {% if not slots %}disabled{% endif %}>Confirm</button>
-                    <a href="{{ url_for('public_booking.profile_page', user_id=user.id) }}" class="btn btn-link">Back</a>
+                    <a href="{{ url_for('public_booking.profile_page', handle=user.handle) }}" class="btn btn-link">Back</a>
                 </div>
             </form>
         </div>

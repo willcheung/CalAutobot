@@ -8,7 +8,7 @@
             <p class="card-text">{{ event_type.title }} with {{ user.display_name }}</p>
             <p class="card-text"><strong>{{ slot_start.strftime('%A, %B %d %Y at %I:%M %p') }}</strong></p>
             <p class="card-text">Invitee: {{ invitee_name }}</p>
-            <a class="btn btn-primary" href="{{ url_for('public_booking.profile_page', user_id=user.id) }}">Back to event types</a>
+            <a class="btn btn-primary" href="{{ url_for('public_booking.profile_page', handle=user.handle) }}">Back to event types</a>
         </div>
     </div>
 </div>

@@ -1,12 +1,14 @@
 from datetime import datetime
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from flask_login import current_user
+from flask import Blueprint, abort, flash, redirect, render_template, request
+from sqlalchemy import func
 
+from app import db
 from app.models import EventType, User
 from app.services import availability as availability_service
 from app.services.event_types import get_event_type_by_slug
 from app.services.public_booking import create_booking_event
+from app.services.users import assign_unique_handle
 
 public_booking = Blueprint("public_booking", __name__)
 
@@ -15,9 +17,7 @@ def _get_user_or_404(user_id: int) -> User:
     return User.query.filter_by(id=user_id).first_or_404()
 
 
-@public_booking.route("/u/<int:user_id>")
-def profile_page(user_id):
-    user = _get_user_or_404(user_id)
+def _render_profile_page(user: User):
     event_types = (
         EventType.query.filter_by(user_id=user.id, is_active=True, is_public=True)
         .order_by(EventType.duration_minutes.asc())
@@ -32,9 +32,20 @@ def profile_page(user_id):
     )
 
 
-@public_booking.route("/u/<int:user_id>/<slug>", methods=["GET", "POST"])
-def event_type_page(user_id, slug):
-    user = _get_user_or_404(user_id)
+@public_booking.route("/u/<handle>")
+def profile_page(handle: str):
+    user = User.query.filter(func.lower(User.handle) == handle.lower()).first()
+    if not user and handle.isdigit():
+        user = _get_user_or_404(int(handle))
+        if not user.handle:
+            assign_unique_handle(user)
+            db.session.commit()
+    if not user:
+        abort(404)
+    return _render_profile_page(user)
+
+
+def _render_event_type_page(user: User, slug: str):
     event_type = get_event_type_by_slug(user.id, slug)
     if not event_type or not event_type.is_active or not event_type.is_public:
         abort(404)
@@ -93,3 +104,16 @@ def event_type_page(user_id, slug):
         slots=slots_for_template,
         display_sidebar=False,
     )
+
+
+@public_booking.route("/u/<handle>/<slug>", methods=["GET", "POST"])
+def event_type_page(handle: str, slug: str):
+    user = User.query.filter(func.lower(User.handle) == handle.lower()).first()
+    if not user and handle.isdigit():
+        user = _get_user_or_404(int(handle))
+        if not user.handle:
+            assign_unique_handle(user)
+            db.session.commit()
+    if not user:
+        abort(404)
+    return _render_event_type_page(user, slug)

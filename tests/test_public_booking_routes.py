@@ -4,6 +4,7 @@ from app import db
 from app.models import EventType, User
 from app.services import event_types as event_types_service
 from app.services import availability as availability_service
+from app.services.users import assign_unique_handle
 
 
 def login(client, user):
@@ -15,6 +16,8 @@ def login(client, user):
 def test_public_booking_flow(client, app_context):
     user = User(username="Host", email=f"host-{datetime.utcnow().timestamp()}@example.com", timezone="UTC")
     db.session.add(user)
+    db.session.commit()
+    assign_unique_handle(user)
     db.session.commit()
 
     target_date = datetime.utcnow().date() + timedelta(days=1)
@@ -36,7 +39,7 @@ def test_public_booking_flow(client, app_context):
     db.session.add(event_type)
     db.session.commit()
 
-    profile_resp = client.get(f"/u/{user.id}")
+    profile_resp = client.get(f"/u/{user.handle}")
     assert profile_resp.status_code == 200
 
     tz = availability_service.get_timezone(user)
@@ -45,7 +48,7 @@ def test_public_booking_flow(client, app_context):
     chosen_slot = slots[0].start.isoformat()
 
     booking_resp = client.post(
-        f"/u/{user.id}/{event_type.slug}",
+        f"/u/{user.handle}/{event_type.slug}",
         data={
             "slot": chosen_slot,
             "invitee_name": "Guest",
@@ -61,6 +64,8 @@ def test_public_booking_flow(client, app_context):
 def test_event_type_creation_route(client, app_context):
     user = User(username="RouteUser", email="route@example.com", timezone="UTC")
     db.session.add(user)
+    db.session.commit()
+    assign_unique_handle(user)
     db.session.commit()
 
     login(client, user)

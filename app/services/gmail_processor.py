@@ -9,6 +9,7 @@ from app.helpers.domain_utils import get_base_url
 from app.helpers.event_deduplication import deduplicate_events, should_skip_attachment
 from app import db
 from app.services.gmail_service import gmail_service, GmailOAuthError
+from app.services.users import assign_unique_handle
 from app.agents.task_classifier import classify_email_task
 from app.services.scheduling_agent import handle_scheduling_email
 import sentry_sdk
@@ -405,6 +406,10 @@ def process_provisional_user_email(formatted_text: str, attachments_data: List[D
                                   user: User, sender_email: str, subject: str) -> Dict[str, object]:
     """Process email for provisional user (no Google authentication yet)"""
     try:
+        if not user.handle:
+            assign_unique_handle(user, sender_email or user.username or user.email or "user")
+            db.session.commit()
+
         result = process_text_to_events(
             formatted_text, 
             user, 
@@ -466,6 +471,7 @@ def process_new_provisional_user_email(formatted_text: str, attachments_data: Li
         new_user.timezone = 'UTC'
         
         db.session.add(new_user)
+        assign_unique_handle(new_user, sender_email)
         db.session.commit()
         
         logger.info(f"✅ Created provisional user for {sender_email}")

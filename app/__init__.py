@@ -7,7 +7,7 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -114,6 +114,7 @@ def load_user(user_id):
     try:
         return User.query.get(int(user_id))
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Error loading user {user_id}: {str(e)}")
         sentry_sdk.capture_exception(e)
         return None
@@ -175,6 +176,15 @@ def handle_exception(e):
     return render_template('error.html',
                            error_code=500,
                            error_message="An unexpected error occurred"), 500
+
+
+@app.before_request
+def ensure_user_handle():
+    if current_user.is_authenticated and not getattr(current_user, "handle", None):
+        from app.services.users import assign_unique_handle
+
+        assign_unique_handle(current_user)
+        db.session.commit()
 
 
 with app.app_context():

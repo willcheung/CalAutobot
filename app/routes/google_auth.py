@@ -8,6 +8,7 @@ from app import db
 from flask import Blueprint, redirect, request, url_for, session
 from flask_login import login_required, login_user, logout_user
 from app.models import User, Event
+from app.services.users import assign_unique_handle
 from oauthlib.oauth2 import WebApplicationClient
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID",
@@ -125,6 +126,9 @@ def callback():
             user.username = users_name
             user.email_count = 0  # Reset email count - real users have no limit
             logger.info(f"✅ Upgraded provisional user {users_email} to authenticated user")
+
+    if not user.handle:
+        assign_unique_handle(user, users_name)
 
     # Update the Google token for Calendar API access
     user.google_token = json.dumps(token_data)

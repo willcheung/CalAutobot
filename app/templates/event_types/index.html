@@ -7,7 +7,7 @@
             <h1 class="mb-1">Event Types</h1>
             <p class="text-muted mb-0" style="max-width: 540px;">Event types enable you to share links that show available times on your calendar and allow people to make bookings with you.</p>
         </div>
-        <a href="{{ url_for('public_booking.profile_page', user_id=current_user.id) }}" class="btn btn-outline-secondary" target="_blank">View public page</a>
+        <a href="{{ url_for('public_booking.profile_page', handle=current_user.handle) }}" class="btn btn-outline-secondary" target="_blank">View public page</a>
     </div>
 
     <div class="card mb-4">
@@ -53,7 +53,7 @@
                                 <h6 class="mb-1">{{ item.title }} <small class="text-muted">({{ item.duration_minutes }} minutes)</small></h6>
                                 <div>
                                     <span class="badge bg-light text-dark">
-                                        <a href="{{ url_for('public_booking.event_type_page', user_id=current_user.id, slug=item.slug) }}" target="_blank" class="text-decoration-none">Public link</a>
+                                        <a href="{{ url_for('public_booking.event_type_page', handle=current_user.handle, slug=item.slug) }}" target="_blank" class="text-decoration-none">Public link</a>
                                     </span>
                                     {% if not item.is_public %}<span class="badge bg-secondary">Private</span>{% endif %}
                                     {% if not item.is_active %}<span class="badge bg-warning text-dark">Inactive</span>{% endif %}
