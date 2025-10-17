@@ -7,11 +7,6 @@
             <h1 class="mb-1">Calendars</h1>
             <p class="text-muted mb-0">Configure how your event types interact with your calendars.</p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-compact" disabled>
-                + Add Calendar
-            </button>
-        </div>
     </div>
 
     {% set active_tab = "calendars" %}
@@ -32,14 +27,11 @@
                         <h5 class="card-title mb-1">Add to calendar</h5>
                         <p class="text-muted small mb-0">Select where to add events when you're booked.</p>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-                        + Add Calendar
-                    </button>
                 </div>
 
                 {% if writable_calendars %}
                     <div class="mb-3">
-                        <label class="form-label" for="booking_calendar_id">Add events to</label>
+                        <label class="form-label" for="booking_calendar_id">Add meeting events to</label>
                         <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id">
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == booking_calendar_id %}selected{% endif %}>
@@ -48,7 +40,7 @@
                             {% endfor %}
                         </select>
                         <div class="form-text">
-                            You can override this on a per-event basis in Advanced settings in each event type.
+                            All meetings booked through Cal and scheduling page will be added to this calendar.
                         </div>
                         {% if booking_calendar_missing %}
                             <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
@@ -58,7 +50,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="extraction_calendar_id">Free tool: Add event extraction to</label>
+                        <label class="form-label" for="extraction_calendar_id">🆓🛠️ Free tool: Add event extraction to</label>
                         <select class="form-select form-control-compact" id="extraction_calendar_id" name="extraction_calendar_id">
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == extraction_calendar_id %}selected{% endif %}>
@@ -67,7 +59,7 @@
                             {% endfor %}
                         </select>
                         <div class="form-text">
-                            Extraction uses the Cal Event Extraction calendar by default so AI-added events stay separate from your primary booking calendars.
+                            Cal Event Extraction turns emails, pictures, and screenshots into calendar events.
                         </div>
                         {% if extraction_calendar_missing %}
                             <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
@@ -120,7 +112,13 @@
                                                 <span class="badge bg-secondary text-white ms-2">Extraction</span>
                                             {% endif %}
                                         </div>
-                                        <div class="calendar-entry-email text-muted">{{ calendar.email }}</div>
+                                        <div class="calendar-entry-email text-muted">
+                                            {% if calendar.email %}
+                                                {{ calendar.email[:60] }}{% if calendar.email|length > 60 %}…{% endif %}
+                                            {% else %}
+                                                <span class="text-muted">No email</span>
+                                            {% endif %}
+                                        </div>
                                         {% if not calendar.can_add_events %}
                                             <div class="calendar-entry-access text-muted">View-only access</div>
                                         {% endif %}
@@ -149,7 +147,7 @@
             </div>
         </div>
 
-        <div class="text-end">
+        <div class="text-start">
             <button type="submit" class="btn btn-primary btn-compact">Save changes</button>
         </div>
     </form>
