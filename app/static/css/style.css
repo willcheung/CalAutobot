@@ -1621,6 +1621,7 @@ code, pre {
 .settings-section.card {
     border: 1px solid #e5e9f2;
     border-radius: 16px;
+    margin-bottom: 16px
 }
 
 .settings-section .card-body {

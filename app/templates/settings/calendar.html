@@ -31,7 +31,7 @@
 
                 {% if writable_calendars %}
                     <div class="mb-3">
-                        <label class="form-label" for="booking_calendar_id">Add meeting events to</label>
+                        <label class="form-label" for="booking_calendar_id">Add meeting events to:</label>
                         <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id">
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == booking_calendar_id %}selected{% endif %}>
@@ -50,7 +50,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="extraction_calendar_id">🆓🛠️ Free tool: Add event extraction to</label>
+                        <label class="form-label" for="extraction_calendar_id">🆓🛠️ Free tool! Add event extraction to:</label>
                         <select class="form-select form-control-compact" id="extraction_calendar_id" name="extraction_calendar_id">
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == extraction_calendar_id %}selected{% endif %}>
