@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Optional
+import logging
 
 from app import db
 from app.helpers.text_processing import sanitize_text_for_db
 from app.models import Event, EventType, User
-from app.services.google_calendar import create_calendar_event
+from app.services.google_calendar import create_calendar_event, delete_calendar_event
+
+logger = logging.getLogger(__name__)
 
 
 def create_booking_event(
@@ -58,3 +61,15 @@ def create_booking_event(
     db.session.add(event)
     db.session.commit()
     return event
+
+
+def cancel_booking_event(user: User, event: Event) -> None:
+    """Remove a booking from the database and Google Calendar if applicable."""
+    if event.google_event_id:
+        try:
+            delete_calendar_event(user, event.google_event_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to delete Google Calendar event %s: %s", event.google_event_id, exc)
+
+    db.session.delete(event)
+    db.session.commit()

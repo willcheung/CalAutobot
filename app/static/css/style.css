@@ -627,11 +627,14 @@ body {
     line-height: 1.6;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .layout {
     display: flex;
-    min-height: 100vh;
+    flex: 1 1 auto;
 }
 
 .sidebar {
@@ -719,6 +722,7 @@ body {
     flex: 1;
     min-width: 0;
     background: var(--background-color);
+    padding-bottom: 3rem;
 }
 
 .main-content {
@@ -1626,60 +1630,46 @@ code, pre {
 .calendar-list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 4px;
 }
 
 .calendar-entry {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
-    padding: 18px 22px;
-    border-radius: 16px;
-    border: 1px solid #dbe0e7;
-    background: #f7f8fa;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: transparent;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.calendar-entry:hover {
+    background: rgba(148, 163, 184, 0.1);
+    transform: translateY(-1px);
 }
 
 .calendar-entry-primary {
-    border-color: #cfd9ff;
-    background: #eef2ff;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(59, 130, 246, 0.06));
 }
 
 .calendar-entry-meta {
     display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.calendar-entry-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: #2563eb;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.calendar-entry-primary .calendar-entry-icon {
-    background: #1d4ed8;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
 }
 
 .calendar-entry-name {
     font-weight: 600;
     color: #1f2937;
-}
-
-.calendar-entry-email {
-    font-size: 0.85rem;
-    color: #5a6473;
+    font-size: 0.95rem;
 }
 
 .calendar-entry-access {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 0;
 }
 
 .calendar-entry-switch {
@@ -1687,37 +1677,45 @@ code, pre {
 }
 
 .calendar-entry-switch .form-check-input {
-    width: 3.1rem;
-    height: 1.6rem;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    background-color: #e8ecf8;
+    border-color: #c7cfe2;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .calendar-entry-switch .form-check-input:focus {
-    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.22);
+    border-color: #6366f1;
 }
 
 .calendar-entry-switch .form-check-input:checked {
-    background-color: #2563eb;
-    border-color: #2563eb;
+    background-color: #4f46e5;
+    border-color: #4f46e5;
 }
 
 .calendar-settings-form .form-select {
     max-width: 420px;
 }
 
+
 .public-booking-container {
-    max-width: 1100px;
+    max-width: 1180px;
     margin: 0 auto;
 }
 
 .booking-layout {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     background: #ffffff;
     color: #1f2933;
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
     border: 1px solid #e5e9f2;
+    min-height: 520px;
+    align-items: stretch;
 }
 
 .booking-sidebar {
@@ -1774,6 +1772,25 @@ code, pre {
     color: #334155;
 }
 
+.booking-former-time .former-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+}
+
+.booking-former-time .former-time {
+    font-size: 0.95rem;
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+.former-time-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
 .booking-meta-icon {
     font-size: 1rem;
 }
@@ -1794,12 +1811,21 @@ code, pre {
     color: #1d4ed8;
 }
 
+.public-page {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+}
+
 .booking-calendar {
-    flex: 1 1 380px;
+    flex: 1 1 540px;
+    min-width: 520px;
     background: #fff;
     padding: 32px;
     border-left: 1px solid #e5e9f2;
     border-right: 1px solid #e5e9f2;
+    display: flex;
+    flex-direction: column;
 }
 
 .calendar-header {
@@ -1853,8 +1879,8 @@ code, pre {
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(7, minmax(56px, 1fr));
+    gap: 8px;
 }
 
 .calendar-day {
@@ -1863,6 +1889,7 @@ code, pre {
     align-items: center;
     justify-content: center;
     height: 56px;
+    width: 100%;
     border-radius: 14px;
     font-weight: 600;
     color: #475569;
@@ -1883,13 +1910,7 @@ code, pre {
 }
 
 .calendar-day--available::after {
-    content: "";
-    position: absolute;
-    bottom: 10px;
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: #16a34a;
+    display: none;
 }
 
 .calendar-day--today {
@@ -1905,12 +1926,27 @@ code, pre {
     background: #ffffff;
 }
 
+.calendar-day--disabled {
+    pointer-events: none;
+    opacity: 0.55;
+    color: #94a3b8;
+    background: #e2e8f0;
+}
+
+.calendar-day--disabled:hover {
+    transform: none;
+    background: #e2e8f0;
+    color: #94a3b8;
+}
+
 .booking-slots {
-    flex: 0 0 320px;
+    flex: 0 0 280px;
+    min-width: 280px;
     background: #f8fafc;
     padding: 32px;
     display: flex;
     flex-direction: column;
+    max-height: 100%;
 }
 
 .slots-header {
@@ -1938,7 +1974,12 @@ code, pre {
 .slots-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    overflow-y: auto;
+    padding-right: 4px;
+    margin-right: -8px;
+    flex: 1 1 auto;
+    max-height: calc(100vh - 280px);
 }
 
 .slot-input {
@@ -1948,44 +1989,71 @@ code, pre {
 .slot-option {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    border: 1px solid #d7deeb;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #dbe2f2;
     background: #ffffff;
     color: #1f2937;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.slot-option:visited {
+    color: #1f2937;
 }
 
 .slot-option:hover {
-    background: #eef2ff;
-    border-color: #c7d2fe;
+    background: #edf2ff;
+    border-color: #c0cff8;
+    color: #1f2937;
+}
+
+.slot-option-former {
+    color: #94a3b8;
+    text-decoration: line-through;
+    pointer-events: none;
+    background: #f1f5f9;
+}
+
+.slot-option-former .slot-arrow {
+    display: none;
 }
 
 .slot-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: #16a34a;
-    box-shadow: 0 0 8px rgba(22, 163, 74, 0.35);
+    display: none;
 }
 
 .slot-time {
     flex: 1;
+    text-align: center;
+}
+
+.slot-arrow {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .slot-input:checked + .slot-option {
     background: #2563eb;
     border-color: #2563eb;
     color: #fff;
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.25);
 }
 
+.slot-option:hover .slot-arrow,
+.slot-option:focus .slot-arrow {
+    color: #2563eb;
+    transform: translateX(2px);
+}
+
+
 .slot-input:checked + .slot-option .slot-dot {
-    background: #ffffff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.45);
+    display: none;
 }
 
 .booking-input {
@@ -2008,6 +2076,179 @@ code, pre {
 .booking-form .btn {
     font-weight: 600;
     letter-spacing: 0.02em;
+}
+
+.booking-powered-by {
+    margin: 24px auto 0;
+    padding-top: 40px;
+    text-align: center;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #94a3b8;
+}
+
+.booking-powered-by span {
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.public-page .booking-powered-by {
+    margin-top: auto;
+    padding-bottom: 24px;
+}
+
+.confirm-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+.confirm-summary {
+    flex: 0 0 280px;
+    background: #f8fafc;
+    border: 1px solid #e5e9f2;
+    border-radius: 20px;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.confirm-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 0;
+}
+
+.confirm-host {
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.confirm-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1f2937;
+    font-size: 0.95rem;
+}
+
+.confirm-icon {
+    font-size: 1rem;
+}
+
+.confirm-form {
+    flex: 1 1 400px;
+    background: #ffffff;
+    border: 1px solid #e5e9f2;
+    border-radius: 20px;
+    padding: 32px;
+}
+
+.confirm-form-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.confirm-form .btn-link {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.confirm-form .btn-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 991.98px) {
+    .confirm-layout {
+        flex-direction: column;
+    }
+    .confirm-summary,
+    .confirm-form {
+        flex: 1 1 auto;
+    }
+}
+
+.confirmation-card {
+    max-width: 640px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e5e9f2;
+    border-radius: 20px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    text-align: center;
+}
+
+.confirmation-header h2 {
+    margin-bottom: 8px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.confirmation-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: #22c55e1a;
+    color: #15803d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.confirmation-subtitle {
+    color: #64748b;
+    margin: 0;
+}
+
+.confirmation-body {
+    border-top: 1px solid #e5e9f2;
+    border-bottom: 1px solid #e5e9f2;
+    padding: 20px 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.confirmation-row {
+    display: flex;
+    gap: 18px;
+}
+
+.confirmation-label {
+    width: 80px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.confirmation-value {
+    color: #1f2937;
+    line-height: 1.5;
+}
+
+.confirmation-footer {
+    color: #64748b;
+}
+
+.confirmation-link {
+    color: #2563eb;
+    text-decoration: none;
+    margin: 0 4px;
+}
+
+.confirmation-link:hover {
+    text-decoration: underline;
 }
 
 @media (max-width: 991.98px) {

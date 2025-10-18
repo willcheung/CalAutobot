@@ -101,6 +101,60 @@ def fetch_user_calendar_list(user, min_access_role="reader"):
 
     return calendars
 
+
+def fetch_freebusy(user, calendar_ids, time_min: datetime, time_max: datetime):
+    """
+    Fetch busy periods for the given calendars between time_min and time_max.
+
+    Returns a mapping of calendar_id -> {'busy': [{'start': iso, 'end': iso}, ...]}
+    """
+    if not calendar_ids:
+        return {}
+
+    access_token = refresh_google_token(user)
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json',
+    }
+    body = {
+        'timeMin': time_min.isoformat(),
+        'timeMax': time_max.isoformat(),
+        'items': [{'id': calendar_id} for calendar_id in calendar_ids],
+    }
+
+    try:
+        response = requests.post(
+            'https://www.googleapis.com/calendar/v3/freeBusy',
+            headers=headers,
+            data=json.dumps(body),
+            timeout=15,
+        )
+    except requests.exceptions.Timeout:
+        logger.error("Timeout while fetching Google free/busy data")
+        raise Exception("Google Calendar request timed out. Please try again.")
+    except requests.exceptions.RequestException as exc:
+        logger.error("Error fetching Google free/busy data: %s", exc)
+        raise Exception("Unable to fetch busy calendar data. Please try again.")
+
+    if response.status_code == 200:
+        data = response.json()
+        return data.get('calendars', {})
+    elif response.status_code in {400, 401, 403}:
+        logger.error(
+            "Google free/busy request failed (%s): %s",
+            response.status_code,
+            response.text,
+        )
+        raise Exception("Google Calendar access failed. Please refresh your connection.")
+    else:
+        logger.error(
+            "Unexpected Google free/busy error (%s): %s",
+            response.status_code,
+            response.text,
+        )
+        raise Exception("Unable to fetch calendar availability from Google.")
+
 def refresh_google_token(user):
     """
     Refresh Google OAuth token if needed.
@@ -419,6 +473,39 @@ def create_calendar_event(user, event_data):
         logger.error(f"Unexpected error creating calendar event: {str(e)}")
         sentry_sdk.capture_exception(e)
         raise Exception(f"Failed to create calendar event: {str(e)}")
+
+
+def delete_calendar_event(user, google_event_id):
+    """Delete an event from the user's calendar if we have the ID."""
+    if not google_event_id:
+        return
+
+    access_token = refresh_google_token(user)
+    calendar_id = get_or_create_textbot_calendar(user, access_token)
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json',
+    }
+
+    try:
+        response = requests.delete(
+            f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{google_event_id}',
+            headers=headers,
+            timeout=15,
+        )
+        if response.status_code in (200, 204, 410):
+            logger.info("Deleted Google Calendar event %s", google_event_id)
+            return
+        elif response.status_code == 404:
+            logger.info("Google Calendar event %s already removed", google_event_id)
+            return
+        elif response.status_code == 401:
+            logger.warning("Google Calendar auth failed when deleting %s", google_event_id)
+        else:
+            logger.warning("Failed to delete Google Calendar event %s: %s - %s", google_event_id, response.status_code, response.text)
+    except requests.exceptions.RequestException as exc:
+        logger.warning("Network error deleting Google Calendar event %s: %s", google_event_id, exc)
 
 def update_calendar_event(user, google_event_id, event_data):
     """

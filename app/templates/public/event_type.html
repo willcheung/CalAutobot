@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Book {{ event_type.title }}{% endblock %}
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 public-page">
     <div class="public-booking-container">
         <div class="booking-layout">
             <aside class="booking-sidebar">
@@ -21,14 +21,26 @@
                         <span class="booking-meta-icon">📍</span>
                         <span>{{ timezone_label }}</span>
                     </div>
-                    {% if event_type.description %}
-                    <div class="booking-meta-item booking-description mt-3">
-                        {{ event_type.description }}
-                    </div>
-                    {% endif %}
+                {% if event_type.description %}
+                <div class="booking-meta-item booking-description mt-3">
+                    {{ event_type.description }}
                 </div>
-                <a href="{{ url_for('public_booking.profile_page', handle=user.handle) }}" class="booking-back-link mt-auto">← Back to event types</a>
-            </aside>
+                {% endif %}
+                {% if former_slot_start %}
+                <div class="booking-meta-item booking-former-time mt-3">
+                    <span class="booking-meta-icon">⏲</span>
+                    <div class="former-time-wrapper">
+                        <div class="former-label">Former time</div>
+                        <div class="former-time">
+                            {{ former_slot_start.strftime('%A, %B %d, %Y %I:%M %p').lstrip('0') }}
+                            {% if former_slot_end %} – {{ former_slot_end.strftime('%I:%M %p').lstrip('0') }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <a href="{{ url_for('public_booking.profile_page', handle=user.handle) }}" class="booking-back-link mt-auto">← Back to event types</a>
+        </aside>
             <div class="booking-calendar">
                 <div class="calendar-header">
                     <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ prev_month_date }}" aria-label="Previous month">
@@ -45,82 +57,81 @@
                     {% endfor %}
                 </div>
                 <div class="calendar-grid">
-                    {% for week in calendar_weeks %}
-                        {% for day in week %}
-                            <a
-                                class="calendar-day
-                                    {% if not day.in_month %} calendar-day--muted{% endif %}
-                                    {% if day.is_available %} calendar-day--available{% endif %}
-                                    {% if day.is_today %} calendar-day--today{% endif %}
-                                    {% if day.is_selected %} calendar-day--selected{% endif %}"
-                                href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ day.iso }}"
-                                aria-current="{% if day.is_selected %}date{% else %}false{% endif %}"
-                            >
-                                <span>{{ day.day }}</span>
-                            </a>
+                        {% for week in calendar_weeks %}
+                            {% for day in week %}
+                                {% set day_classes = "calendar-day" %}
+                                {% if not day.in_month %}
+                                    {% set day_classes = day_classes + " calendar-day--muted" %}
+                                {% endif %}
+                                {% if day.is_available %}
+                                    {% set day_classes = day_classes + " calendar-day--available" %}
+                                {% endif %}
+                                {% if day.is_today %}
+                                    {% set day_classes = day_classes + " calendar-day--today" %}
+                                {% endif %}
+                                {% if day.is_selected %}
+                                    {% set day_classes = day_classes + " calendar-day--selected" %}
+                                {% endif %}
+                                {% if not day.is_selectable %}
+                                    {% set day_classes = day_classes + " calendar-day--disabled" %}
+                                {% endif %}
+
+                                {% if day.is_selectable %}
+                                    <a
+                                        class="{{ day_classes }}"
+                                        href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ day.iso }}"
+                                        aria-current="{% if day.is_selected %}date{% else %}false{% endif %}"
+                                    >
+                                        <span>{{ day.day }}</span>
+                                    </a>
+                                {% else %}
+                                    <span
+                                        class="{{ day_classes }}"
+                                        aria-disabled="true"
+                                        {% if day.is_selected %}aria-current="date"{% endif %}
+                                    >
+                                        <span>{{ day.day }}</span>
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
                         {% endfor %}
-                    {% endfor %}
+                    </div>
                 </div>
-            </div>
             <div class="booking-slots">
                 <div class="slots-header">
                     <div>
                         <div class="slots-day">{{ target_date.strftime('%A') }}</div>
                         <div class="slots-date">{{ target_date.strftime('%B') }} {{ target_date.day }}</div>
                     </div>
-                    <div class="slots-timezone">{{ timezone_label }}</div>
                 </div>
-                <form method="post" class="booking-form mt-3">
-                    <div class="slots-list">
-                        {% if slots %}
-                            {% for slot in slots %}
-                                <input
-                                    type="radio"
-                                    class="slot-input"
-                                    name="slot"
-                                    id="slot-{{ loop.index }}"
-                                    value="{{ slot.start_iso }}"
-                                    {% if loop.first %}required{% endif %}
-                                >
-                                <label class="slot-option" for="slot-{{ loop.index }}">
-                                    <span class="slot-dot"></span>
-                                    <span class="slot-time">{{ slot.start_display }}</span>
-                                </label>
-                            {% endfor %}
-                        {% else %}
-                            <p class="text-muted mb-0">No availability for this day. Please choose another date.</p>
-                        {% endif %}
-                    </div>
-                    <div class="booking-form-fields mt-4">
-                        <label class="form-label" for="invitee_name">Your name</label>
-                        <input
-                            type="text"
-                            class="form-control booking-input"
-                            id="invitee_name"
-                            name="invitee_name"
-                            value="{{ current_user.display_name if current_user.is_authenticated else '' }}"
-                            required
-                        >
-                    </div>
-                    <div class="booking-form-fields mt-3">
-                        <label class="form-label" for="invitee_email">Email</label>
-                        <input
-                            type="email"
-                            class="form-control booking-input"
-                            id="invitee_email"
-                            name="invitee_email"
-                            value="{{ current_user.email if current_user.is_authenticated else '' }}"
-                            required
-                        >
-                    </div>
-                    <div class="booking-form-fields mt-3">
-                        <label class="form-label" for="notes">Notes</label>
-                        <textarea class="form-control booking-input" id="notes" name="notes" rows="3"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 mt-4" {% if not slots %}disabled{% endif %}>Confirm booking</button>
-                </form>
+                <div class="slots-list mt-3">
+                    {% if availability_error %}
+                        <div class="alert alert-warning">
+                            {{ availability_error }}
+                        </div>
+                    {% elif slots %}
+                        {% for slot in slots %}
+                            {% set option_classes = 'slot-option' %}
+                            {% if former_slot_iso and slot.start_iso == former_slot_iso %}
+                                {% set option_classes = option_classes + ' slot-option-former' %}
+                            {% endif %}
+                            <a
+                                class="{{ option_classes }}"
+                                href="{{ url_for('public_booking.confirm_booking_page', handle=user.handle, slug=event_type.slug) }}?slot={{ slot.start_iso }}"
+                            >
+                                <span class="slot-time">{{ slot.start_display }}</span>
+                                <span class="slot-arrow">→</span>
+                            </a>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted mb-0">No availability for this day. Please choose another date.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
+    </div>
+    <div class="booking-powered-by">
+        Powered by <span>Cal</span>Autobot.com
     </div>
 </div>
 {% endblock %}
