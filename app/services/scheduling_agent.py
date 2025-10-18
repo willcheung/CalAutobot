@@ -19,6 +19,7 @@ from app.agents.meeting_scheduler import (
 )
 from app.helpers.text_processing import sanitize_text_for_db
 from app.services import availability as availability_service
+from app.services.availability import AvailabilityError
 from app.services.public_booking import create_booking_event
 from app.services.gmail_service import gmail_service
 
@@ -34,6 +35,43 @@ def _normalise_addresses(raw_addresses) -> List[str]:
             continue
         addresses.append(address.strip().lower())
     return addresses
+
+
+def _format_slot_for_email_line(slot, tz) -> str:
+    start_local = slot.start.astimezone(tz)
+    end_local = slot.end.astimezone(tz)
+    return (
+        f"- {start_local.strftime('%b %d (%a) %I:%M %p %Z')}"
+        f" to {end_local.strftime('%I:%M %p %Z')}"
+    )
+
+
+def _compose_system_issue_reply(owner_name: str) -> str:
+    return (
+        "Hi there,\n\n"
+        f"This is Cal, {owner_name}'s assistant. I'm running into a system issue with our "
+        "calendar right now, so I can't check availability or send confirmations at the moment. "
+        "I'll follow up as soon as it's resolved. Thanks for your patience!\n\n"
+        "Best,\nCal"
+    )
+
+
+def _compose_slot_taken_reply(owner_name: str, slot_start: datetime, tz, fallback_lines) -> str:
+    slot_label = slot_start.astimezone(tz).strftime('%b %d (%a) %I:%M %p %Z')
+    lines = [
+        "Hi there,",
+        "",
+        f"This is Cal, {owner_name}'s assistant. It looks like the {slot_label} time was just booked.",
+    ]
+    if fallback_lines:
+        lines.append("Here are a few other openings:")
+        lines.extend(fallback_lines)
+    else:
+        lines.append("I'll circle back with new options shortly.")
+    lines.append("")
+    lines.append("Best,")
+    lines.append("Cal")
+    return "\n".join(lines)
 
 
 def _get_or_create_meeting_request(
@@ -205,6 +243,8 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     }
 
     availability = []
+    availability_batch = None
+    availability_lookup_error = None
     default_event_type = (
         EventType.query.filter_by(user_id=user.id, is_active=True)
         .order_by(EventType.duration_minutes.asc())
@@ -212,26 +252,46 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     )
 
     if default_event_type:
-        start_date = datetime.utcnow().date()
         tz = availability_service.get_timezone(user)
-        for offset in range(7):
-            day = start_date + timedelta(days=offset)
-            slots = availability_service.get_slots_for_date(user, default_event_type, day)
-            for slot in slots:
-                availability.append({"start": slot.start.isoformat(), "end": slot.end.isoformat()})
+        start_date = datetime.now(tz).date()
+        end_date = start_date + timedelta(days=13)
+        try:
+            availability_batch = availability_service.get_availability_for_range(
+                user, default_event_type, start_date, end_date
+            )
+        except AvailabilityError as exc:
+            availability_lookup_error = str(exc) or "A system issue prevented us from checking the calendar."
+        else:
+            for day in sorted(availability_batch.slots_by_date.keys()):
+                if day < start_date:
+                    continue
+                for slot in availability_batch.slots_by_date[day]:
+                    availability.append(
+                        {"start": slot.start.isoformat(), "end": slot.end.isoformat()}
+                    )
+                    if len(availability) >= 8:
+                        break
                 if len(availability) >= 8:
                     break
-            if len(availability) >= 8:
-                break
 
-    if not availability:
-        availability = get_testing_availability(user.timezone or "UTC")
-    agent_result = run_meeting_scheduler_agent(
-        agent_input,
-        history,
-        latest_message,
-        availability=availability,
-    )
+    if availability_lookup_error:
+        agent_result = {
+            "action": "request_clarification",
+            "reply": _compose_system_issue_reply(agent_input.get("owner_name") or user.email),
+            "proposed_slots": [],
+            "confirmed_slot": None,
+            "notes": "availability_fetch_error",
+        }
+        availability = []
+    else:
+        if not availability:
+            availability = get_testing_availability(user.timezone or "UTC")
+        agent_result = run_meeting_scheduler_agent(
+            agent_input,
+            history,
+            latest_message,
+            availability=availability,
+        )
 
     logger.info(
         "Scheduler agent result for meeting_request %s: action=%s proposed=%s confirmed=%s",
@@ -299,57 +359,143 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                         or default_event_type
                     )
 
-                    invitee = next(
-                        (p for p in meeting_request.participants if p.email and p.email.lower() != (user.email or "").lower()),
-                        None,
-                    )
-                    invitee_email = invitee.email if invitee else None
-                    invitee_name = invitee.name or invitee_email if invitee else None
+                    owner_name = agent_input.get("owner_name") or (user.username or user.email)
+                    failure_reply = None
+                    failure_action = None
+                    failure_notes = None
+                    failure_proposed_slots: List[Dict[str, str]] = []
 
-                    if not invitee_email:
-                        for field in ("to", "cc"):
-                            for addr in email_data.get(field) or []:
-                                cleaned = (addr or "").strip().lower()
-                                if not cleaned:
-                                    continue
-                                if cleaned == (user.email or "").lower() or cleaned in ASSISTANT_EMAILS:
-                                    continue
-                                invitee_email = cleaned
-                                invitee_name = cleaned
-                                break
-                            if invitee_email:
-                                break
+                    if not selected_event_type:
+                        failure_reply = _compose_system_issue_reply(owner_name)
+                        failure_action = "request_clarification"
+                        failure_notes = "missing_event_type"
 
-                    if not invitee_email:
-                        invitee_email = user.email
-                        invitee_name = user.username
+                    if not failure_reply:
+                        try:
+                            day_slots = availability_service.get_slots_for_date(
+                                user,
+                                selected_event_type,
+                                slot_start.date(),
+                            )
+                        except AvailabilityError:
+                            failure_reply = _compose_system_issue_reply(owner_name)
+                            failure_action = "request_clarification"
+                            failure_notes = "availability_verify_error"
+                        else:
+                            if not any(
+                                abs((candidate.start - slot_start).total_seconds()) < 60 for candidate in day_slots
+                            ):
+                                # Slot is no longer available; prepare alternatives
+                                tz_local = availability_service.get_timezone(user)
+                                fallback_slots: List = []
+                                try:
+                                    fresh_batch = availability_service.get_availability_for_range(
+                                        user,
+                                        selected_event_type,
+                                        max(slot_start.date(), datetime.now(tz_local).date()),
+                                        max(slot_start.date(), datetime.now(tz_local).date()) + timedelta(days=13),
+                                    )
+                                except AvailabilityError:
+                                    failure_reply = _compose_system_issue_reply(owner_name)
+                                    failure_action = "request_clarification"
+                                    failure_notes = "availability_refresh_error"
+                                else:
+                                    for day_key in sorted(fresh_batch.slots_by_date.keys()):
+                                        for alt_slot in fresh_batch.slots_by_date[day_key]:
+                                            if abs((alt_slot.start - slot_start).total_seconds()) < 60:
+                                                continue
+                                            fallback_slots.append(alt_slot)
+                                            if len(fallback_slots) >= 5:
+                                                break
+                                        if len(fallback_slots) >= 5:
+                                            break
 
-                    booking_event_type = selected_event_type or SimpleNamespace(
-                        title=meeting_request.subject or "Meeting",
-                        description=None,
-                        duration_minutes=duration_minutes or 30,
-                    )
+                                    tz_for_lines = tz_local
+                                    fallback_lines = [
+                                        _format_slot_for_email_line(alt_slot, tz_for_lines)
+                                        for alt_slot in fallback_slots
+                                    ]
+                                    failure_proposed_slots = [
+                                        {"start": alt_slot.start.isoformat(), "end": alt_slot.end.isoformat()}
+                                        for alt_slot in fallback_slots
+                                    ]
+                                    failure_reply = _compose_slot_taken_reply(
+                                        owner_name,
+                                        slot_start,
+                                        tz_for_lines,
+                                        fallback_lines,
+                                    )
+                                    failure_action = "propose_slots"
+                                    failure_notes = "slot_taken"
 
-                    try:
-                        created_event = create_booking_event(
-                            user,
-                            booking_event_type,
-                            slot_start,
-                            invitee_name,
-                            invitee_email,
-                            _build_calendar_description(history, user.username or user.email, user.email),
+                    if failure_reply:
+                        agent_result = {
+                            "action": failure_action,
+                            "reply": failure_reply,
+                            "proposed_slots": failure_proposed_slots,
+                            "confirmed_slot": None,
+                            "notes": failure_notes,
+                        }
+                        action = failure_action
+                        meeting_request.proposed_slots = failure_proposed_slots
+                        meeting_request.confirmed_slot = None
+                        meeting_request.status = (
+                            "collecting" if failure_action == "request_clarification" else "proposed"
                         )
-                        calendar_event_id = created_event.google_event_id
-                        if calendar_event_id:
-                            updated_confirmed = dict(confirmed_info)
-                            updated_confirmed["google_event_id"] = calendar_event_id
-                            meeting_request.confirmed_slot = updated_confirmed
-                    except Exception as calendar_err:
-                        logger.warning(
-                            "Failed to create calendar event for meeting_request %s: %s",
-                            meeting_request.id,
-                            calendar_err,
+                        meeting_request.current_step = failure_action
+                        calendar_event_id = None
+                    else:
+                        invitee = next(
+                            (p for p in meeting_request.participants if p.email and p.email.lower() != (user.email or "").lower()),
+                            None,
                         )
+                        invitee_email = invitee.email if invitee else None
+                        invitee_name = invitee.name or invitee_email if invitee else None
+
+                        if not invitee_email:
+                            for field in ("to", "cc"):
+                                for addr in email_data.get(field) or []:
+                                    cleaned = (addr or "").strip().lower()
+                                    if not cleaned:
+                                        continue
+                                    if cleaned == (user.email or "").lower() or cleaned in ASSISTANT_EMAILS:
+                                        continue
+                                    invitee_email = cleaned
+                                    invitee_name = cleaned
+                                    break
+                                if invitee_email:
+                                    break
+
+                        if not invitee_email:
+                            invitee_email = user.email
+                            invitee_name = user.username
+
+                        booking_event_type = selected_event_type or SimpleNamespace(
+                            title=meeting_request.subject or "Meeting",
+                            description=None,
+                            duration_minutes=duration_minutes or 30,
+                        )
+
+                        try:
+                            created_event = create_booking_event(
+                                user,
+                                booking_event_type,
+                                slot_start,
+                                invitee_name,
+                                invitee_email,
+                                _build_calendar_description(history, user.username or user.email, user.email),
+                            )
+                            calendar_event_id = created_event.google_event_id
+                            if calendar_event_id:
+                                updated_confirmed = dict(confirmed_info)
+                                updated_confirmed["google_event_id"] = calendar_event_id
+                                meeting_request.confirmed_slot = updated_confirmed
+                        except Exception as calendar_err:
+                            logger.warning(
+                                "Failed to create calendar event for meeting_request %s: %s",
+                                meeting_request.id,
+                                calendar_err,
+                            )
 
     db.session.commit()
 

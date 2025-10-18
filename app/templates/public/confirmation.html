@@ -1,15 +1,38 @@
 {% extends "base.html" %}
 {% block title %}Meeting Confirmed{% endblock %}
 {% block content %}
-<div class="container mt-4 text-center">
-    <div class="card mx-auto" style="max-width: 480px;">
-        <div class="card-body">
-            <h2 class="card-title">You're booked!</h2>
-            <p class="card-text">{{ event_type.title }} with {{ user.display_name }}</p>
-            <p class="card-text"><strong>{{ slot_start.strftime('%A, %B %d %Y at %I:%M %p') }}</strong></p>
-            <p class="card-text">Invitee: {{ invitee_name }}</p>
-            <a class="btn btn-primary" href="{{ url_for('public_booking.profile_page', handle=user.handle) }}">Back to event types</a>
+<div class="container mt-4 public-page">
+    <div class="confirmation-card">
+        <div class="confirmation-header">
+            <div class="confirmation-icon">✓</div>
+            <h2>This meeting is scheduled</h2>
+            <p class="confirmation-subtitle">We sent a calendar invitation with the details to everyone.</p>
+        </div>
+        <div class="confirmation-body">
+            <div class="confirmation-row">
+                <span class="confirmation-label">What</span>
+                <span class="confirmation-value">{{ event_type.title }} between {{ user.display_name }} and {{ invitee_name }}</span>
+            </div>
+            <div class="confirmation-row">
+                <span class="confirmation-label">When</span>
+                <span class="confirmation-value">{{ slot_start.strftime('%A, %B %d, %Y') }}<br>{{ slot_start.strftime('%I:%M %p').lstrip('0') }} – {{ slot_end.strftime('%I:%M %p').lstrip('0') }} ({{ timezone_label }})</span>
+            </div>
+            <div class="confirmation-row">
+                <span class="confirmation-label">Who</span>
+                <span class="confirmation-value">{{ user.display_name }} (Host)<br>{{ user.email }}<br><br>{{ invitee_name }}<br>{{ invitee_email }}</span>
+            </div>
+            <div class="confirmation-row">
+                <span class="confirmation-label">Where</span>
+                <span class="confirmation-value">Calendar Autobot</span>
+            </div>
+        </div>
+        <div class="confirmation-footer">
+            Need to make a change?
+            <a href="{{ reschedule_url }}" class="confirmation-link">Reschedule</a>
+            or
+            <a href="{{ cancel_url }}" class="confirmation-link">Cancel</a>
         </div>
     </div>
+    <div class="booking-powered-by">Powered by <span>Cal</span>Autobot.com</div>
 </div>
 {% endblock %}

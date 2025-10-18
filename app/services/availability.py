@@ -1,14 +1,21 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
+
+import logging
 
 import pytz
 from dateutil import parser
+from sqlalchemy import or_
 
 from app import db
 from app.models import AvailabilityWindow, Event, EventType, User
+from app.services import google_calendar
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -22,6 +29,18 @@ class Slot:
             "end_iso": self.end.isoformat(),
             "start_display": self.start.strftime("%I:%M %p").lstrip("0"),
         }
+
+
+@dataclass
+class AvailabilityBatch:
+    slots_by_date: Dict[date, List[Slot]]
+    availability_map: Dict[date, bool]
+
+
+class AvailabilityError(Exception):
+    def __init__(self, message: str, code: str = "availability_error"):
+        super().__init__(message)
+        self.code = code
 
 
 def get_timezone(user: User) -> pytz.BaseTzInfo:
@@ -138,21 +157,77 @@ def _parse_event_datetime(event: Event, tz) -> Optional[Slot]:
     return Slot(start=start_dt, end=end_dt)
 
 
-def _collect_busy_slots(user: User, day_start: datetime, day_end: datetime) -> List[Slot]:
-    tz = get_timezone(user)
+def _collect_local_busy_slots(
+    user: User, range_start: datetime, range_end: datetime, tz
+) -> List[Slot]:
     busy_slots: List[Slot] = []
 
-    events = Event.query.filter(Event.user_id == user.id).all()
+    events_query = Event.query.filter(Event.user_id == user.id)
+    # Narrow down by SQL date columns when available
+    events_query = events_query.filter(
+        or_(Event.start_date == None, Event.start_date <= range_end.date())
+    ).filter(or_(Event.end_date == None, Event.end_date >= range_start.date()))
+
+    events = events_query.all()
 
     for event in events:
         slot = _parse_event_datetime(event, tz)
         if not slot:
             continue
-        if slot.end <= day_start or slot.start >= day_end:
+        if slot.end <= range_start or slot.start >= range_end:
             continue
         busy_slots.append(slot)
 
     return busy_slots
+
+
+def _collect_google_busy_slots(
+    user: User, range_start: datetime, range_end: datetime, tz
+) -> List[Slot]:
+    conflict_calendar_ids = [
+        calendar.calendar_id
+        for calendar in user.calendars
+        if calendar.is_selected_for_conflicts
+    ]
+    if not conflict_calendar_ids:
+        return []
+
+    try:
+        calendars_busy = google_calendar.fetch_freebusy(
+            user, conflict_calendar_ids, range_start, range_end
+        )
+    except Exception as exc:
+        logger.warning("Failed to fetch Google free/busy data: %s", exc)
+        raise AvailabilityError(
+            "Unable to check calendar conflicts right now. Please try again shortly.",
+            code="google_unavailable",
+        ) from exc
+
+    busy_slots: List[Slot] = []
+    for calendar_id in conflict_calendar_ids:
+        periods = calendars_busy.get(calendar_id, {}).get("busy", [])
+        for period in periods:
+            try:
+                start_dt = parser.isoparse(period["start"]).astimezone(tz)
+                end_dt = parser.isoparse(period["end"]).astimezone(tz)
+            except Exception:
+                continue
+            busy_slots.append(Slot(start=start_dt, end=end_dt))
+    return busy_slots
+
+
+def _group_busy_slots_by_date(
+    busy_slots: Iterable[Slot], tz
+) -> Dict[date, List[Slot]]:
+    busy_by_date: Dict[date, List[Slot]] = defaultdict(list)
+    for slot in busy_slots:
+        start_day = slot.start.astimezone(tz).date()
+        end_day = slot.end.astimezone(tz).date()
+        current_day = start_day
+        while current_day <= end_day:
+            busy_by_date[current_day].append(slot)
+            current_day += timedelta(days=1)
+    return busy_by_date
 
 
 def _slot_overlaps(slot: Slot, busy_slots: Iterable[Slot]) -> bool:
@@ -162,43 +237,81 @@ def _slot_overlaps(slot: Slot, busy_slots: Iterable[Slot]) -> bool:
     return False
 
 
-def get_slots_for_date(user: User, event_type: EventType, target_date: date) -> List[Slot]:
+def get_availability_for_range(
+    user: User,
+    event_type: EventType,
+    start_date: date,
+    end_date: date,
+) -> AvailabilityBatch:
+    if end_date < start_date:
+        raise ValueError("end_date must be on or after start_date")
+
     ensure_default_windows(user)
     tz = get_timezone(user)
 
-    weekday = target_date.weekday()
-    windows = (
-        AvailabilityWindow.query.filter_by(user_id=user.id, weekday=weekday, is_active=True)
-        .order_by(AvailabilityWindow.start_time.asc())
-        .all()
-    )
+    weekly_windows = [
+        window for window in get_weekly_windows(user) if window.is_active
+    ]
+    if not weekly_windows:
+        return AvailabilityBatch(slots_by_date={}, availability_map={})
 
-    if not windows:
-        return []
-
-    day_start = tz.localize(datetime.combine(target_date, time.min))
-    day_end = tz.localize(datetime.combine(target_date, time.max))
-    busy_slots = _collect_busy_slots(user, day_start, day_end)
+    windows_by_weekday: Dict[int, List[AvailabilityWindow]] = defaultdict(list)
+    for window in weekly_windows:
+        windows_by_weekday[window.weekday].append(window)
 
     duration = timedelta(minutes=event_type.duration_minutes)
     now = datetime.now(tz)
 
-    available: List[Slot] = []
-    for window in windows:
-        window_start = tz.localize(datetime.combine(target_date, window.start_time))
-        window_end = tz.localize(datetime.combine(target_date, window.end_time))
+    range_start_dt = tz.localize(datetime.combine(start_date, time.min))
+    range_end_dt = tz.localize(datetime.combine(end_date, time.max))
 
-        cursor = window_start
-        while cursor + duration <= window_end:
-            slot = Slot(start=cursor, end=cursor + duration)
-            if slot.start < now:
-                cursor += duration
-                continue
-            if not _slot_overlaps(slot, busy_slots):
-                available.append(slot)
-            cursor += duration
+    local_busy = _collect_local_busy_slots(user, range_start_dt, range_end_dt, tz)
+    google_busy = _collect_google_busy_slots(user, range_start_dt, range_end_dt, tz)
+    all_busy = local_busy + google_busy
+    busy_by_date = _group_busy_slots_by_date(all_busy, tz)
 
-    return available
+    slots_by_date: Dict[date, List[Slot]] = {}
+    availability_map: Dict[date, bool] = {}
+
+    current_date = start_date
+    while current_date <= end_date:
+        day_windows = windows_by_weekday.get(current_date.weekday(), [])
+        day_slots: List[Slot] = []
+
+        if day_windows:
+            day_busy = busy_by_date.get(current_date, [])
+            for window in day_windows:
+                window_start = tz.localize(datetime.combine(current_date, window.start_time))
+                window_end = tz.localize(datetime.combine(current_date, window.end_time))
+
+                cursor = window_start
+                # align to top of hour or half hour
+                minute_offset = cursor.minute % 30
+                if minute_offset != 0:
+                    cursor += timedelta(minutes=30 - minute_offset)
+
+                while cursor + duration <= window_end:
+                    slot = Slot(start=cursor, end=cursor + duration)
+                    if slot.start < now:
+                        cursor += timedelta(minutes=30)
+                        continue
+                    if not _slot_overlaps(slot, day_busy):
+                        day_slots.append(slot)
+                    cursor += timedelta(minutes=30)
+
+        slots_by_date[current_date] = day_slots
+        availability_map[current_date] = bool(day_slots)
+        current_date += timedelta(days=1)
+
+    return AvailabilityBatch(
+        slots_by_date=slots_by_date,
+        availability_map=availability_map,
+    )
+
+
+def get_slots_for_date(user: User, event_type: EventType, target_date: date) -> List[Slot]:
+    batch = get_availability_for_range(user, event_type, target_date, target_date)
+    return batch.slots_by_date.get(target_date, [])
 
 
 def format_slots_for_template(slots: Iterable[Slot]) -> List[dict]:

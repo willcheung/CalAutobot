@@ -96,33 +96,21 @@
                         {% for calendar in calendars %}
                             <div class="calendar-entry {% if calendar.id == primary_calendar_id %}calendar-entry-primary{% endif %}">
                                 <div class="calendar-entry-meta">
-                                    <div class="calendar-entry-icon">
-                                        <span>{{ (calendar.name[0] if calendar.name else 'C') | upper }}</span>
-                                    </div>
-                                    <div>
-                                        <div class="calendar-entry-name">
-                                            {{ calendar.name }}
-                                            {% if calendar.id == primary_calendar_id %}
-                                                <span class="badge bg-light text-dark ms-2">Primary</span>
-                                            {% endif %}
-                                            {% if calendar.is_booking_destination %}
-                                                <span class="badge bg-primary text-white ms-2">Bookings</span>
-                                            {% endif %}
-                                            {% if calendar.is_extraction_destination %}
-                                                <span class="badge bg-secondary text-white ms-2">Extraction</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="calendar-entry-email text-muted">
-                                            {% if calendar.email %}
-                                                {{ calendar.email[:60] }}{% if calendar.email|length > 60 %}…{% endif %}
-                                            {% else %}
-                                                <span class="text-muted">No email</span>
-                                            {% endif %}
-                                        </div>
-                                        {% if not calendar.can_add_events %}
-                                            <div class="calendar-entry-access text-muted">View-only access</div>
+                                    <div class="calendar-entry-name">
+                                        {{ calendar.name }}
+                                        {% if calendar.id == primary_calendar_id %}
+                                            <span class="badge bg-light text-dark ms-2">Primary</span>
+                                        {% endif %}
+                                        {% if calendar.is_booking_destination %}
+                                            <span class="badge bg-primary text-white ms-2">Bookings</span>
+                                        {% endif %}
+                                        {% if calendar.is_extraction_destination %}
+                                            <span class="badge bg-secondary text-white ms-2">Extraction</span>
                                         {% endif %}
                                     </div>
+                                    {% if not calendar.can_add_events %}
+                                        <div class="calendar-entry-access text-muted">View-only access</div>
+                                    {% endif %}
                                 </div>
                                 <div class="form-check form-switch calendar-entry-switch">
                                     <input
