@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rename user.extraction_calendar_id to user.extraction_calendar_id.
+"""Rename user.textbot_calendar_id to user.extraction_calendar_id.
 
 Run with:
     python tools/migrations/20250420_rename_textbot_calendar_column.py
@@ -16,7 +16,7 @@ sys.path.insert(0, ".")
 from app import app, db  # noqa: E402
 
 TABLE_NAME = "user"
-OLD_COLUMN = "extraction_calendar_id"
+OLD_COLUMN = "textbot_calendar_id"
 NEW_COLUMN = "extraction_calendar_id"
 
 
