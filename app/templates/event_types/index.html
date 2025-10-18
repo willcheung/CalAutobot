@@ -72,12 +72,12 @@
                                             {% if item.is_active %}checked{% endif %}
                                             onchange="this.form.submit()"
                                         >
-                                        <label class="form-check-label small" for="event-type-active-{{ item.id }}">Active</label>
+                                        <label class="form-check-label" for="event-type-active-{{ item.id }}"></label>
                                     </div>
                                 </form>
                                 <form class="d-inline-block" method="post" action="{{ url_for('event_types_routes.delete_event_type', event_type_id=item.id) }}" onsubmit="return confirm('Delete this event type?');">
-                                    <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Delete event type">
-                                        <span aria-hidden="true">🗑</span>
+                                    <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete event type" aria-label="Delete event type">
+                                        <i data-feather="trash-2"></i>
                                     </button>
                                 </form>
                             </div>

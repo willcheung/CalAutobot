@@ -32,7 +32,7 @@
                 {% if writable_calendars %}
                     <div class="mb-3">
                         <label class="form-label" for="booking_calendar_id">Add meeting events to:</label>
-                        <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id">
+                        <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id" onchange="this.form.submit()">
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == booking_calendar_id %}selected{% endif %}>
                                     {{ calendar.name }}
@@ -51,7 +51,7 @@
 
                     <div class="mb-3">
                         <label class="form-label" for="extraction_calendar_id">🆓🛠️ Free tool! Add event extraction to:</label>
-                        <select class="form-select form-control-compact" id="extraction_calendar_id" name="extraction_calendar_id">
+                        <select class="form-select form-control-compact" id="extraction_calendar_id" name="extraction_calendar_id" onchange="this.form.submit()">
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == extraction_calendar_id %}selected{% endif %}>
                                     {{ calendar.name }}
@@ -84,7 +84,7 @@
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <h5 class="card-title mb-1">Check for conflicts</h5>
-                        <p class="text-muted small mb-0">Select which calendars you want to check for conflicts to prevent double bookings.</p>
+                        <p class="text-muted mb-0">Select which calendars you want to check for conflicts to prevent double bookings.</p>
                     </div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                         + Add
@@ -121,6 +121,7 @@
                                         name="conflict_calendar_ids"
                                         value="{{ calendar.id }}"
                                         {% if calendar.selected_for_conflicts %}checked{% endif %}
+                                        onchange="this.form.submit()"
                                     >
                                     <label class="form-check-label" for="conflict-{{ loop.index }}"></label>
                                 </div>
@@ -135,9 +136,6 @@
             </div>
         </div>
 
-        <div class="text-start">
-            <button type="submit" class="btn btn-primary btn-compact">Save changes</button>
-        </div>
     </form>
 </div>
 {% endblock %}
