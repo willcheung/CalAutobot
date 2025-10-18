@@ -60,7 +60,6 @@
                                 </div>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('event_types_routes.edit_event_type', event_type_id=item.id) }}">Edit</a>
                                 <form class="d-inline-block" method="post" action="{{ url_for('event_types_routes.toggle_event_type', event_type_id=item.id) }}">
                                     <div class="form-check form-switch m-0">
                                         <input
@@ -75,6 +74,7 @@
                                         <label class="form-check-label" for="event-type-active-{{ item.id }}"></label>
                                     </div>
                                 </form>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('event_types_routes.edit_event_type', event_type_id=item.id) }}">Edit</a>
                                 <form class="d-inline-block" method="post" action="{{ url_for('event_types_routes.delete_event_type', event_type_id=item.id) }}" onsubmit="return confirm('Delete this event type?');">
                                     <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete event type" aria-label="Delete event type">
                                         <i data-feather="trash-2"></i>
