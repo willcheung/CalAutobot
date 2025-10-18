@@ -87,6 +87,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert original_token
     assert "payload" in captured
     assert captured.get("calendar_id") == "booking-calendar"
+    assert captured["payload"]["event_name"] == "Host // Guest: Quick Chat"
     description_text = captured["payload"]["event_description"]
     assert "Looking forward" in description_text
     assert "Event Name: Quick Chat" in description_text
@@ -132,6 +133,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert b"This meeting is scheduled" in booking_resp_two.data
     new_event = Event.query.filter_by(user_id=user.id).first()
     assert new_event is not None
+    assert new_event.event_name == "Host // Guest: Quick Chat"
     assert new_event.event_description is not None
     assert "Created by Cal Autobot" in new_event.event_description
     assert Event.query.filter_by(id=original_event_id).first() is None

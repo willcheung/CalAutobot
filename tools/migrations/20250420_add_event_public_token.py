@@ -33,6 +33,11 @@ def ensure_column():
                 f'ALTER TABLE "{TABLE_NAME}" ADD COLUMN {COLUMN_NAME} VARCHAR(64)'
             )
         )
+        conn.execute(
+            db.text(
+                f'CREATE UNIQUE INDEX IF NOT EXISTS idx_event_{COLUMN_NAME} ON "{TABLE_NAME}" ({COLUMN_NAME})'
+            )
+        )
         conn.commit()
 
 

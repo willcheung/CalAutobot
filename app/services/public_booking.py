@@ -34,8 +34,18 @@ def create_booking_event(
             "No booking calendar configured. Please choose one in Settings -> Calendars before scheduling."
         )
 
+    host_name = (
+        getattr(user, "display_name", None)
+        or getattr(user, "username", None)
+        or (user.email or "Host")
+    )
+
+    invitee_display = invitee_name.strip() if invitee_name.strip() else invitee_email
+    event_title = event_type.title or "Meeting"
+    calendar_event_title = f"{host_name} // {invitee_display}: {event_title}"
+
     event_payload = {
-        "event_name": event_type.title,
+        "event_name": calendar_event_title,
         "start_datetime": start_dt.isoformat(),
         "end_datetime": end_dt.isoformat(),
         "location": None,
@@ -44,7 +54,7 @@ def create_booking_event(
 
     event = Event(
         user_id=user.id,
-        event_name=sanitize_text_for_db(event_type.title),
+        event_name=sanitize_text_for_db(calendar_event_title),
         event_description=None,
         start_date=start_dt.date(),
         start_time=start_dt.time(),
