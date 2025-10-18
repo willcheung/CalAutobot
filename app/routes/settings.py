@@ -55,14 +55,72 @@ def calendar_settings():
     calendar_error = None
     calendar_items = []
 
-    try:
-        calendar_items = fetch_user_calendar_list(current_user)
-    except Exception as exc:
-        calendar_error = str(exc)
-
     calendars_by_id = {cal.calendar_id: cal for cal in current_user.calendars}
     seen_calendar_ids = set()
     pending_changes = False
+
+    if request.method == "POST":
+        booking_calendar_id = request.form.get("booking_calendar_id") or None
+        extraction_calendar_id = request.form.get("extraction_calendar_id") or None
+        conflict_calendar_ids = set(request.form.getlist("conflict_calendar_ids"))
+
+        valid_calendar_ids = set(calendars_by_id.keys())
+        conflict_calendar_ids &= valid_calendar_ids
+
+        writable_calendar_ids = {
+            cal_id
+            for cal_id, calendar in calendars_by_id.items()
+            if calendar.access_role in {"owner", "writer"}
+        }
+
+        is_valid = True
+        if booking_calendar_id and booking_calendar_id not in writable_calendar_ids:
+            flash("Selected booking calendar is not available.", "danger")
+            is_valid = False
+        if extraction_calendar_id and extraction_calendar_id not in writable_calendar_ids:
+            flash("Selected extraction calendar is not available.", "danger")
+            is_valid = False
+
+        if is_valid:
+            if booking_calendar_id:
+                if current_user.default_booking_calendar_id != booking_calendar_id:
+                    current_user.default_booking_calendar_id = booking_calendar_id
+                    pending_changes = True
+            elif (
+                current_user.default_booking_calendar_id
+                and current_user.default_booking_calendar_id not in valid_calendar_ids
+            ):
+                current_user.default_booking_calendar_id = None
+                pending_changes = True
+
+            if extraction_calendar_id:
+                if current_user.extraction_calendar_id != extraction_calendar_id:
+                    current_user.extraction_calendar_id = extraction_calendar_id
+                    pending_changes = True
+            elif (
+                current_user.extraction_calendar_id
+                and current_user.extraction_calendar_id not in valid_calendar_ids
+            ):
+                current_user.extraction_calendar_id = None
+                pending_changes = True
+
+            for calendar_id, calendar in calendars_by_id.items():
+                selected = calendar_id in conflict_calendar_ids
+                if calendar.is_selected_for_conflicts != selected:
+                    calendar.is_selected_for_conflicts = selected
+                    pending_changes = True
+
+            if pending_changes:
+                db.session.commit()
+                flash("Calendar preferences updated.", "success")
+            return redirect(url_for("settings_routes.calendar_settings"))
+
+    if not calendar_error:
+        try:
+            calendar_items = fetch_user_calendar_list(current_user)
+        except Exception as exc:
+            calendar_error = str(exc)
+            calendar_items = []
 
     if not calendar_error:
         for item in calendar_items:
@@ -145,56 +203,6 @@ def calendar_settings():
                 if not default_extraction_calendar.is_selected_for_conflicts:
                     default_extraction_calendar.is_selected_for_conflicts = True
                 pending_changes = True
-
-    if request.method == "POST" and not calendar_error:
-        booking_calendar_id = request.form.get("booking_calendar_id") or None
-        extraction_calendar_id = request.form.get("extraction_calendar_id") or None
-        conflict_calendar_ids = set(request.form.getlist("conflict_calendar_ids"))
-
-        # Filter to calendars currently available
-        valid_calendar_ids = set(calendars_by_id.keys())
-        conflict_calendar_ids &= valid_calendar_ids
-
-        writable_calendar_ids = {
-            cal_id
-            for cal_id, calendar in calendars_by_id.items()
-            if calendar.access_role in {"owner", "writer"}
-        }
-
-        is_valid = True
-        if booking_calendar_id and booking_calendar_id not in writable_calendar_ids:
-            flash("Selected booking calendar is not available.", "danger")
-            is_valid = False
-        if extraction_calendar_id and extraction_calendar_id not in writable_calendar_ids:
-            flash("Selected extraction calendar is not available.", "danger")
-            is_valid = False
-
-        if is_valid:
-            if booking_calendar_id:
-                current_user.default_booking_calendar_id = booking_calendar_id
-            elif (
-                current_user.default_booking_calendar_id
-                and current_user.default_booking_calendar_id not in valid_calendar_ids
-            ):
-                current_user.default_booking_calendar_id = None
-
-            if extraction_calendar_id:
-                current_user.extraction_calendar_id = extraction_calendar_id
-            elif (
-                current_user.extraction_calendar_id
-                and current_user.extraction_calendar_id not in valid_calendar_ids
-            ):
-                current_user.extraction_calendar_id = None
-
-            for calendar_id, calendar in calendars_by_id.items():
-                calendar.is_selected_for_conflicts = (
-                    calendar_id in conflict_calendar_ids
-                )
-
-            pending_changes = True
-            db.session.commit()
-            flash("Calendar preferences updated.", "success")
-            return redirect(url_for("settings_routes.calendar_settings"))
 
     if pending_changes:
         db.session.commit()
