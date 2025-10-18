@@ -360,7 +360,12 @@ def update_event(event_id):
             try:
                 event_data = prepare_event_data_for_calendar(event)
 
-                if update_calendar_event(current_user, event.google_event_id, event_data):
+                if update_calendar_event(
+                    current_user,
+                    event.google_event_id,
+                    event_data,
+                    use_extraction_calendar=True,
+                ):
                     flash("Event updated successfully in both database and Google Calendar!", "success")
                 else:
                     flash("Event updated in database, but failed to update in Google Calendar.", "warning")
@@ -390,7 +395,11 @@ def sync_to_calendar(event_id):
 
     try:
         event_data = prepare_event_data_for_calendar(event)
-        google_event_id = create_calendar_event(current_user, event_data)
+        google_event_id = create_calendar_event(
+            current_user,
+            event_data,
+            use_extraction_calendar=True,
+        )
 
         event.google_event_id = google_event_id
         event.is_synced = True
@@ -421,7 +430,11 @@ def delete_event_internal(event, user, skip_google_calendar=False):
         # Delete from Google Calendar if synced and not skipping
         if not skip_google_calendar and event.is_synced and event.google_event_id:
             try:
-                delete_calendar_event(user, event.google_event_id)
+                delete_calendar_event(
+                    user,
+                    event.google_event_id,
+                    use_extraction_calendar=True,
+                )
             except Exception as e:
                 logger.warning(f"Failed to delete event {event.id} from Google Calendar: {str(e)}")
                 # Continue with database deletion even if Google Calendar deletion fails
@@ -506,7 +519,7 @@ def add_email():
         
         # Optimized single query to check all email conflicts at once
         # Check if email already exists for this user OR any other user (primary or additional)
-        existing_user_email = User.query.filter(User.email == email, User.textbot_calendar_id != None).first()
+        existing_user_email = User.query.filter(User.email == email, User.extraction_calendar_id != None).first()
         existing_user_additional = UserEmail.query.filter_by(user_id=current_user.id, email=email).first()
         
         if existing_user_additional:

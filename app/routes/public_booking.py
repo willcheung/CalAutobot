@@ -78,31 +78,29 @@ def _render_event_type_page(user: User, slug: str):
     calendar_range_end = month_calendar[-1][-1]
 
     former_slot_iso = request.args.get("former_slot")
-    cancel_event_id = request.args.get("cancel_event_id", type=int)
+    reschedule_event_id = request.args.get("reschedule_event_id", type=int)
     former_slot_start = None
     former_slot_end = None
 
-    if cancel_event_id:
-        event_to_cancel = Event.query.filter_by(id=cancel_event_id, user_id=user.id).first()
-        if event_to_cancel:
+    if reschedule_event_id:
+        event_to_reschedule = Event.query.filter_by(id=reschedule_event_id, user_id=user.id).first()
+        if event_to_reschedule:
             if not former_slot_iso:
-                cancel_dt = None
-                if event_to_cancel.start_datetime:
+                former_dt = None
+                if event_to_reschedule.start_datetime:
                     try:
-                        cancel_dt = datetime.fromisoformat(event_to_cancel.start_datetime)
+                        former_dt = datetime.fromisoformat(event_to_reschedule.start_datetime)
                     except ValueError:
-                        cancel_dt = None
-                if cancel_dt is None and event_to_cancel.start_date:
-                    base_time = event_to_cancel.start_time or time(0, 0)
-                    cancel_dt = tz.localize(datetime.combine(event_to_cancel.start_date, base_time))
-                if cancel_dt is not None:
-                    former_slot_iso = cancel_dt.isoformat()
-                    former_slot_start = cancel_dt.astimezone(tz)
+                        former_dt = None
+                if former_dt is None and event_to_reschedule.start_date:
+                    base_time = event_to_reschedule.start_time or time(0, 0)
+                    former_dt = tz.localize(datetime.combine(event_to_reschedule.start_date, base_time))
+                if former_dt is not None:
+                    former_slot_iso = former_dt.isoformat()
+                    former_slot_start = former_dt.astimezone(tz)
                     former_slot_end = former_slot_start + timedelta(minutes=event_type.duration_minutes)
-            cancel_booking_event(user, event_to_cancel)
-            flash("Your previous booking was cancelled. Pick a new time.", "info")
         else:
-            flash("We couldn't find the original booking to cancel.", "warning")
+            flash("We couldn't find the booking you want to reschedule.", "warning")
 
     availability_error = None
     availability_map = {}
@@ -185,6 +183,7 @@ def _render_event_type_page(user: User, slug: str):
         former_slot_start=former_slot_start,
         former_slot_end=former_slot_end,
         former_slot_iso=former_slot_iso,
+        reschedule_event_id=reschedule_event_id,
         display_sidebar=False,
     )
 
@@ -219,15 +218,26 @@ def confirm_booking_page(handle: str, slug: str):
 
     tz = availability_service.get_timezone(user)
     slot_iso = request.values.get("slot")
+    reschedule_event_id_value = request.values.get("reschedule_event_id")
+    reschedule_event_id = None
+    if reschedule_event_id_value and str(reschedule_event_id_value).isdigit():
+        reschedule_event_id = int(reschedule_event_id_value)
+
     if not slot_iso:
         flash("Please pick a time before continuing.", "danger")
-        return redirect(url_for("public_booking.event_type_page", handle=handle, slug=slug))
+        redirect_args = {"handle": handle, "slug": slug}
+        if reschedule_event_id:
+            redirect_args["reschedule_event_id"] = reschedule_event_id
+        return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     try:
         slot_start = datetime.fromisoformat(slot_iso)
     except ValueError:
         flash("Invalid time selection.", "danger")
-        return redirect(url_for("public_booking.event_type_page", handle=handle, slug=slug))
+        redirect_args = {"handle": handle, "slug": slug}
+        if reschedule_event_id:
+            redirect_args["reschedule_event_id"] = reschedule_event_id
+        return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     slot_start = slot_start.astimezone(tz)
     slot_date = slot_start.date()
@@ -236,7 +246,14 @@ def confirm_booking_page(handle: str, slug: str):
         day_slots = availability_service.get_slots_for_date(user, event_type, slot_date)
     except AvailabilityError:
         flash("We couldn't verify availability right now. Please try again shortly.", "danger")
-        return redirect(url_for("public_booking.event_type_page", handle=handle, slug=slug, date=slot_date.isoformat()))
+        redirect_args = {
+            "handle": handle,
+            "slug": slug,
+            "date": slot_date.isoformat(),
+        }
+        if reschedule_event_id:
+            redirect_args["reschedule_event_id"] = reschedule_event_id
+        return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     selected_slot = next(
         (s for s in day_slots if abs((s.start - slot_start).total_seconds()) < 60),
@@ -245,7 +262,14 @@ def confirm_booking_page(handle: str, slug: str):
 
     if not selected_slot:
         flash("That time is no longer available. Please choose another slot.", "danger")
-        return redirect(url_for("public_booking.event_type_page", handle=handle, slug=slug, date=slot_date.isoformat()))
+        redirect_args = {
+            "handle": handle,
+            "slug": slug,
+            "date": slot_date.isoformat(),
+        }
+        if reschedule_event_id:
+            redirect_args["reschedule_event_id"] = reschedule_event_id
+        return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     if request.method == "POST":
         invitee_name = request.form.get("invitee_name", "").strip()
@@ -274,6 +298,10 @@ def confirm_booking_page(handle: str, slug: str):
                 )
                 flash("We couldn't schedule that meeting. Please try again.", "danger")
             else:
+                if reschedule_event_id:
+                    original_event = Event.query.filter_by(id=reschedule_event_id, user_id=user.id).first()
+                    if original_event:
+                        cancel_booking_event(user, original_event)
                 slot_end = selected_slot.end
                 return render_template(
                     "public/confirmation.html",
@@ -290,7 +318,7 @@ def confirm_booking_page(handle: str, slug: str):
                         slug=event_type.slug,
                         former_slot=selected_slot.start.isoformat(),
                         date=selected_slot.start.date().isoformat(),
-                        cancel_event_id=event_record.id,
+                        reschedule_event_id=event_record.id,
                     ),
                     cancel_url=url_for(
                         "public_booking.cancel_booking",
@@ -325,6 +353,7 @@ def confirm_booking_page(handle: str, slug: str):
         default_name=display_name,
         default_email=display_email,
         notes=notes_value,
+        reschedule_event_id=reschedule_event_id,
         display_sidebar=False,
     )
 

@@ -16,8 +16,9 @@ def login(client, user):
 def test_public_booking_flow(client, app_context, monkeypatch):
     captured = {}
 
-    def _capture_calendar_event(_user, payload):
+    def _capture_calendar_event(_user, payload, **_kwargs):
         captured["payload"] = payload
+        captured["calendar_id"] = _kwargs.get("calendar_id")
         return "fake-google-id"
 
     monkeypatch.setattr(
@@ -25,6 +26,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
         _capture_calendar_event,
     )
     user = User(username="Host", email=f"host-{datetime.utcnow().timestamp()}@example.com", timezone="UTC")
+    user.default_booking_calendar_id = "booking-calendar"
     db.session.add(user)
     db.session.commit()
     assign_unique_handle(user)
@@ -80,7 +82,9 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert b"Reschedule" in booking_resp.data
     booked_event = Event.query.filter_by(user_id=user.id).first()
     assert booked_event is not None
+    original_event_id = booked_event.id
     assert "payload" in captured
+    assert captured.get("calendar_id") == "booking-calendar"
     description_text = captured["payload"]["event_description"]
     assert "Looking forward" in description_text
     assert "Event Name: Quick Chat" in description_text
@@ -93,19 +97,22 @@ def test_public_booking_flow(client, app_context, monkeypatch):
         f"/u/{user.handle}/{event_type.slug}",
         query_string={
             "former_slot": chosen_slot,
-            "cancel_event_id": booked_event.id,
+            "reschedule_event_id": original_event_id,
             "date": slots[0].start.date().isoformat(),
         },
     )
     assert reschedule_resp.status_code == 200
     assert b"Former time" in reschedule_resp.data
-    assert Event.query.filter_by(user_id=user.id).count() == 0
+    assert Event.query.filter_by(user_id=user.id).count() == 1
 
     alternative_slot = next(s for s in slots if s.start.isoformat() != chosen_slot)
 
     confirm_resp_two = client.get(
         f"/u/{user.handle}/{event_type.slug}/confirm",
-        query_string={"slot": alternative_slot.start.isoformat()},
+        query_string={
+            "slot": alternative_slot.start.isoformat(),
+            "reschedule_event_id": original_event_id,
+        },
     )
     assert confirm_resp_two.status_code == 200
     booking_resp_two = client.post(
@@ -115,6 +122,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
             "invitee_name": "Guest",
             "invitee_email": "guest@example.com",
             "notes": "Trying a new time",
+            "reschedule_event_id": str(original_event_id),
         },
         follow_redirects=True,
     )
@@ -124,6 +132,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert new_event is not None
     assert new_event.event_description is not None
     assert "Created by Cal Autobot" in new_event.event_description
+    assert Event.query.filter_by(id=original_event_id).first() is None
 
 
 def test_public_booking_flow_handles_calendar_failure(client, app_context, monkeypatch):
@@ -140,6 +149,7 @@ def test_public_booking_flow_handles_calendar_failure(client, app_context, monke
     )
 
     user = User(username="HostFail", email=f"host-fail-{datetime.utcnow().timestamp()}@example.com", timezone="UTC")
+    user.default_booking_calendar_id = "booking-calendar"
     db.session.add(user)
     db.session.commit()
     assign_unique_handle(user)

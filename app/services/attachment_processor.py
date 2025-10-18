@@ -329,7 +329,7 @@ class AttachmentProcessor:
                                 event_data['end_time'] = event.end_time.strftime('%H:%M')
 
                         # Create event in Google Calendar
-                        google_event_id = create_calendar_event(user, event_data)
+                        google_event_id = create_calendar_event(user, event_data, use_extraction_calendar=True)
 
                         if google_event_id:
                             event.google_event_id = google_event_id

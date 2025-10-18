@@ -372,7 +372,7 @@ def process_existing_user_email(formatted_text: str, attachments_data: List[Dict
                     
                     # Prepare and sync event
                     event_data = prepare_event_data_for_calendar(event)
-                    google_event_id = create_calendar_event(user, event_data)
+                    google_event_id = create_calendar_event(user, event_data, use_extraction_calendar=True)
                     
                     if google_event_id:
                         event.google_event_id = google_event_id

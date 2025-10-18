@@ -27,6 +27,12 @@ def create_booking_event(
     """Create a calendar event and persist it in the Event table."""
     end_dt = start_dt + timedelta(minutes=event_type.duration_minutes)
 
+    booking_calendar_id = getattr(user, "default_booking_calendar_id", None)
+    if not booking_calendar_id:
+        raise BookingCreationError(
+            "No booking calendar configured. Please choose one in Settings -> Calendars before scheduling."
+        )
+
     event_payload = {
         "event_name": event_type.title,
         "start_datetime": start_dt.isoformat(),
@@ -77,7 +83,7 @@ def create_booking_event(
                     slug=slug,
                     former_slot=start_dt.isoformat(),
                     date=start_dt.date().isoformat(),
-                    cancel_event_id=event.id,
+                    reschedule_event_id=event.id,
                     _external=True,
                 )
             except Exception as exc:  # noqa: BLE001
@@ -118,7 +124,11 @@ def create_booking_event(
         event_payload["location"] = sanitized_location
 
     try:
-        google_event_id = create_calendar_event(user, event_payload)
+        google_event_id = create_calendar_event(
+            user,
+            event_payload,
+            calendar_id=booking_calendar_id,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.error(
             "Failed to create Google Calendar booking for user %s: %s",
@@ -139,7 +149,12 @@ def create_booking_event(
         db.session.rollback()
         if google_event_id:
             try:
-                delete_calendar_event(user, google_event_id)
+                delete_calendar_event(
+                    user,
+                    google_event_id,
+                    calendar_id=booking_calendar_id,
+                    use_extraction_calendar=not bool(booking_calendar_id),
+                )
             except Exception as cleanup_exc:  # noqa: BLE001
                 logger.warning(
                     "Failed to roll back Google event %s after DB error: %s",
@@ -154,7 +169,13 @@ def cancel_booking_event(user: User, event: Event) -> None:
     """Remove a booking from the database and Google Calendar if applicable."""
     if event.google_event_id:
         try:
-            delete_calendar_event(user, event.google_event_id)
+            booking_calendar_id = getattr(user, "default_booking_calendar_id", None)
+            delete_calendar_event(
+                user,
+                event.google_event_id,
+                calendar_id=booking_calendar_id,
+                use_extraction_calendar=not bool(booking_calendar_id),
+            )
         except Exception as exc:  # noqa: BLE001
             logger.warning("Failed to delete Google Calendar event %s: %s", event.google_event_id, exc)
 

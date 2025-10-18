@@ -30,7 +30,7 @@ def create_test_user_with_calendar():
                 email='webhook-test@example.com',
                 google_id='test-google-id-123',
                 timezone='UTC',
-                textbot_calendar_id='test-calendar-id-123@group.calendar.google.com'
+                extraction_calendar_id='test-calendar-id-123@group.calendar.google.com'
             )
             
             # Add some test Google token data (not functional, just for testing)
@@ -47,7 +47,7 @@ def create_test_user_with_calendar():
             db.session.commit()
             
             print(f"Created test user: {test_user.email}")
-            print(f"Calendar ID: {test_user.textbot_calendar_id}")
+            print(f"Calendar ID: {test_user.extraction_calendar_id}")
             
             return test_user
             
@@ -168,7 +168,7 @@ def show_webhook_status():
                     status = "Expired"
                 
                 print(f"\nUser: {user.email}")
-                print(f"  Calendar ID: {user.textbot_calendar_id}")
+                print(f"  Calendar ID: {user.extraction_calendar_id}")
                 print(f"  Channel ID: {user.webhook_channel_id}")
                 print(f"  Resource ID: {user.webhook_resource_id}")
                 print(f"  Expiration: {user.webhook_expiration}")
@@ -186,7 +186,7 @@ def show_webhook_status():
             print(f"\nUsers without webhooks: {len(users_without_webhooks)}")
             for user in users_without_webhooks:
                 event_count = Event.query.filter_by(user_id=user.id, is_synced=True).count()
-                print(f"  {user.email} - Calendar: {user.textbot_calendar_id} - Events: {event_count}")
+                print(f"  {user.email} - Calendar: {user.extraction_calendar_id} - Events: {event_count}")
                 
     except Exception as e:
         print(f"Error showing webhook status: {e}")

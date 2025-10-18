@@ -112,8 +112,8 @@ def calendar_settings():
                 if current_user.default_booking_calendar_id == calendar.calendar_id:
                     current_user.default_booking_calendar_id = None
                     pending_changes = True
-                if current_user.textbot_calendar_id == calendar.calendar_id:
-                    current_user.textbot_calendar_id = None
+                if current_user.extraction_calendar_id == calendar.calendar_id:
+                    current_user.extraction_calendar_id = None
                     pending_changes = True
                 db.session.delete(calendar)
                 calendars_by_id.pop(calendar.calendar_id, None)
@@ -138,10 +138,10 @@ def calendar_settings():
                 current_user.default_booking_calendar_id = default_booking.calendar_id
                 pending_changes = True
 
-        if not current_user.textbot_calendar_id:
+        if not current_user.extraction_calendar_id:
             default_extraction_calendar = service_calendar or primary_calendar
             if default_extraction_calendar:
-                current_user.textbot_calendar_id = default_extraction_calendar.calendar_id
+                current_user.extraction_calendar_id = default_extraction_calendar.calendar_id
                 if not default_extraction_calendar.is_selected_for_conflicts:
                     default_extraction_calendar.is_selected_for_conflicts = True
                 pending_changes = True
@@ -179,12 +179,12 @@ def calendar_settings():
                 current_user.default_booking_calendar_id = None
 
             if extraction_calendar_id:
-                current_user.textbot_calendar_id = extraction_calendar_id
+                current_user.extraction_calendar_id = extraction_calendar_id
             elif (
-                current_user.textbot_calendar_id
-                and current_user.textbot_calendar_id not in valid_calendar_ids
+                current_user.extraction_calendar_id
+                and current_user.extraction_calendar_id not in valid_calendar_ids
             ):
-                current_user.textbot_calendar_id = None
+                current_user.extraction_calendar_id = None
 
             for calendar_id, calendar in calendars_by_id.items():
                 calendar.is_selected_for_conflicts = (
@@ -213,7 +213,7 @@ def calendar_settings():
                 "is_booking_destination": calendar_id
                 == current_user.default_booking_calendar_id,
                 "is_extraction_destination": calendar_id
-                == current_user.textbot_calendar_id,
+                == current_user.extraction_calendar_id,
             }
         )
 
@@ -225,7 +225,7 @@ def calendar_settings():
         cal for cal in calendar_preferences if cal["can_add_events"]
     ]
     booking_calendar_id = current_user.default_booking_calendar_id
-    extraction_calendar_id = current_user.textbot_calendar_id
+    extraction_calendar_id = current_user.extraction_calendar_id
     booking_calendar_missing = bool(
         booking_calendar_id
         and not any(cal["id"] == booking_calendar_id for cal in writable_calendars)

@@ -115,7 +115,7 @@ def find_user_by_calendar_resource(resource_id, resource_uri):
             calendar_id = resource_uri.split('/calendars/')[1].split('/events')[0]
             
             # Find user with this calendar ID
-            user = User.query.filter_by(textbot_calendar_id=calendar_id).first()
+            user = User.query.filter_by(extraction_calendar_id=calendar_id).first()
             return user
         
         logger.warning(f"Could not extract calendar ID from resource URI: {resource_uri}")
@@ -173,7 +173,7 @@ def process_calendar_deletions_for_user(user):
             'Content-Type': 'application/json'
         }
         
-        calendar_id = user.textbot_calendar_id
+        calendar_id = user.extraction_calendar_id
         if not calendar_id:
             logger.warning(f"User {user.email} has no Cal Event Extraction calendar ID")
             return
@@ -268,7 +268,7 @@ def setup_calendar_webhook():
             return jsonify({"error": "Authentication required"}), 401
         
         # Get user's calendar ID
-        calendar_id = current_user.textbot_calendar_id
+        calendar_id = current_user.extraction_calendar_id
         if not calendar_id:
             return jsonify({"error": "No Cal Event Extraction calendar found for user"}), 400
         

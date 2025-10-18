@@ -30,14 +30,14 @@ def find_users_needing_webhooks():
         with app.app_context():
             # Find users with Cal Event Extraction calendars but no webhook
             users_needing_webhooks = User.query.filter(
-                User.textbot_calendar_id.isnot(None),  # Has a calendar
+                User.extraction_calendar_id.isnot(None),  # Has a calendar
                 User.webhook_channel_id.is_(None)      # But no webhook
             ).all()
             
             logger.info(f"Found {len(users_needing_webhooks)} users needing webhook setup")
             
             for user in users_needing_webhooks:
-                logger.info(f"  - {user.email}: Calendar {user.textbot_calendar_id}")
+                logger.info(f"  - {user.email}: Calendar {user.extraction_calendar_id}")
             
             return users_needing_webhooks
             
@@ -62,7 +62,7 @@ def setup_webhook_for_user(user):
             return False, f"Could not refresh token for user {user.email}"
         
         # Set up webhook
-        webhook_data = setup_calendar_webhook_for_user(user, access_token, user.textbot_calendar_id)
+        webhook_data = setup_calendar_webhook_for_user(user, access_token, user.extraction_calendar_id)
         
         if webhook_data:
             return True, f"Successfully set up webhook for {user.email}"
@@ -145,13 +145,13 @@ def check_webhook_status():
             
             # Users with calendars but no webhooks
             users_needing_webhooks = User.query.filter(
-                User.textbot_calendar_id.isnot(None),
+                User.extraction_calendar_id.isnot(None),
                 User.webhook_channel_id.is_(None)
             ).all()
             
             # Users with neither
             users_no_calendar = User.query.filter(
-                User.textbot_calendar_id.is_(None)
+                User.extraction_calendar_id.is_(None)
             ).all()
             
             logger.info("=== WEBHOOK STATUS REPORT ===")
@@ -165,7 +165,7 @@ def check_webhook_status():
             
             logger.info(f"\nUsers needing webhook setup: {len(users_needing_webhooks)}")
             for user in users_needing_webhooks:
-                logger.info(f"  ⚠ {user.email} - Has calendar: {user.textbot_calendar_id[:20]}...")
+                logger.info(f"  ⚠ {user.email} - Has calendar: {user.extraction_calendar_id[:20]}...")
             
             logger.info(f"\nUsers without Cal Event Extraction calendar: {len(users_no_calendar)}")
             logger.info("  (These users don't need webhooks yet)")

@@ -20,7 +20,7 @@ def test_event_extractor_creates_calendar_event(monkeypatch, app_context):
 
     captured_payload = {}
 
-    def fake_create_calendar_event(user_arg, payload):
+    def fake_create_calendar_event(user_arg, payload, **kwargs):
         assert user_arg.id == user.id
         captured_payload.update(payload)
         return "event-extractor-123"

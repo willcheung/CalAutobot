@@ -9,6 +9,23 @@ import sentry_sdk
 
 logger = logging.getLogger(__name__)
 
+
+def _resolve_calendar_id(user, access_token, *, use_extraction_calendar=False, calendar_id=None):
+    """Determine which calendar ID to use for Google Calendar operations."""
+    if calendar_id:
+        return calendar_id
+
+    if use_extraction_calendar:
+        return get_or_create_extraction_calendar(user, access_token)
+
+    booking_calendar_id = getattr(user, "default_booking_calendar_id", None)
+    if booking_calendar_id:
+        return booking_calendar_id
+
+    raise Exception(
+        "No booking calendar configured. Please choose a calendar under Settings › Calendars."  # noqa: EM101
+    )
+
 # Database-stored calendar IDs replace caching for better reliability
 
 def check_user_has_calendar_scope(user):
@@ -261,13 +278,13 @@ def refresh_google_token(user):
             logger.error(f"Unexpected error in token refresh: {str(e)}")
             raise Exception("Google authentication issue. Please sign in again")
 
-def get_or_create_textbot_calendar(user, access_token):
+def get_or_create_extraction_calendar(user, access_token):
     """
-    Get stored Textbot calendar ID or create a new one if needed.
-    Validates existing calendar ID and creates new one if invalid.
+    Get stored extraction calendar ID or create a new one if needed.
+    Validates existing calendar ID and creates a new one if invalid.
 
     Args:
-        user: User object with textbot_calendar_id
+        user: User object with extraction_calendar_id
         access_token: Valid Google access token
 
     Returns:
@@ -281,27 +298,30 @@ def get_or_create_textbot_calendar(user, access_token):
     }
 
     # Check if user already has a stored calendar ID and validate it
-    if user.textbot_calendar_id:
-        logger.info(f"Validating stored Cal Event Extraction calendar ID: {user.textbot_calendar_id}")
+    if user.extraction_calendar_id:
+        logger.info(
+            "Validating stored Cal Event Extraction calendar ID: %s",
+            user.extraction_calendar_id,
+        )
 
         try:
             # Test if the stored calendar ID is still valid
             test_response = requests.get(
-                f'https://www.googleapis.com/calendar/v3/calendars/{user.textbot_calendar_id}',
+                f'https://www.googleapis.com/calendar/v3/calendars/{user.extraction_calendar_id}',
                 headers=headers,
                 timeout=10
             )
 
             if test_response.status_code == 200:
                 logger.info("Stored calendar ID is valid, using it")
-                return user.textbot_calendar_id
+                return user.extraction_calendar_id
             else:
                 logger.warning(f"Stored calendar ID is invalid (status {test_response.status_code}), will create new calendar")
-                user.textbot_calendar_id = None  # Clear invalid ID
+                user.extraction_calendar_id = None  # Clear invalid ID
 
         except Exception as e:
             logger.warning(f"Error validating stored calendar ID: {str(e)}, will create new calendar")
-            user.textbot_calendar_id = None  # Clear invalid ID
+            user.extraction_calendar_id = None  # Clear invalid ID
 
     try:
         # Create new Cal Event Extraction calendar since user doesn't have one stored or it's invalid
@@ -324,7 +344,7 @@ def get_or_create_textbot_calendar(user, access_token):
             calendar_id = result.get('id')
 
             # Store the calendar ID in the user's record
-            user.textbot_calendar_id = calendar_id
+            user.extraction_calendar_id = calendar_id
             db.session.commit()
 
             logger.info(f"Successfully created and stored Cal Event Extraction calendar with ID: {calendar_id}")
@@ -348,7 +368,7 @@ def get_or_create_textbot_calendar(user, access_token):
         logger.error(f"Error creating Cal Event Extraction calendar: {str(e)}")
         raise Exception("Failed to create calendar. Please try again.")
 
-def create_calendar_event(user, event_data):
+def create_calendar_event(user, event_data, use_extraction_calendar=False, calendar_id=None):
     """
     Create an event in Google Calendar.
 
@@ -363,8 +383,12 @@ def create_calendar_event(user, event_data):
         logger.info(f"Creating calendar event: {event_data.get('event_name', 'Unnamed Event')}")
         access_token = refresh_google_token(user)
 
-        # Get or create the Cal Event Extraction calendar
-        calendar_id = get_or_create_textbot_calendar(user, access_token)
+        target_calendar_id = _resolve_calendar_id(
+            user,
+            access_token,
+            use_extraction_calendar=use_extraction_calendar,
+            calendar_id=calendar_id,
+        )
 
 
 
@@ -432,7 +456,7 @@ def create_calendar_event(user, event_data):
 
         logger.info("Making request to Google Calendar API")
         response = requests.post(
-            f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events',
+            f'https://www.googleapis.com/calendar/v3/calendars/{target_calendar_id}/events',
             headers=headers,
             params={"sendUpdates": "all"},
             data=json.dumps(calendar_event),
@@ -475,13 +499,18 @@ def create_calendar_event(user, event_data):
         raise Exception(f"Failed to create calendar event: {str(e)}")
 
 
-def delete_calendar_event(user, google_event_id):
+def _delete_calendar_event_impl(user, google_event_id, use_extraction_calendar=False, calendar_id=None):
     """Delete an event from the user's calendar if we have the ID."""
     if not google_event_id:
         return
 
     access_token = refresh_google_token(user)
-    calendar_id = get_or_create_textbot_calendar(user, access_token)
+    target_calendar_id = _resolve_calendar_id(
+        user,
+        access_token,
+        use_extraction_calendar=use_extraction_calendar,
+        calendar_id=calendar_id,
+    )
 
     headers = {
         'Authorization': f'Bearer {access_token}',
@@ -490,7 +519,7 @@ def delete_calendar_event(user, google_event_id):
 
     try:
         response = requests.delete(
-            f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{google_event_id}',
+            f'https://www.googleapis.com/calendar/v3/calendars/{target_calendar_id}/events/{google_event_id}',
             headers=headers,
             timeout=15,
         )
@@ -507,211 +536,110 @@ def delete_calendar_event(user, google_event_id):
     except requests.exceptions.RequestException as exc:
         logger.warning("Network error deleting Google Calendar event %s: %s", google_event_id, exc)
 
-def update_calendar_event(user, google_event_id, event_data):
-    """
-    Update an existing event in Google Calendar with optimized token handling.
-    
-    Tries update with existing token first, only refreshes if authentication fails.
+def update_calendar_event(user, google_event_id, event_data, use_extraction_calendar=False, calendar_id=None):
+    """Update an existing event in Google Calendar."""
+    if not google_event_id:
+        return False
 
-    Args:
-        user: User object with Google token
-        google_event_id: Google Calendar event ID
-        event_data: Dictionary with updated event details
-
-    Returns:
-        bool: True if successful
-    """
     try:
-        # Get existing token without validation first
-        if not user.google_token:
-            logger.error("No Google token available for user")
-            return False
-            
-        token_data = json.loads(user.google_token)
-        access_token = token_data.get('access_token')
-        
-        if not access_token:
-            logger.error("No access token in stored data")
-            return False
+        access_token = refresh_google_token(user)
+        target_calendar_id = _resolve_calendar_id(
+            user,
+            access_token,
+            use_extraction_calendar=use_extraction_calendar,
+            calendar_id=calendar_id,
+        )
 
-        # Get the Cal Event Extraction calendar ID (optimized approach)
-        calendar_id = user.textbot_calendar_id
-        if not calendar_id:
-            # Need to get/create calendar, which requires valid token
-            access_token = refresh_google_token(user)
-            calendar_id = get_or_create_textbot_calendar(user, access_token)
-
-        # Similar logic as create_calendar_event but for updating
-        start_datetime = event_data['start_date']
-        end_datetime = event_data.get('end_date', event_data['start_date'])
-
-        if event_data.get('start_time'):
-            start_datetime += f"T{event_data['start_time']}:00"
+        if event_data.get('start_datetime') and event_data.get('end_datetime'):
+            start_datetime = event_data['start_datetime']
+            end_datetime = event_data['end_datetime']
         else:
-            start_datetime += "T09:00:00"
+            start_datetime = event_data['start_date']
+            end_datetime = event_data.get('end_date', event_data['start_date'])
 
-        if event_data.get('end_time'):
-            end_datetime += f"T{event_data['end_time']}:00"
-        else:
             if event_data.get('start_time'):
-                start_time = datetime.strptime(event_data['start_time'], '%H:%M')
-                end_time = start_time + timedelta(hours=1)
-                end_datetime += f"T{end_time.strftime('%H:%M')}:00"
+                start_datetime += f"T{event_data['start_time']}:00"
             else:
-                end_datetime += "T10:00:00"
+                start_datetime += "T09:00:00"
+
+            if event_data.get('end_time'):
+                end_datetime += f"T{event_data['end_time']}:00"
+            else:
+                if event_data.get('start_time'):
+                    start_time = datetime.strptime(event_data['start_time'], '%H:%M')
+                    end_time = start_time + timedelta(hours=1)
+                    end_datetime += f"T{end_time.strftime('%H:%M')}:00"
+                else:
+                    end_datetime += "T10:00:00"
 
         calendar_event = {
             "summary": event_data['event_name'],
             "description": event_data.get('event_description', ''),
             "start": {
                 "dateTime": start_datetime,
-                "timeZone": user.timezone
+                "timeZone": user.timezone,
             },
             "end": {
                 "dateTime": end_datetime,
-                "timeZone": user.timezone
-            }
+                "timeZone": user.timezone,
+            },
         }
 
         if event_data.get('location'):
             calendar_event["location"] = event_data['location']
 
+        attendees = event_data.get('attendees') or []
+        if attendees:
+            calendar_event["attendees"] = [{"email": email} for email in attendees]
+
         headers = {
             'Authorization': f'Bearer {access_token}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
         }
 
-        # Try update with existing token first (optimistic approach)
         response = requests.put(
-            f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{google_event_id}',
+            f'https://www.googleapis.com/calendar/v3/calendars/{target_calendar_id}/events/{google_event_id}',
             headers=headers,
             data=json.dumps(calendar_event),
-            timeout=30
+            timeout=30,
         )
 
-        # Success case - no token refresh needed
-        if response.status_code == 200:
-            logger.info(f"Successfully updated calendar event {google_event_id} without token refresh")
+        if response.status_code in (200, 204):
+            logger.info(f"Successfully updated calendar event {google_event_id}")
             return True
-        
-        # Authentication failure - try with refreshed token
-        elif response.status_code == 401:
-            logger.info("Token expired during update, refreshing and retrying")
-            try:
-                # Refresh token and retry
-                access_token = refresh_google_token(user)
-                headers['Authorization'] = f'Bearer {access_token}'
-                
-                retry_response = requests.put(
-                    f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{google_event_id}',
-                    headers=headers,
-                    data=json.dumps(calendar_event),
-                    timeout=30
-                )
-                
-                success = retry_response.status_code == 200
-                if success:
-                    logger.info(f"Successfully updated calendar event {google_event_id} after token refresh")
-                else:
-                    logger.error(f"Failed to update event after refresh: {retry_response.status_code}")
-                return success
-                
-            except Exception as refresh_error:
-                logger.error(f"Error refreshing token for update: {str(refresh_error)}")
-                return False
-        
-        # Other error codes
-        else:
-            logger.error(f"Failed to update calendar event: {response.status_code} - {response.text}")
+        if response.status_code == 404:
+            logger.warning(f"Calendar event {google_event_id} not found during update")
             return False
 
-    except Exception as e:
-        logger.error(f"Error updating calendar event: {str(e)}")
+        logger.error(
+            "Failed to update calendar event %s: %s - %s",
+            google_event_id,
+            response.status_code,
+            response.text,
+        )
         return False
 
-def delete_calendar_event(user, google_event_id):
-    """
-    Delete an event from Google Calendar with optimized token handling.
-    
-    Tries deletion with existing token first, only refreshes if authentication fails.
-    This reduces unnecessary database calls and API requests.
+    except requests.exceptions.RequestException as exc:
+        logger.error("Network error updating calendar event %s: %s", google_event_id, exc)
+        return False
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Error updating calendar event: {str(exc)}")
+        return False
 
-    Args:
-        user: User object with Google token
-        google_event_id: Google Calendar event ID
 
-    Returns:
-        bool: True if successful
-    """
+def delete_calendar_event(user, google_event_id, use_extraction_calendar=False, calendar_id=None):
     try:
-        # Get existing token without validation to avoid unnecessary API calls
-        if not user.google_token:
-            logger.error("No Google token available for user")
-            return False
-            
-        token_data = json.loads(user.google_token)
-        access_token = token_data.get('access_token')
-        
-        if not access_token:
-            logger.error("No access token in stored data")
-            return False
-
-        # Get the Cal Event Extraction calendar ID (may need token for validation)
-        calendar_id = user.textbot_calendar_id
-        if not calendar_id:
-            # Need to get/create calendar, which requires valid token
-            access_token = refresh_google_token(user)
-            calendar_id = get_or_create_textbot_calendar(user, access_token)
-
-        # Try deletion with existing token first (optimistic approach)
-        headers = {
-            'Authorization': f'Bearer {access_token}'
-        }
-
-        response = requests.delete(
-            f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{google_event_id}',
-            headers=headers,
-            timeout=30
+        _delete_calendar_event_impl(
+            user,
+            google_event_id,
+            use_extraction_calendar=use_extraction_calendar,
+            calendar_id=calendar_id,
         )
-
-        # Success case - no token refresh needed
-        if response.status_code == 204:
-            logger.info(f"Successfully deleted calendar event {google_event_id} without token refresh")
-            return True
-        
-        # Authentication failure - try with refreshed token
-        elif response.status_code == 401:
-            logger.info("Token expired during deletion, refreshing and retrying")
-            try:
-                # Refresh token and retry
-                access_token = refresh_google_token(user)
-                headers['Authorization'] = f'Bearer {access_token}'
-                
-                retry_response = requests.delete(
-                    f'https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events/{google_event_id}',
-                    headers=headers,
-                    timeout=30
-                )
-                
-                success = retry_response.status_code == 204
-                if success:
-                    logger.info(f"Successfully deleted calendar event {google_event_id} after token refresh")
-                else:
-                    logger.error(f"Failed to delete event after refresh: {retry_response.status_code}")
-                return success
-                
-            except Exception as refresh_error:
-                logger.error(f"Error refreshing token for deletion: {str(refresh_error)}")
-                return False
-        
-        # Other error codes
-        else:
-            logger.error(f"Failed to delete calendar event: {response.status_code} - {response.text}")
-            return False
-
-    except Exception as e:
-        logger.error(f"Error deleting calendar event: {str(e)}")
+        return True
+    except Exception as exc:
+        logger.error(f"Error deleting calendar event: {str(exc)}")
         return False
+
 
 def setup_calendar_webhook_for_user(user, access_token, calendar_id):
     """

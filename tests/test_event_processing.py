@@ -28,7 +28,7 @@ def test_process_text_to_events_creates_records(monkeypatch, app_context):
         }]
         return events, "sender@example.com", False, "success", None
 
-    def fake_create_calendar_event(user_arg, event_data):
+    def fake_create_calendar_event(user_arg, event_data, **kwargs):
         captured_event_payload.update(event_data)
         return "google-event-123"
 
