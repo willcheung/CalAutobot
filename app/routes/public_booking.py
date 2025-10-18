@@ -78,12 +78,18 @@ def _render_event_type_page(user: User, slug: str):
     calendar_range_end = month_calendar[-1][-1]
 
     former_slot_iso = request.args.get("former_slot")
-    reschedule_event_id = request.args.get("reschedule_event_id", type=int)
+    reschedule_token = request.args.get("reschedule_token")
+    legacy_cancel_event_id = request.args.get("cancel_event_id", type=int)
     former_slot_start = None
     former_slot_end = None
 
-    if reschedule_event_id:
-        event_to_reschedule = Event.query.filter_by(id=reschedule_event_id, user_id=user.id).first()
+    if not reschedule_token and legacy_cancel_event_id:
+        legacy_event = Event.query.filter_by(id=legacy_cancel_event_id, user_id=user.id).first()
+        if legacy_event and legacy_event.public_token:
+            reschedule_token = legacy_event.public_token
+
+    if reschedule_token:
+        event_to_reschedule = Event.query.filter_by(public_token=reschedule_token, user_id=user.id).first()
         if event_to_reschedule:
             if not former_slot_iso:
                 former_dt = None
@@ -183,7 +189,7 @@ def _render_event_type_page(user: User, slug: str):
         former_slot_start=former_slot_start,
         former_slot_end=former_slot_end,
         former_slot_iso=former_slot_iso,
-        reschedule_event_id=reschedule_event_id,
+        reschedule_token=reschedule_token,
         display_sidebar=False,
     )
 
@@ -218,16 +224,18 @@ def confirm_booking_page(handle: str, slug: str):
 
     tz = availability_service.get_timezone(user)
     slot_iso = request.values.get("slot")
-    reschedule_event_id_value = request.values.get("reschedule_event_id")
-    reschedule_event_id = None
-    if reschedule_event_id_value and str(reschedule_event_id_value).isdigit():
-        reschedule_event_id = int(reschedule_event_id_value)
+    reschedule_token = request.values.get("reschedule_token")
+    legacy_reschedule_event_id = request.values.get("reschedule_event_id", type=int)
+    if not reschedule_token and legacy_reschedule_event_id:
+        legacy_event = Event.query.filter_by(id=legacy_reschedule_event_id, user_id=user.id).first()
+        if legacy_event and legacy_event.public_token:
+            reschedule_token = legacy_event.public_token
 
     if not slot_iso:
         flash("Please pick a time before continuing.", "danger")
         redirect_args = {"handle": handle, "slug": slug}
-        if reschedule_event_id:
-            redirect_args["reschedule_event_id"] = reschedule_event_id
+        if reschedule_token:
+            redirect_args["reschedule_token"] = reschedule_token
         return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     try:
@@ -235,8 +243,8 @@ def confirm_booking_page(handle: str, slug: str):
     except ValueError:
         flash("Invalid time selection.", "danger")
         redirect_args = {"handle": handle, "slug": slug}
-        if reschedule_event_id:
-            redirect_args["reschedule_event_id"] = reschedule_event_id
+        if reschedule_token:
+            redirect_args["reschedule_token"] = reschedule_token
         return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     slot_start = slot_start.astimezone(tz)
@@ -251,8 +259,8 @@ def confirm_booking_page(handle: str, slug: str):
             "slug": slug,
             "date": slot_date.isoformat(),
         }
-        if reschedule_event_id:
-            redirect_args["reschedule_event_id"] = reschedule_event_id
+        if reschedule_token:
+            redirect_args["reschedule_token"] = reschedule_token
         return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     selected_slot = next(
@@ -267,8 +275,8 @@ def confirm_booking_page(handle: str, slug: str):
             "slug": slug,
             "date": slot_date.isoformat(),
         }
-        if reschedule_event_id:
-            redirect_args["reschedule_event_id"] = reschedule_event_id
+        if reschedule_token:
+            redirect_args["reschedule_token"] = reschedule_token
         return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
     if request.method == "POST":
@@ -298,8 +306,8 @@ def confirm_booking_page(handle: str, slug: str):
                 )
                 flash("We couldn't schedule that meeting. Please try again.", "danger")
             else:
-                if reschedule_event_id:
-                    original_event = Event.query.filter_by(id=reschedule_event_id, user_id=user.id).first()
+                if reschedule_token:
+                    original_event = Event.query.filter_by(public_token=reschedule_token, user_id=user.id).first()
                     if original_event:
                         cancel_booking_event(user, original_event)
                 slot_end = selected_slot.end
@@ -318,13 +326,13 @@ def confirm_booking_page(handle: str, slug: str):
                         slug=event_type.slug,
                         former_slot=selected_slot.start.isoformat(),
                         date=selected_slot.start.date().isoformat(),
-                        reschedule_event_id=event_record.id,
+                        reschedule_token=event_record.public_token,
                     ),
                     cancel_url=url_for(
                         "public_booking.cancel_booking",
                         handle=user.handle,
                         slug=event_type.slug,
-                        event_id=event_record.id,
+                        token=event_record.public_token,
                     ),
                     display_sidebar=False,
                 )
@@ -353,7 +361,7 @@ def confirm_booking_page(handle: str, slug: str):
         default_name=display_name,
         default_email=display_email,
         notes=notes_value,
-        reschedule_event_id=reschedule_event_id,
+        reschedule_token=reschedule_token,
         display_sidebar=False,
     )
 
@@ -373,16 +381,21 @@ def cancel_booking(handle: str, slug: str):
     if not event_type or not event_type.is_active or not event_type.is_public:
         abort(404)
 
-    event_id = request.args.get("event_id", type=int)
-    if not event_id:
-        flash("No booking specified to cancel.", "warning")
+    token = request.args.get("token")
+    event_record = None
+
+    if token:
+        event_record = Event.query.filter_by(public_token=token, user_id=user.id).first()
+    else:
+        legacy_event_id = request.args.get("event_id", type=int)
+        if legacy_event_id:
+            event_record = Event.query.filter_by(id=legacy_event_id, user_id=user.id).first()
+
+    if not event_record:
+        flash("We couldn't find that booking to cancel.", "warning")
         return redirect(url_for("public_booking.profile_page", handle=user.handle))
 
-    event_record = Event.query.filter_by(id=event_id, user_id=user.id).first()
-    if event_record:
-        cancel_booking_event(user, event_record)
-        flash("Your booking has been cancelled.", "info")
-    else:
-        flash("We couldn't find that booking to cancel.", "warning")
+    cancel_booking_event(user, event_record)
+    flash("Your booking has been cancelled.", "info")
 
     return redirect(url_for("public_booking.profile_page", handle=user.handle))

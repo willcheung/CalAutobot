@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import logging
+import secrets
 
 from flask import has_request_context, url_for
 
@@ -60,6 +61,19 @@ def create_booking_event(
     db.session.add(event)
     db.session.flush()
 
+    token = None
+    for _ in range(5):
+        candidate = secrets.token_urlsafe(16)
+        if not Event.query.filter_by(public_token=candidate).first():
+            token = candidate
+            break
+
+    if token is None:
+        db.session.rollback()
+        raise BookingCreationError("We couldn't schedule that meeting. Please try again.")
+
+    event.public_token = token
+
     location_value = getattr(event_type, "location", None) or getattr(user, "default_location", None)
 
     cancel_url = None
@@ -74,7 +88,7 @@ def create_booking_event(
                     "public_booking.cancel_booking",
                     handle=handle,
                     slug=slug,
-                    event_id=event.id,
+                    token=event.public_token,
                     _external=True,
                 )
                 reschedule_url = url_for(
@@ -83,7 +97,7 @@ def create_booking_event(
                     slug=slug,
                     former_slot=start_dt.isoformat(),
                     date=start_dt.date().isoformat(),
-                    reschedule_event_id=event.id,
+                    reschedule_token=event.public_token,
                     _external=True,
                 )
             except Exception as exc:  # noqa: BLE001
@@ -153,7 +167,7 @@ def create_booking_event(
                     user,
                     google_event_id,
                     calendar_id=booking_calendar_id,
-                    use_extraction_calendar=not bool(booking_calendar_id),
+                    use_extraction_calendar=False,
                 )
             except Exception as cleanup_exc:  # noqa: BLE001
                 logger.warning(
@@ -174,7 +188,7 @@ def cancel_booking_event(user: User, event: Event) -> None:
                 user,
                 event.google_event_id,
                 calendar_id=booking_calendar_id,
-                use_extraction_calendar=not bool(booking_calendar_id),
+                use_extraction_calendar=False,
             )
         except Exception as exc:  # noqa: BLE001
             logger.warning("Failed to delete Google Calendar event %s: %s", event.google_event_id, exc)

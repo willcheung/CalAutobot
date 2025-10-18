@@ -83,6 +83,8 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     booked_event = Event.query.filter_by(user_id=user.id).first()
     assert booked_event is not None
     original_event_id = booked_event.id
+    original_token = booked_event.public_token
+    assert original_token
     assert "payload" in captured
     assert captured.get("calendar_id") == "booking-calendar"
     description_text = captured["payload"]["event_description"]
@@ -97,7 +99,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
         f"/u/{user.handle}/{event_type.slug}",
         query_string={
             "former_slot": chosen_slot,
-            "reschedule_event_id": original_event_id,
+            "reschedule_token": original_token,
             "date": slots[0].start.date().isoformat(),
         },
     )
@@ -111,7 +113,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
         f"/u/{user.handle}/{event_type.slug}/confirm",
         query_string={
             "slot": alternative_slot.start.isoformat(),
-            "reschedule_event_id": original_event_id,
+            "reschedule_token": original_token,
         },
     )
     assert confirm_resp_two.status_code == 200
@@ -122,7 +124,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
             "invitee_name": "Guest",
             "invitee_email": "guest@example.com",
             "notes": "Trying a new time",
-            "reschedule_event_id": str(original_event_id),
+            "reschedule_token": original_token,
         },
         follow_redirects=True,
     )

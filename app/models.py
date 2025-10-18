@@ -55,6 +55,7 @@ class Event(db.Model):
     
     # Google Calendar integration
     google_event_id = db.Column(db.String(100))
+    public_token = db.Column(db.String(64), nullable=True, unique=True)
     is_synced = db.Column(db.Boolean, default=False)
     
     # Event duration

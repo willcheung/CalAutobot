@@ -115,8 +115,8 @@
                             {% if former_slot_iso and slot.start_iso == former_slot_iso %}
                                 {% set option_classes = option_classes + ' slot-option-former' %}
                             {% endif %}
-                            {% if reschedule_event_id %}
-                                {% set confirm_url = url_for('public_booking.confirm_booking_page', handle=user.handle, slug=event_type.slug, slot=slot.start_iso, reschedule_event_id=reschedule_event_id) %}
+                            {% if reschedule_token %}
+                                {% set confirm_url = url_for('public_booking.confirm_booking_page', handle=user.handle, slug=event_type.slug, slot=slot.start_iso, reschedule_token=reschedule_token) %}
                             {% else %}
                                 {% set confirm_url = url_for('public_booking.confirm_booking_page', handle=user.handle, slug=event_type.slug, slot=slot.start_iso) %}
                             {% endif %}
