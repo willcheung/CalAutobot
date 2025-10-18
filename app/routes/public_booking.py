@@ -1,7 +1,7 @@
 import calendar
 from datetime import datetime, timedelta, time
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import func
 
@@ -10,7 +10,11 @@ from app.models import Event, EventType, User
 from app.services import availability as availability_service
 from app.services.availability import AvailabilityError
 from app.services.event_types import get_event_type_by_slug
-from app.services.public_booking import create_booking_event, cancel_booking_event
+from app.services.public_booking import (
+    BookingCreationError,
+    cancel_booking_event,
+    create_booking_event,
+)
 from app.services.users import assign_unique_handle
 
 public_booking = Blueprint("public_booking", __name__)
@@ -251,33 +255,51 @@ def confirm_booking_page(handle: str, slug: str):
         if not invitee_name or not invitee_email:
             flash("Please provide your name and email to continue.", "danger")
         else:
-            event_record = create_booking_event(user, event_type, selected_slot.start, invitee_name, invitee_email, notes)
-            slot_end = selected_slot.end
-            return render_template(
-                "public/confirmation.html",
-                user=user,
-                event_type=event_type,
-                slot_start=selected_slot.start,
-                slot_end=slot_end,
-                timezone_label=tz.zone,
-                invitee_name=invitee_name,
-                invitee_email=invitee_email,
-                reschedule_url=url_for(
-                    "public_booking.event_type_page",
-                    handle=user.handle,
-                    slug=event_type.slug,
-                    former_slot=selected_slot.start.isoformat(),
-                    date=selected_slot.start.date().isoformat(),
-                    cancel_event_id=event_record.id,
-                ),
-                cancel_url=url_for(
-                    "public_booking.cancel_booking",
-                    handle=user.handle,
-                    slug=event_type.slug,
-                    event_id=event_record.id,
-                ),
-                display_sidebar=False,
-            )
+            try:
+                event_record = create_booking_event(
+                    user,
+                    event_type,
+                    selected_slot.start,
+                    invitee_name,
+                    invitee_email,
+                    notes,
+                )
+            except BookingCreationError as exc:
+                flash(str(exc) or "We couldn't schedule that meeting. Please try again.", "danger")
+            except Exception as exc:  # noqa: BLE001
+                current_app.logger.exception(
+                    "Unexpected error while creating booking for user %s and event type %s",
+                    user.id,
+                    event_type.id,
+                )
+                flash("We couldn't schedule that meeting. Please try again.", "danger")
+            else:
+                slot_end = selected_slot.end
+                return render_template(
+                    "public/confirmation.html",
+                    user=user,
+                    event_type=event_type,
+                    slot_start=selected_slot.start,
+                    slot_end=slot_end,
+                    timezone_label=tz.zone,
+                    invitee_name=invitee_name,
+                    invitee_email=invitee_email,
+                    reschedule_url=url_for(
+                        "public_booking.event_type_page",
+                        handle=user.handle,
+                        slug=event_type.slug,
+                        former_slot=selected_slot.start.isoformat(),
+                        date=selected_slot.start.date().isoformat(),
+                        cancel_event_id=event_record.id,
+                    ),
+                    cancel_url=url_for(
+                        "public_booking.cancel_booking",
+                        handle=user.handle,
+                        slug=event_type.slug,
+                        event_id=event_record.id,
+                    ),
+                    display_sidebar=False,
+                )
 
     if current_user.is_authenticated:
         display_name = (

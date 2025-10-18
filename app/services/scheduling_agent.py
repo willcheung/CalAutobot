@@ -358,17 +358,18 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                         .first()
                         or default_event_type
                     )
+                    if not selected_event_type:
+                        selected_event_type = SimpleNamespace(
+                            title=meeting_request.subject or "Meeting",
+                            description=None,
+                            duration_minutes=duration_minutes or 30,
+                        )
 
                     owner_name = agent_input.get("owner_name") or (user.username or user.email)
                     failure_reply = None
                     failure_action = None
                     failure_notes = None
                     failure_proposed_slots: List[Dict[str, str]] = []
-
-                    if not selected_event_type:
-                        failure_reply = _compose_system_issue_reply(owner_name)
-                        failure_action = "request_clarification"
-                        failure_notes = "missing_event_type"
 
                     if not failure_reply:
                         try:
@@ -382,7 +383,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                             failure_action = "request_clarification"
                             failure_notes = "availability_verify_error"
                         else:
-                            if not any(
+                            if day_slots and not any(
                                 abs((candidate.start - slot_start).total_seconds()) < 60 for candidate in day_slots
                             ):
                                 # Slot is no longer available; prepare alternatives
