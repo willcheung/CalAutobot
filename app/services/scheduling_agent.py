@@ -26,6 +26,11 @@ from app.services.gmail_service import gmail_service
 logger = logging.getLogger(__name__)
 
 ASSISTANT_EMAILS = {"go@calautobot.com", "cal@calautobot.com"}
+OWNER_ALERT_MESSAGES = {
+    "availability_fetch_error": "I couldn't load your calendar availability for the latest request.",
+    "availability_verify_error": "I couldn't confirm that the selected meeting slot is still available.",
+    "availability_refresh_error": "I couldn't refresh your up-to-date availability from Google Calendar.",
+}
 
 
 def _normalise_addresses(raw_addresses) -> List[str]:
@@ -72,6 +77,117 @@ def _compose_slot_taken_reply(owner_name: str, slot_start: datetime, tz, fallbac
     lines.append("Best,")
     lines.append("Cal")
     return "\n".join(lines)
+
+
+def _slot_matches_target(slot_start: datetime, candidates: List["Slot"], tolerance_seconds: int = 60) -> bool:
+    for candidate in candidates:
+        if abs((candidate.start - slot_start).total_seconds()) < tolerance_seconds:
+            return True
+    return False
+
+
+def _system_issue_agent_result(owner_name: str, note: str) -> Dict[str, object]:
+    return {
+        "action": "request_clarification",
+        "reply": _compose_system_issue_reply(owner_name),
+        "proposed_slots": [],
+        "confirmed_slot": None,
+        "notes": note,
+    }
+
+
+def _find_fallback_slots(
+    user: User,
+    event_type: EventType,
+    slot_start: datetime,
+    limit: int = 5,
+) -> List["Slot"]:
+    tz_local = availability_service.get_timezone(user)
+    today = datetime.now(tz_local).date()
+    start_date = max(slot_start.date(), today)
+    end_date = start_date + timedelta(days=13)
+
+    fresh_batch = availability_service.get_availability_for_range(
+        user,
+        event_type,
+        start_date,
+        end_date,
+    )
+
+    fallback_slots: List["Slot"] = []
+    for day_key in sorted(fresh_batch.slots_by_date.keys()):
+        for alt_slot in fresh_batch.slots_by_date[day_key]:
+            if abs((alt_slot.start - slot_start).total_seconds()) < 60:
+                continue
+            fallback_slots.append(alt_slot)
+            if len(fallback_slots) >= limit:
+                return fallback_slots
+    return fallback_slots
+
+
+def _validate_confirmed_slot(
+    user: User,
+    event_type: EventType,
+    slot_start: datetime,
+    owner_name: str,
+) -> Optional[Dict[str, object]]:
+    try:
+        day_slots = availability_service.get_slots_for_date(
+            user,
+            event_type,
+            slot_start.date(),
+        )
+    except AvailabilityError:
+        return _system_issue_agent_result(owner_name, "availability_verify_error")
+
+    if day_slots and not _slot_matches_target(slot_start, day_slots):
+        tz_local = availability_service.get_timezone(user)
+        try:
+            fallback_slots = _find_fallback_slots(user, event_type, slot_start)
+        except AvailabilityError:
+            return _system_issue_agent_result(owner_name, "availability_refresh_error")
+
+        fallback_lines = [
+            _format_slot_for_email_line(alt_slot, tz_local) for alt_slot in fallback_slots
+        ]
+        proposed_slots = [
+            {"start": alt_slot.start.isoformat(), "end": alt_slot.end.isoformat()}
+            for alt_slot in fallback_slots
+        ]
+        return {
+            "action": "propose_slots",
+            "reply": _compose_slot_taken_reply(owner_name, slot_start, tz_local, fallback_lines),
+            "proposed_slots": proposed_slots,
+            "confirmed_slot": None,
+            "notes": "slot_taken",
+        }
+
+    return None
+
+
+def _notify_owner_calendar_issue(user: User, note: Optional[str]):
+    if not note or note not in OWNER_ALERT_MESSAGES:
+        return
+
+    owner_email = getattr(user, "email", None)
+    if not owner_email:
+        return
+
+    owner_name = getattr(user, "username", None) or owner_email
+    message = OWNER_ALERT_MESSAGES[note]
+    subject = "Action needed: Restore Google Calendar access"
+    body = (
+        f"Hi {owner_name},\n\n"
+        f"This is Cal. {message} Please visit Settings → Calendars "
+        "to reconnect Google Calendar access so I can keep scheduling meetings for you.\n\n"
+        "You can go straight there at https://calautobot.com/settings/calendars\n\n"
+        "Thanks,\nCal"
+    )
+
+    try:
+        gmail_service.send_email(owner_email, subject, text_body=body)
+    except Exception as exc:
+        logger.warning("Unable to notify owner about calendar issue: %s", exc)
 
 
 def _get_or_create_meeting_request(
@@ -366,84 +482,22 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                         )
 
                     owner_name = agent_input.get("owner_name") or (user.username or user.email)
-                    failure_reply = None
-                    failure_action = None
-                    failure_notes = None
-                    failure_proposed_slots: List[Dict[str, str]] = []
+                    validation_result = _validate_confirmed_slot(
+                        user,
+                        selected_event_type,
+                        slot_start,
+                        owner_name,
+                    )
 
-                    if not failure_reply:
-                        try:
-                            day_slots = availability_service.get_slots_for_date(
-                                user,
-                                selected_event_type,
-                                slot_start.date(),
-                            )
-                        except AvailabilityError:
-                            failure_reply = _compose_system_issue_reply(owner_name)
-                            failure_action = "request_clarification"
-                            failure_notes = "availability_verify_error"
-                        else:
-                            if day_slots and not any(
-                                abs((candidate.start - slot_start).total_seconds()) < 60 for candidate in day_slots
-                            ):
-                                # Slot is no longer available; prepare alternatives
-                                tz_local = availability_service.get_timezone(user)
-                                fallback_slots: List = []
-                                try:
-                                    fresh_batch = availability_service.get_availability_for_range(
-                                        user,
-                                        selected_event_type,
-                                        max(slot_start.date(), datetime.now(tz_local).date()),
-                                        max(slot_start.date(), datetime.now(tz_local).date()) + timedelta(days=13),
-                                    )
-                                except AvailabilityError:
-                                    failure_reply = _compose_system_issue_reply(owner_name)
-                                    failure_action = "request_clarification"
-                                    failure_notes = "availability_refresh_error"
-                                else:
-                                    for day_key in sorted(fresh_batch.slots_by_date.keys()):
-                                        for alt_slot in fresh_batch.slots_by_date[day_key]:
-                                            if abs((alt_slot.start - slot_start).total_seconds()) < 60:
-                                                continue
-                                            fallback_slots.append(alt_slot)
-                                            if len(fallback_slots) >= 5:
-                                                break
-                                        if len(fallback_slots) >= 5:
-                                            break
-
-                                    tz_for_lines = tz_local
-                                    fallback_lines = [
-                                        _format_slot_for_email_line(alt_slot, tz_for_lines)
-                                        for alt_slot in fallback_slots
-                                    ]
-                                    failure_proposed_slots = [
-                                        {"start": alt_slot.start.isoformat(), "end": alt_slot.end.isoformat()}
-                                        for alt_slot in fallback_slots
-                                    ]
-                                    failure_reply = _compose_slot_taken_reply(
-                                        owner_name,
-                                        slot_start,
-                                        tz_for_lines,
-                                        fallback_lines,
-                                    )
-                                    failure_action = "propose_slots"
-                                    failure_notes = "slot_taken"
-
-                    if failure_reply:
-                        agent_result = {
-                            "action": failure_action,
-                            "reply": failure_reply,
-                            "proposed_slots": failure_proposed_slots,
-                            "confirmed_slot": None,
-                            "notes": failure_notes,
-                        }
-                        action = failure_action
-                        meeting_request.proposed_slots = failure_proposed_slots
+                    if validation_result:
+                        agent_result = validation_result
+                        action = validation_result["action"]
+                        meeting_request.proposed_slots = validation_result.get("proposed_slots", [])
                         meeting_request.confirmed_slot = None
                         meeting_request.status = (
-                            "collecting" if failure_action == "request_clarification" else "proposed"
+                            "collecting" if action == "request_clarification" else "proposed"
                         )
-                        meeting_request.current_step = failure_action
+                        meeting_request.current_step = action
                         calendar_event_id = None
                     else:
                         invitee = next(
@@ -497,6 +551,8 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                 meeting_request.id,
                                 calendar_err,
                             )
+
+    _notify_owner_calendar_issue(user, agent_result.get("notes"))
 
     db.session.commit()
 

@@ -5,9 +5,8 @@
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
         <div>
             <h1 class="mb-1">Event Types</h1>
-            <p class="text-muted mb-0" style="max-width: 540px;">Event types enable you to share links that show available times on your calendar and allow people to make bookings with you.</p>
+            <p class="text-muted mb-0" style="max-width: 540px;">Create events to share for people to book on your calendar.</p>
         </div>
-        <a href="{{ url_for('public_booking.profile_page', handle=current_user.handle) }}" class="btn btn-outline-secondary" target="_blank">View public page</a>
     </div>
 
     <div class="card mb-4">
@@ -31,7 +30,7 @@
                         <label class="form-label d-block" for="create_is_public">Visibility</label>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="create_is_public" name="is_public" checked>
-                            <label class="form-check-label" for="create_is_public">Public</label>
+                            <label class="form-check-label ms-1" for="create_is_public">Public</label>
                         </div>
                     </div>
                 </div>
@@ -44,7 +43,6 @@
 
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Existing event types</h5>
             {% if event_types %}
                 <div class="list-group">
                     {% for item in event_types %}
@@ -77,7 +75,9 @@
                                         <label class="form-check-label" for="event-type-active-{{ item.id }}"></label>
                                     </div>
                                 </form>
-                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('event_types_routes.edit_event_type', event_type_id=item.id) }}">Edit</a>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('event_types_routes.edit_event_type', event_type_id=item.id) }}" title="Edit event type" aria-label="Edit event type">
+                                    <i data-feather="edit-2"></i>
+                                </a>
                                 <form class="d-inline-block" method="post" action="{{ url_for('event_types_routes.delete_event_type', event_type_id=item.id) }}" onsubmit="return confirm('Delete this event type?');">
                                     <button class="btn btn-sm btn-outline-danger" type="submit" title="Delete event type" aria-label="Delete event type">
                                         <i data-feather="trash-2"></i>
@@ -92,5 +92,6 @@
             {% endif %}
         </div>
     </div>
+    <div><a href="{{ url_for('public_booking.profile_page', handle=current_user.handle) }}" class="btn btn-outline-secondary btn-compact" target="_blank">View public page <i data-feather="external-link" class="ms-1 small-icon"></i></a></div>
 </div>
 {% endblock %}

@@ -13,9 +13,17 @@
     {% include "settings/_nav.html" %}
 
     {% if calendar_error %}
-        <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
-            {{ calendar_error }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-warning alert-permanent mt-3 d-flex flex-column flex-md-row align-items-start gap-3" role="alert">
+            <div>
+                <strong class="d-block mb-1">We need access to your Google Calendar</strong>
+                <p class="mb-0 small text-muted">
+                    Please sign in with Google again to sync events.
+                </p>
+            </div>
+            <a href="#" class="google-calendar-connect-btn mt-3 mt-md-0" onclick="startGoogleLogin(); return false;">
+                <img src="{{ url_for('static', filename='images/google-calendar.svg') }}" alt="Google Calendar icon">
+                <span>Connect Google Calendar</span>
+            </a>
         </div>
     {% endif %}
 
