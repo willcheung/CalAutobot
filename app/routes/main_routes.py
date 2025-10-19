@@ -190,7 +190,19 @@ def gmail_push_webhook():
             logger.warning("Received Gmail push request without message payload")
             return ("", 204)
 
-        from app.services.gmail_push_processor import handle_history_message
+        from app.services.gmail_push_processor import (
+            enqueue_history_message,
+            handle_history_message,
+        )
+
+        try:
+            if enqueue_history_message(envelope):
+                return ("", 204)
+        except Exception as exc:
+            logger.exception(
+                "Failed to enqueue Gmail push task; falling back to inline processing: %s",
+                exc,
+            )
 
         handle_history_message(envelope)
         return ("", 204)

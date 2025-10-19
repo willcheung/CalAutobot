@@ -2,8 +2,13 @@ import base64
 import json
 import logging
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Optional, Set, List
+
+import sentry_sdk
+from flask import current_app
 
 from app import db
 from app.models import GmailPushState
@@ -14,6 +19,96 @@ logger = logging.getLogger(__name__)
 # Lock window keeps concurrent push deliveries from stepping on each other.
 # Keep it short so we rarely skip pushes yet still avoid parallel processing.
 LOCK_TIMEOUT_SECONDS = 5
+
+_MAX_WORKERS = max(1, int(os.environ.get("GMAIL_PUSH_WORKERS", "2")))
+_PUSH_EXECUTOR = ThreadPoolExecutor(
+    max_workers=_MAX_WORKERS,
+    thread_name_prefix="gmail-push",
+)
+
+
+def _queue_depth() -> Optional[int]:
+    work_queue = getattr(_PUSH_EXECUTOR, "_work_queue", None)
+    if not work_queue:
+        return None
+    try:
+        return work_queue.qsize()
+    except Exception:
+        return None
+
+
+def enqueue_history_message(envelope: dict) -> bool:
+    """Submit a Gmail push payload for background processing."""
+    if not envelope:
+        return False
+
+    app = current_app._get_current_object()
+    message_attrs = (envelope.get("message") or {}).get("attributes") or {}
+    history_id = None
+
+    raw_data = (envelope.get("message") or {}).get("data")
+    if raw_data:
+        try:
+            decoded = base64.b64decode(raw_data).decode("utf-8")
+            payload = json.loads(decoded)
+            history_id = payload.get("historyId")
+        except Exception:
+            history_id = None
+
+    depth = _queue_depth()
+    sentry_sdk.add_breadcrumb(
+        category="gmail_push.enqueue",
+        message="Queued Gmail push task",
+        level="info",
+        data={
+            "queue_depth": depth,
+            "history_id": history_id,
+            "resource_id": message_attrs.get("resourceId"),
+        },
+    )
+
+    logger.info(
+        "Enqueuing Gmail push task history_id=%s resource_id=%s depth=%s",
+        history_id,
+        message_attrs.get("resourceId"),
+        depth,
+    )
+
+    _PUSH_EXECUTOR.submit(_run_history_task, app, envelope, depth)
+    return True
+
+
+def _run_history_task(app, envelope: dict, enqueue_depth: Optional[int] = None) -> None:
+    start = time.monotonic()
+    with app.app_context():
+        try:
+            sentry_sdk.add_breadcrumb(
+                category="gmail_push.worker",
+                message="Processing Gmail push task",
+                level="info",
+                data={"enqueue_depth": enqueue_depth},
+            )
+            handle_history_message(envelope)
+            duration = time.monotonic() - start
+            logger.info(
+                "Completed Gmail push task in %.2fs (queued_depth=%s)",
+                duration,
+                enqueue_depth,
+            )
+            sentry_sdk.add_breadcrumb(
+                category="gmail_push.worker",
+                message="Completed Gmail push task",
+                level="info",
+                data={"duration_sec": round(duration, 2)},
+            )
+        except Exception as exc:
+            duration = time.monotonic() - start
+            logger.exception(
+                "Background Gmail push task failed after %.2fs: %s",
+                duration,
+                exc,
+            )
+            sentry_sdk.capture_exception(exc)
 
 
 def _get_allowed_recipients() -> Set[str]:

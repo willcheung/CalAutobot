@@ -138,7 +138,7 @@ def extract_events_from_text(text,
             messages=messages,
             response_format={"type": "json_object"},
             temperature=0.0,
-            timeout=60.0)
+            timeout=90.0)
 
         content = response.choices[0].message.content
         if not content:
