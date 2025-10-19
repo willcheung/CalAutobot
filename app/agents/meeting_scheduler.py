@@ -35,8 +35,9 @@ Key Rules & Constraints
 - Relative date resolution:
   Resolve references like "tomorrow" or "next Monday" using the email's sent date if available; otherwise, assume '{current_date}'.
 - Availability logic:
-  - Use the provided availability roster to select valid windows.
-  - Each slot must include precise ISO 8601 start and end times (UTC acceptable).
+  - The availability roster contains contiguous availability windows that may span multiple hours.
+  - Meetings must fit entirely inside a window and use the owner's standard meeting length of {event_duration_minutes} minutes.
+  - Provide proposed slots using precise ISO 8601 start and end timestamps (UTC acceptable).
   - If no availability exists in the next two weeks, politely notify all parties and ask if scheduling after two weeks works.
 - Tone & style:
   - Provide a helpful, professional, third-person assistant email body in plain text (no markdown, no HTML). 
@@ -93,52 +94,13 @@ Inputs You Will Receive:
 - current_date: ISO 8601 current date (e.g., "2025-10-13")
 - owner_name: display name of the owner
 - owner_email: email of the owner
+- event_duration_minutes: the owner's standard meeting duration
 
 ---
 
 Your Task:
 Given these inputs, analyze the conversation and produce the next scheduling step using the JSON schema above.
 """
-
-# Hard-coded availability windows (UTC) for initial testing.
-DEFAULT_AVAILABILITY = {
-    "weekday_mornings": [
-        {"start": "2025-10-20T16:00:00Z", "end": "2025-10-20T17:00:00Z"},
-        {"start": "2025-10-16T17:00:00Z", "end": "2025-10-16T18:00:00Z"},
-        {"start": "2025-10-17T13:00:00Z", "end": "2025-10-17T17:00:00Z"},
-    ],
-    "weekday_afternoons": [
-        {"start": "2025-10-20T21:00:00Z", "end": "2025-10-20T22:00:00Z"},
-        {"start": "2025-10-16T20:30:00Z", "end": "2025-10-16T21:30:00Z"},
-    ],
-}
-
-
-def get_testing_availability(user_timezone: str = "UTC") -> List[Dict[str, str]]:
-    """
-    Retrieve hard-coded availability and filter out past times.
-    """
-    now = datetime.now(timezone.utc)
-    slots = []
-    for bucket in DEFAULT_AVAILABILITY.values():
-        for slot in bucket:
-            try:
-                # Interpret as UTC
-                start_dt = datetime.fromisoformat(slot["start"].replace("Z", "+00:00"))
-                end_dt = datetime.fromisoformat(slot["end"].replace("Z", "+00:00"))
-            except Exception:
-                continue
-            if start_dt >= now:
-                slots.append(
-                    {
-                        "start": start_dt.isoformat(),
-                        "end": end_dt.isoformat(),
-                    }
-                )
-    # Sort chronologically
-    slots.sort(key=lambda s: s["start"])
-    return slots[:5]
-
 
 def build_conversation_history(messages: List[Dict[str, str]]) -> str:
     lines = []
@@ -159,7 +121,7 @@ def run_meeting_scheduler_agent(
     """
     Drive the scheduler agent to produce the next reply and slot suggestions.
     """
-    availability = availability or get_testing_availability()
+    availability = availability or []
     conversation_text = build_conversation_history(messages)
     latest_body = latest_message.get("body") or ""
 
@@ -167,12 +129,15 @@ def run_meeting_scheduler_agent(
     current_date = meeting_context.get("current_date") or datetime.utcnow().date().isoformat()
     owner_email = meeting_context.get("owner_email") or "[unknown]"
     owner_name = meeting_context.get("owner_name") or owner_email
+    event_duration_minutes = meeting_context.get("event_duration_minutes") or 30
+    availability_note = meeting_context.get("availability_note")
     system_prompt = (
         SCHEDULER_SYSTEM_PROMPT_TEMPLATE
         .replace("{owner_name}", owner_name)
         .replace("{owner_email}", owner_email)
         .replace("{timezone}", timezone)
         .replace("{current_date}", current_date)
+        .replace("{event_duration_minutes}", str(event_duration_minutes))
     )
 
     payload = f"""
@@ -185,6 +150,8 @@ Participants: {', '.join(meeting_context.get('participants') or [])}
 Status: {meeting_context.get('status') or 'pending'}
 Timezone: {timezone}
 Current date: {current_date}
+Default meeting duration: {event_duration_minutes} minutes
+Availability note: {availability_note or 'None'}
 
 Conversation so far:
 {conversation_text or '[no prior messages]'}

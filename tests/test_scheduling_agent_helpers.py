@@ -198,3 +198,57 @@ def test_notify_owner_calendar_issue_requires_email(monkeypatch):
 
     user = SimpleNamespace(email=None, username="Owner")
     scheduling_agent._notify_owner_calendar_issue(user, "availability_fetch_error")
+
+
+def test_coalesce_availability_windows_merges_contiguous_slots():
+    day = datetime(2025, 1, 5, 9, 0, tzinfo=pytz.UTC)
+    slots_by_date = {
+        day.date(): [
+            DummySlot(day, day + timedelta(minutes=30)),
+            DummySlot(day + timedelta(minutes=30), day + timedelta(minutes=60)),
+            DummySlot(day + timedelta(minutes=60), day + timedelta(minutes=90)),
+        ]
+    }
+    batch = SimpleNamespace(slots_by_date=slots_by_date)
+
+    blocks = scheduling_agent._coalesce_availability_windows(batch, day.date(), max_blocks=5)
+
+    assert len(blocks) == 1
+    assert blocks[0]["start"].startswith("2025-01-05T09:00")
+    assert blocks[0]["end"].startswith("2025-01-05T10:30")
+
+
+def test_coalesce_availability_windows_splits_on_gap():
+    day = datetime(2025, 1, 5, 9, 0, tzinfo=pytz.UTC)
+    slots_by_date = {
+        day.date(): [
+            DummySlot(day, day + timedelta(minutes=30)),
+            DummySlot(day + timedelta(minutes=30), day + timedelta(minutes=60)),
+            DummySlot(day + timedelta(minutes=120), day + timedelta(minutes=150)),
+        ]
+    }
+    batch = SimpleNamespace(slots_by_date=slots_by_date)
+
+    blocks = scheduling_agent._coalesce_availability_windows(batch, day.date(), max_blocks=5)
+
+    assert len(blocks) == 2
+    assert blocks[0]["start"].startswith("2025-01-05T09:00")
+    assert blocks[0]["end"].startswith("2025-01-05T10:00")
+    assert blocks[1]["start"].startswith("2025-01-05T11:00")
+    assert blocks[1]["end"].startswith("2025-01-05T11:30")
+
+
+def test_coalesce_availability_windows_respects_limit():
+    day = datetime(2025, 1, 5, 9, 0, tzinfo=pytz.UTC)
+    slots_by_date = {
+        day.date(): [
+            DummySlot(day + timedelta(minutes=offset), day + timedelta(minutes=offset + 30))
+            for offset in range(0, 240, 30)
+        ]
+    }
+    batch = SimpleNamespace(slots_by_date=slots_by_date)
+
+    blocks = scheduling_agent._coalesce_availability_windows(batch, day.date(), max_blocks=1)
+
+    assert len(blocks) == 1
+    assert blocks[0]["start"].startswith("2025-01-05T09:00")

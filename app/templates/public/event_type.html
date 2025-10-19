@@ -18,8 +18,18 @@
                         <span>{{ event_type.duration_minutes }} minute meeting</span>
                     </div>
                     <div class="booking-meta-item">
-                        <span class="booking-meta-icon">📍</span>
-                        <span>{{ timezone_label }}</span>
+                        <div class="booking-meta-content">
+                            <div class="booking-meta-label">Host timezone</div>
+                            <div class="booking-meta-value">{{ timezone_label }}</div>
+                        </div>
+                    </div>
+                    <div class="booking-meta-item booking-meta-item-column">
+                        <label class="booking-meta-label" for="visitor-timezone">Your timezone</label>
+                        <select id="visitor-timezone" class="form-select form-control-compact visitor-timezone-select">
+                            {% for zone in timezone_options %}
+                                <option value="{{ zone }}">{{ zone.replace('_', ' ') }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 {% if event_type.description %}
                 <div class="booking-meta-item booking-description mt-3">
@@ -41,7 +51,7 @@
             </div>
             <a href="{{ url_for('public_booking.profile_page', handle=user.handle) }}" class="booking-back-link mt-auto">← Back to event types</a>
         </aside>
-            <div class="booking-calendar">
+            <div class="booking-calendar" data-owner-timezone="{{ owner_timezone }}">
                 <div class="calendar-header">
                     <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ prev_month_date }}" aria-label="Previous month">
                         ‹
@@ -99,9 +109,8 @@
                 </div>
             <div class="booking-slots">
                 <div class="slots-header">
-                    <div>
-                        <div class="slots-day">{{ target_date.strftime('%A') }}</div>
-                        <div class="slots-date">{{ target_date.strftime('%B') }} {{ target_date.day }}</div>
+                    <div class="slots-timezone text-muted small">
+                        Times shown in <span data-visitor-timezone-display>{{ owner_timezone.replace('_', ' ') }}</span>
                     </div>
                 </div>
                 <div class="slots-list mt-3">
@@ -123,6 +132,8 @@
                             <a
                                 class="{{ option_classes }}"
                                 href="{{ confirm_url }}"
+                                data-base-href="{{ confirm_url }}"
+                                data-start-iso="{{ slot.start_iso }}"
                             >
                                 <span class="slot-time">{{ slot.start_display }}</span>
                                 <span class="slot-arrow">→</span>
@@ -139,4 +150,100 @@
         Powered by <span>Cal</span>Autobot.com
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timezoneSelect = document.getElementById('visitor-timezone');
+    const slotLinks = Array.from(document.querySelectorAll('.slot-option[data-start-iso]'));
+    const timezoneDisplay = document.querySelector('[data-visitor-timezone-display]');
+
+    const hasIntl = typeof Intl !== 'undefined' && typeof Intl.DateTimeFormat === 'function';
+    if (!timezoneSelect || !slotLinks.length || !hasIntl) {
+        return;
+    }
+
+    const VISITOR_PARAM = 'visitor_timezone';
+
+    slotLinks.forEach(link => {
+        if (!link.dataset.baseHref) {
+            link.dataset.baseHref = link.getAttribute('href');
+        }
+    });
+
+    function formatSlotTime(zone, isoString) {
+        try {
+            const slotDate = new Date(isoString);
+            return new Intl.DateTimeFormat(undefined, {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: zone,
+            }).format(slotDate);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function buildHref(baseHref, zone) {
+        try {
+            const url = new URL(baseHref, window.location.origin);
+            if (zone) {
+                url.searchParams.set(VISITOR_PARAM, zone);
+            } else {
+                url.searchParams.delete(VISITOR_PARAM);
+            }
+            return url.pathname + url.search + url.hash;
+        } catch (error) {
+            return baseHref;
+        }
+    }
+
+    function updateSlotTimes() {
+        const zone = timezoneSelect.value;
+        slotLinks.forEach(link => {
+            const startIso = link.getAttribute('data-start-iso');
+            const timeLabel = link.querySelector('.slot-time');
+            const formatted = formatSlotTime(zone, startIso);
+            if (formatted && timeLabel) {
+                timeLabel.textContent = formatted;
+            }
+            const baseHref = link.dataset.baseHref || link.getAttribute('href');
+            link.href = buildHref(baseHref, zone);
+        });
+        if (timezoneDisplay) {
+            timezoneDisplay.textContent = zone.replace(/_/g, ' ');
+        }
+        try {
+            localStorage.setItem('calautobotVisitorTimezone', zone);
+        } catch (storageError) {
+            // Ignore storage issues (e.g., private mode)
+        }
+    }
+
+    const storedZone = (() => {
+        try {
+            return localStorage.getItem('calautobotVisitorTimezone');
+        } catch (error) {
+            return null;
+        }
+    })();
+    const browserZone = (() => {
+        try {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch (error) {
+            return null;
+        }
+    })();
+
+    let initialZone = timezoneSelect.value;
+    if (storedZone && timezoneSelect.querySelector(`option[value="${storedZone}"]`)) {
+        initialZone = storedZone;
+    } else if (browserZone && timezoneSelect.querySelector(`option[value="${browserZone}"]`)) {
+        initialZone = browserZone;
+    }
+
+    timezoneSelect.value = initialZone;
+    updateSlotTimes();
+    timezoneSelect.addEventListener('change', updateSlotTimes);
+});
+</script>
 {% endblock %}

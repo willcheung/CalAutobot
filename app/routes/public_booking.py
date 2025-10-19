@@ -16,6 +16,7 @@ from app.services.public_booking import (
     create_booking_event,
 )
 from app.services.users import assign_unique_handle
+import pytz
 
 public_booking = Blueprint("public_booking", __name__)
 
@@ -58,6 +59,13 @@ def _render_event_type_page(user: User, slug: str):
         abort(404)
 
     tz = availability_service.get_timezone(user)
+    owner_timezone = tz.zone
+    owner_timezone_label = f"{owner_timezone.replace('_', ' ')} ({datetime.now(tz).strftime('%Z')})"
+
+    timezone_options = []
+    for zone in [owner_timezone] + list(pytz.common_timezones):
+        if zone not in timezone_options:
+            timezone_options.append(zone)
 
     date_str = request.args.get("date")
     if date_str:
@@ -184,7 +192,9 @@ def _render_event_type_page(user: User, slug: str):
         weekday_labels=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         prev_month_date=prev_month.isoformat(),
         next_month_date=next_month.isoformat(),
-        timezone_label=tz.zone,
+        timezone_label=owner_timezone_label,
+        owner_timezone=owner_timezone,
+        timezone_options=timezone_options,
         availability_error=availability_error,
         former_slot_start=former_slot_start,
         former_slot_end=former_slot_end,
@@ -225,6 +235,9 @@ def confirm_booking_page(handle: str, slug: str):
     tz = availability_service.get_timezone(user)
     slot_iso = request.values.get("slot")
     reschedule_token = request.values.get("reschedule_token")
+    visitor_timezone = request.values.get("visitor_timezone")
+    if visitor_timezone and visitor_timezone not in pytz.all_timezones:
+        visitor_timezone = None
     legacy_reschedule_event_id = request.values.get("reschedule_event_id", type=int)
     if not reschedule_token and legacy_reschedule_event_id:
         legacy_event = Event.query.filter_by(id=legacy_reschedule_event_id, user_id=user.id).first()
@@ -279,10 +292,40 @@ def confirm_booking_page(handle: str, slug: str):
             redirect_args["reschedule_token"] = reschedule_token
         return redirect(url_for("public_booking.event_type_page", **redirect_args))
 
+    host_slot_start = selected_slot.start.astimezone(tz)
+    host_slot_end = selected_slot.end.astimezone(tz)
+    host_timezone_label = f"{tz.zone.replace('_', ' ')} ({host_slot_start.strftime('%Z')})"
+    host_date_display = host_slot_start.strftime("%A, %B %d, %Y")
+    host_time_range = f"{host_slot_start.strftime('%I:%M %p').lstrip('0')} – {host_slot_end.strftime('%I:%M %p').lstrip('0')}"
+
+    def compute_visitor_details(zone: str):
+        if not zone or zone not in pytz.all_timezones:
+            return None, None, None, None
+        try:
+            tz_obj = pytz.timezone(zone)
+        except Exception:
+            return None, None, None, None
+        visitor_slot_start = selected_slot.start.astimezone(tz_obj)
+        visitor_slot_end = selected_slot.end.astimezone(tz_obj)
+        label = f"{zone.replace('_', ' ')} ({visitor_slot_start.strftime('%Z')})"
+        date_display = visitor_slot_start.strftime("%A, %B %d, %Y")
+        time_range = (
+            f"{visitor_slot_start.strftime('%I:%M %p').lstrip('0')} – "
+            f"{visitor_slot_end.strftime('%I:%M %p').lstrip('0')}"
+        )
+        return zone, label, date_display, time_range
+
+    visitor_timezone, visitor_timezone_label, visitor_date_display, visitor_time_range = compute_visitor_details(
+        visitor_timezone
+    )
+
     if request.method == "POST":
         invitee_name = request.form.get("invitee_name", "").strip()
         invitee_email = request.form.get("invitee_email", "").strip()
         notes = request.form.get("notes", "")
+        visitor_timezone, visitor_timezone_label, visitor_date_display, visitor_time_range = compute_visitor_details(
+            request.form.get("visitor_timezone") or visitor_timezone
+        )
 
         if not invitee_name or not invitee_email:
             flash("Please provide your name and email to continue.", "danger")
@@ -315,11 +358,15 @@ def confirm_booking_page(handle: str, slug: str):
                     "public/confirmation.html",
                     user=user,
                     event_type=event_type,
-                    slot_start=selected_slot.start,
-                    slot_end=slot_end,
-                    timezone_label=tz.zone,
+                    host_date_display=host_date_display,
+                    host_time_range=host_time_range,
+                    host_timezone_label=host_timezone_label,
+                    visitor_timezone_label=visitor_timezone_label,
+                    visitor_date_display=visitor_date_display,
+                    visitor_time_range=visitor_time_range,
                     invitee_name=invitee_name,
                     invitee_email=invitee_email,
+                    visitor_timezone=visitor_timezone,
                     reschedule_url=url_for(
                         "public_booking.event_type_page",
                         handle=user.handle,
@@ -358,6 +405,13 @@ def confirm_booking_page(handle: str, slug: str):
         slot_start=selected_slot.start,
         slot_end=slot_end,
         timezone_label=tz.zone,
+        host_date_display=host_date_display,
+        host_time_range=host_time_range,
+        host_timezone_label=host_timezone_label,
+        visitor_timezone=visitor_timezone,
+        visitor_timezone_label=visitor_timezone_label,
+        visitor_date_display=visitor_date_display,
+        visitor_time_range=visitor_time_range,
         default_name=display_name,
         default_email=display_email,
         notes=notes_value,

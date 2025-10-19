@@ -1272,8 +1272,8 @@ code, pre {
 }
 
 .btn-sm svg.feather {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
 }
 
 .btn-sm i {
@@ -1831,6 +1831,30 @@ code, pre {
     color: #334155;
 }
 
+.booking-meta-item-column {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.booking-meta-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.booking-meta-label {
+    font-size: calc(0.8rem * var(--font-scale));
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+}
+
+.booking-meta-value {
+    font-size: calc(0.95rem * var(--font-scale));
+    color: #334155;
+}
+
 .booking-former-time .former-label {
     font-size: calc(0.75rem * var(--font-scale));
     text-transform: uppercase;
@@ -1852,6 +1876,11 @@ code, pre {
 
 .booking-meta-icon {
     font-size: calc(1rem * var(--font-scale));
+}
+
+.visitor-timezone-select {
+    width: 100%;
+    font-size: calc(0.95rem * var(--font-scale));
 }
 
 .booking-description {
@@ -2010,19 +2039,15 @@ code, pre {
 
 .slots-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
     color: #0f172a;
 }
 
 .slots-day {
     font-weight: 600;
     font-size: calc(1.05rem * var(--font-scale));
-}
-
-.slots-date {
-    color: #475569;
-    font-size: calc(0.95rem * var(--font-scale));
 }
 
 .slots-timezone {
@@ -2333,8 +2358,8 @@ code, pre {
 }
 
 .event-type-form .form-check-input {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
 }
 
 .event-type-form .form-check-label {

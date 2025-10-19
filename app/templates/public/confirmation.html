@@ -15,7 +15,16 @@
             </div>
             <div class="confirmation-row">
                 <span class="confirmation-label">When</span>
-                <span class="confirmation-value">{{ slot_start.strftime('%A, %B %d, %Y') }}<br>{{ slot_start.strftime('%I:%M %p').lstrip('0') }} – {{ slot_end.strftime('%I:%M %p').lstrip('0') }} ({{ timezone_label }})</span>
+                <span class="confirmation-value">
+                    {{ host_date_display }}<br>
+                    {{ host_time_range }}<br>
+                    <small class="text-muted d-block">Host timezone: {{ host_timezone_label }}</small>
+                    {% if visitor_timezone_label %}
+                        <br>{{ visitor_date_display }}<br>
+                        {{ visitor_time_range }}<br>
+                        <small class="text-muted d-block">Your timezone: {{ visitor_timezone_label }}</small>
+                    {% endif %}
+                </span>
             </div>
             <div class="confirmation-row">
                 <span class="confirmation-label">Who</span>

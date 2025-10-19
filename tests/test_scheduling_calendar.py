@@ -71,8 +71,6 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     }
 
     monkeypatch.setattr("app.services.scheduling_agent.run_meeting_scheduler_agent", lambda *args, **kwargs: response)
-    monkeypatch.setattr("app.services.scheduling_agent.get_testing_availability", lambda *args, **kwargs: [])
-
     handle_scheduling_email(email_data, owner)
 
     assert booking_call["title"] == "Project Sync"

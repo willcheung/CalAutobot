@@ -44,7 +44,7 @@ def login():
         redirect_uri=request.url_root.rstrip('/') + REDIRECT_URL,
         scope=[
             "email",
-            "https://www.googleapis.com/auth/calendar.app.created"
+            "https://www.googleapis.com/auth/calendar"
         ],
         access_type="offline",  # Request offline access to get refresh token
         prompt="consent"  # Only prompt for account selection, not consent for returning users

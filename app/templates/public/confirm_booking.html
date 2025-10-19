@@ -8,11 +8,17 @@
             <p class="confirm-host">{{ user.display_name }}</p>
             <div class="confirm-detail">
                 <span class="confirm-icon">📅</span>
-                <span>{{ slot_start.strftime('%A, %B %d, %Y') }}</span>
+                <span>{{ host_date_display }}</span>
             </div>
             <div class="confirm-detail">
                 <span class="confirm-icon">⏰</span>
-                <span>{{ slot_start.strftime('%I:%M %p').lstrip('0') }} – {{ slot_end.strftime('%I:%M %p').lstrip('0') }} {{ timezone_label }}</span>
+                <span>
+                    {{ host_time_range }} <small class="text-muted d-block">Host timezone: {{ host_timezone_label }}</small>
+                    {% if visitor_timezone_label %}
+                        <br>{{ visitor_date_display }}
+                        <br>{{ visitor_time_range }} <small class="text-muted d-block">Your timezone: {{ visitor_timezone_label }}</small>
+                    {% endif %}
+                </span>
             </div>
             <div class="confirm-detail">
                 <span class="confirm-icon">⏱</span>
@@ -22,6 +28,7 @@
         <div class="confirm-form">
             <form method="post" class="confirm-form-inner">
                 <input type="hidden" name="slot" value="{{ slot_iso }}">
+                <input type="hidden" name="visitor_timezone" value="{{ visitor_timezone or '' }}">
                 {% if reschedule_token %}
                 <input type="hidden" name="reschedule_token" value="{{ reschedule_token }}">
                 {% endif %}

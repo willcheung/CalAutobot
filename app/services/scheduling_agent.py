@@ -13,13 +13,10 @@ from app.models import (
     User,
     EventType,
 )
-from app.agents.meeting_scheduler import (
-    get_testing_availability,
-    run_meeting_scheduler_agent,
-)
+from app.agents.meeting_scheduler import run_meeting_scheduler_agent
 from app.helpers.text_processing import sanitize_text_for_db
 from app.services import availability as availability_service
-from app.services.availability import AvailabilityError
+from app.services.availability import AvailabilityBatch, AvailabilityError
 from app.services.public_booking import create_booking_event
 from app.services.gmail_service import gmail_service
 
@@ -163,6 +160,53 @@ def _validate_confirmed_slot(
         }
 
     return None
+
+
+def _coalesce_availability_windows(
+    availability_batch: AvailabilityBatch,
+    window_start_date,
+    max_blocks: int = 8,
+) -> List[Dict[str, str]]:
+    """
+    Merge contiguous 30-minute slots into larger availability windows.
+    """
+    blocks: List[Dict[str, str]] = []
+    sorted_days = sorted(availability_batch.slots_by_date.keys())
+
+    for day in sorted_days:
+        if day < window_start_date:
+            continue
+
+        day_slots = sorted(
+            availability_batch.slots_by_date.get(day, []),
+            key=lambda slot: slot.start,
+        )
+
+        current_start = None
+        current_end = None
+
+        for slot in day_slots:
+            if current_start is None:
+                current_start = slot.start
+                current_end = slot.end
+                continue
+
+            gap_seconds = (slot.start - current_end).total_seconds()
+            if gap_seconds <= 60:
+                current_end = max(current_end, slot.end)
+            else:
+                blocks.append({"start": current_start.isoformat(), "end": current_end.isoformat()})
+                if len(blocks) >= max_blocks:
+                    return blocks
+                current_start = slot.start
+                current_end = slot.end
+
+        if current_start is not None:
+            blocks.append({"start": current_start.isoformat(), "end": current_end.isoformat()})
+            if len(blocks) >= max_blocks:
+                return blocks
+
+    return blocks
 
 
 def _notify_owner_calendar_issue(user: User, note: Optional[str]):
@@ -351,6 +395,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         "timezone": user.timezone or "UTC",
         "current_date": datetime.utcnow().date().isoformat(),
     }
+    agent_input["availability_note"] = None
     history = _export_messages_for_agent(meeting_request)
     latest_message = history[-1] if history else {
         "sender": meeting_message.sender_email,
@@ -358,7 +403,8 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         "body": meeting_message.body_text or "",
     }
 
-    availability = []
+    availability_blocks: List[Dict[str, str]] = []
+    extended_availability_blocks: List[Dict[str, str]] = []
     availability_batch = None
     availability_lookup_error = None
     default_event_type = (
@@ -366,6 +412,12 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         .order_by(EventType.duration_minutes.asc())
         .first()
     )
+    event_duration_minutes = (
+        default_event_type.duration_minutes
+        if default_event_type and default_event_type.duration_minutes
+        else 30
+    )
+    agent_input["event_duration_minutes"] = event_duration_minutes
 
     if default_event_type:
         tz = availability_service.get_timezone(user)
@@ -378,17 +430,20 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         except AvailabilityError as exc:
             availability_lookup_error = str(exc) or "A system issue prevented us from checking the calendar."
         else:
-            for day in sorted(availability_batch.slots_by_date.keys()):
-                if day < start_date:
-                    continue
-                for slot in availability_batch.slots_by_date[day]:
-                    availability.append(
-                        {"start": slot.start.isoformat(), "end": slot.end.isoformat()}
+            availability_blocks = _coalesce_availability_windows(availability_batch, start_date)
+            if not availability_blocks:
+                extended_start = end_date + timedelta(days=1)
+                extended_end = extended_start + timedelta(days=13)
+                try:
+                    extended_batch = availability_service.get_availability_for_range(
+                        user, default_event_type, extended_start, extended_end
                     )
-                    if len(availability) >= 8:
-                        break
-                if len(availability) >= 8:
-                    break
+                except AvailabilityError:
+                    extended_availability_blocks = []
+                else:
+                    extended_availability_blocks = _coalesce_availability_windows(
+                        extended_batch, extended_start
+                    )
 
     if availability_lookup_error:
         agent_result = {
@@ -400,8 +455,17 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         }
         availability = []
     else:
-        if not availability:
-            availability = get_testing_availability(user.timezone or "UTC")
+        availability = availability_blocks
+        if not availability and extended_availability_blocks:
+            availability = extended_availability_blocks
+            agent_input[
+                "availability_note"
+            ] = "No availability in the next two weeks; showing openings slightly further out."
+        elif not availability:
+            agent_input[
+                "availability_note"
+            ] = "No availability found in the next two weeks."
+        agent_input["event_duration_minutes"] = event_duration_minutes
         agent_result = run_meeting_scheduler_agent(
             agent_input,
             history,
