@@ -9,6 +9,8 @@ import sentry_sdk
 
 logger = logging.getLogger(__name__)
 
+from app.services.calendar_notifications import notify_owner_calendar_issue
+
 
 def _resolve_calendar_id(user, access_token, *, use_extraction_calendar=False, calendar_id=None):
     """Determine which calendar ID to use for Google Calendar operations."""
@@ -525,9 +527,12 @@ def create_calendar_event(
         sentry_sdk.capture_exception(e)
         raise Exception("Network error connecting to Google Calendar. Please check your connection.")
     except Exception as e:
-        logger.error(f"Unexpected error creating calendar event: {str(e)}")
+        error_text = str(e)
+        logger.error("Unexpected error creating calendar event: %s", error_text)
         sentry_sdk.capture_exception(e)
-        raise Exception(f"Failed to create calendar event: {str(e)}")
+        if "Please sign in with Google" in error_text or "Invalid Google authentication" in error_text:
+            notify_owner_calendar_issue(user, "calendar_access_error")
+        raise Exception(f"Failed to create calendar event: {error_text}")
 
 
 def _delete_calendar_event_impl(user, google_event_id, use_extraction_calendar=False, calendar_id=None):
@@ -668,7 +673,10 @@ def delete_calendar_event(user, google_event_id, use_extraction_calendar=False, 
         )
         return True
     except Exception as exc:
-        logger.error(f"Error deleting calendar event: {str(exc)}")
+        error_text = str(exc)
+        logger.error(f"Error deleting calendar event: {error_text}")
+        if "Please sign in with Google" in error_text or "Invalid Google authentication" in error_text:
+            notify_owner_calendar_issue(user, "calendar_access_error")
         return False
 
 

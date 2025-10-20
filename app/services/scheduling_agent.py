@@ -19,15 +19,17 @@ from app.services import availability as availability_service
 from app.services.availability import AvailabilityBatch, AvailabilityError
 from app.services.public_booking import create_booking_event
 from app.services.gmail_service import gmail_service
+from app.services.calendar_notifications import (
+    OWNER_ALERT_MESSAGES,
+    notify_owner_calendar_issue,
+)
 
 logger = logging.getLogger(__name__)
 
 ASSISTANT_EMAILS = {"go@calautobot.com", "cal@calautobot.com"}
-OWNER_ALERT_MESSAGES = {
-    "availability_fetch_error": "I couldn't load your calendar availability for the latest request.",
-    "availability_verify_error": "I couldn't confirm that the selected meeting slot is still available.",
-    "availability_refresh_error": "I couldn't refresh your up-to-date availability from Google Calendar.",
-}
+
+# Backward compatibility for existing imports/tests
+_notify_owner_calendar_issue = notify_owner_calendar_issue
 
 
 def _normalise_addresses(raw_addresses) -> List[str]:
@@ -207,31 +209,6 @@ def _coalesce_availability_windows(
                 return blocks
 
     return blocks
-
-
-def _notify_owner_calendar_issue(user: User, note: Optional[str]):
-    if not note or note not in OWNER_ALERT_MESSAGES:
-        return
-
-    owner_email = getattr(user, "email", None)
-    if not owner_email:
-        return
-
-    owner_name = getattr(user, "username", None) or owner_email
-    message = OWNER_ALERT_MESSAGES[note]
-    subject = "Action needed: Restore Google Calendar access"
-    body = (
-        f"Hi {owner_name},\n\n"
-        f"This is Cal. {message} Please visit Settings → Calendars "
-        "to reconnect Google Calendar access so I can keep scheduling meetings for you.\n\n"
-        "You can go straight there at https://calautobot.com/settings/calendars\n\n"
-        "Thanks,\nCal"
-    )
-
-    try:
-        gmail_service.send_email(owner_email, subject, text_body=body)
-    except Exception as exc:
-        logger.warning("Unable to notify owner about calendar issue: %s", exc)
 
 
 def _get_or_create_meeting_request(
@@ -616,7 +593,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                 calendar_err,
                             )
 
-    _notify_owner_calendar_issue(user, agent_result.get("notes"))
+    notify_owner_calendar_issue(user, agent_result.get("notes"))
 
     db.session.commit()
 
