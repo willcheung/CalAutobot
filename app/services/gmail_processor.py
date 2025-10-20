@@ -638,7 +638,7 @@ def send_no_events_response(email_data: Dict, recipient_email: str) -> None:
     body = (
         "Hi there,\n\n"
         "I looked over your email but couldn't find any calendar events to create. "
-        "If there's a specific date or time you'd like me to capture a specific date/time, feel free to reply with more details.\n\n"
+        "If you want me to schedule a meeting for you, or you'd like me to capture a specific date/time, feel free to reply with more details.\n\n"
         "Thanks!\nCal"
     )
 
