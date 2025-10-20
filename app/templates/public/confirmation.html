@@ -30,9 +30,18 @@
                 <span class="confirmation-label">Who</span>
                 <span class="confirmation-value">{{ user.display_name }} (Host)<br>{{ user.email }}<br><br>{{ invitee_name }}<br>{{ invitee_email }}</span>
             </div>
-            <div class="confirmation-row">
-                <span class="confirmation-label">Where</span>
-                <span class="confirmation-value">Calendar Autobot</span>
+            <div class="confirmation-row confirmation-row-location">
+                <span class="confirmation-label">Location</span>
+                <span class="confirmation-value">
+                    <span class="confirmation-location-value">
+                        <img
+                            src="{{ url_for('static', filename='images/google-meet.svg') }}"
+                            alt="Google Meet"
+                            class="confirmation-location-icon"
+                        >
+                        Google Meet
+                    </span>
+                </span>
             </div>
         </div>
         <div class="confirmation-footer">

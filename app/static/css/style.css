@@ -1907,6 +1907,22 @@ code, pre {
     font-size: calc(1rem * var(--font-scale));
 }
 
+.booking-meta-location .booking-meta-content {
+    gap: 6px;
+}
+
+.booking-meta-location-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.booking-meta-icon-image {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
 .visitor-timezone-select {
     width: 100%;
     font-size: calc(0.95rem * var(--font-scale));
@@ -2252,6 +2268,36 @@ code, pre {
     font-size: calc(1rem * var(--font-scale));
 }
 
+.confirm-icon-image {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.confirm-detail-location {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.confirm-meta-label {
+    font-size: calc(0.8rem * var(--font-scale));
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+}
+
+.confirm-meta-value {
+    font-size: calc(0.95rem * var(--font-scale));
+    color: #334155;
+}
+
+.confirm-meta-location-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .confirm-form {
     flex: 1 1 400px;
     background: #ffffff;
@@ -2348,6 +2394,24 @@ code, pre {
 .confirmation-value {
     color: #1f2937;
     line-height: 1.5;
+}
+
+.confirmation-location-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.confirmation-row-location .confirmation-value {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.confirmation-location-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .confirmation-footer {

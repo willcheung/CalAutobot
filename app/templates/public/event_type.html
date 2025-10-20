@@ -17,6 +17,19 @@
                         <span class="booking-meta-icon">⏱</span>
                         <span>{{ event_type.duration_minutes }} minute meeting</span>
                     </div>
+                    <div class="booking-meta-item booking-meta-location">
+                        <div class="booking-meta-content">
+                            <div class="booking-meta-label">Location</div>
+                            <div class="booking-meta-value booking-meta-location-value">
+                                <img
+                                    src="{{ url_for('static', filename='images/google-meet.svg') }}"
+                                    alt="Google Meet"
+                                    class="booking-meta-icon-image"
+                                >
+                                <span>Google Meet</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="booking-meta-item">
                         <div class="booking-meta-content">
                             <div class="booking-meta-label">Host timezone</div>

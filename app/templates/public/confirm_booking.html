@@ -7,6 +7,10 @@
             <h2 class="confirm-title">{{ event_type.title }}</h2>
             <p class="confirm-host">{{ user.display_name }}</p>
             <div class="confirm-detail">
+                <span class="confirm-icon">⏱</span>
+                <span>{{ event_type.duration_minutes }} minute meeting</span>
+            </div>
+            <div class="confirm-detail">
                 <span class="confirm-icon">📅</span>
                 <span>{{ host_date_display }}</span>
             </div>
@@ -20,9 +24,16 @@
                     {% endif %}
                 </span>
             </div>
-            <div class="confirm-detail">
-                <span class="confirm-icon">⏱</span>
-                <span>{{ event_type.duration_minutes }} minute meeting</span>
+            <div class="confirm-detail confirm-detail-location">
+                <div class="confirm-meta-label">Location</div>
+                <div class="confirm-meta-value confirm-meta-location-value">
+                    <img
+                        src="{{ url_for('static', filename='images/google-meet.svg') }}"
+                        alt="Google Meet"
+                        class="confirm-icon-image"
+                    >
+                    <span>Google Meet</span>
+                </div>
             </div>
         </aside>
         <div class="confirm-form">
