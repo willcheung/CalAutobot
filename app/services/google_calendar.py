@@ -368,7 +368,13 @@ def get_or_create_extraction_calendar(user, access_token):
         logger.error(f"Error creating Cal Event Extraction calendar: {str(e)}")
         raise Exception("Failed to create calendar. Please try again.")
 
-def create_calendar_event(user, event_data, use_extraction_calendar=False, calendar_id=None):
+def create_calendar_event(
+    user,
+    event_data,
+    use_extraction_calendar=False,
+    calendar_id=None,
+    add_google_meet: bool = False,
+):
     """
     Create an event in Google Calendar.
 
@@ -454,14 +460,39 @@ def create_calendar_event(user, event_data, use_extraction_calendar=False, calen
             'Content-Type': 'application/json'
         }
 
+        params = {"sendUpdates": "all"}
+        if add_google_meet:
+            calendar_event["conferenceData"] = {
+                "createRequest": {
+                    "conferenceSolutionKey": {"type": "hangoutsMeet"},
+                    "requestId": uuid.uuid4().hex,
+                }
+            }
+            params["conferenceDataVersion"] = 1
+
         logger.info("Making request to Google Calendar API")
         response = requests.post(
             f'https://www.googleapis.com/calendar/v3/calendars/{target_calendar_id}/events',
             headers=headers,
-            params={"sendUpdates": "all"},
+            params=params,
             data=json.dumps(calendar_event),
             timeout=30
         )
+
+        if response.status_code in {400, 403} and add_google_meet:
+            logger.warning(
+                "Google Meet creation failed (%s); retrying without conference data",
+                response.status_code,
+            )
+            calendar_event.pop("conferenceData", None)
+            params = {"sendUpdates": "all"}
+            response = requests.post(
+                f'https://www.googleapis.com/calendar/v3/calendars/{target_calendar_id}/events',
+                headers=headers,
+                params=params,
+                data=json.dumps(calendar_event),
+                timeout=30
+            )
 
         if response.status_code == 200:
             result = response.json()

@@ -152,6 +152,7 @@ def create_booking_event(
             user,
             event_payload,
             calendar_id=booking_calendar_id,
+            add_google_meet=True,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error(
