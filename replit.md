@@ -17,11 +17,11 @@ Preferred communication style: Simple, everyday language.
 - **Core Components**:
     - **User Authentication**: Handles Google OAuth, token refresh handling, session management, and provisional user upgrades.
     - **Provisional User System**: Emails to go@calautobot.com create provisional accounts capped at two processed messages; OAuth signup upgrades the account and auto-syncs stored events.
-    - **AI Event Extraction**: Structured prompting, timezone-aware date resolution, emoji tagging, validation, and persistence via `process_text_to_events`.
+    - **AI Event Extraction**: Structured prompting, timezone-aware date resolution, emoji tagging, validation, and persistence via `process_text_to_events`, with OpenAI calls capped at a 90-second client timeout to avoid wedging workers.
     - **Task Classifier Agent**: Lightweight heuristic + LLM router that inspects email headers/body to decide between event extraction and meeting coordination.
     - **Meeting Scheduler Agent**: Coordinates multi-party email threads, stores conversation context (`MeetingRequest`, `MeetingParticipant`, `MeetingMessage`), proposes new times using hard-coded availability during testing, and replies directly in the original email thread. If the sender hasn’t onboarded yet, Cal responds with a provisional signup email and respects the two-message limit before sending the “limit reached” notice.
-    - **Google Calendar Integration**: Manages calendar creation, event CRUD, webhook registration, and token refresh via `app/services/google_calendar.py`.
-    - **Gmail Ingestion**: Polling (cron) and push (Pub/Sub) processors download messages, filter attachments, deduplicate events, and mark mail as read.
+    - **Google Calendar Integration**: Manages calendar creation, event CRUD, webhook registration, token refresh, optional Google Meet conferencing, and owner alerts via `app/services/google_calendar.py`.
+    - **Gmail Ingestion**: Polling (cron) and push (Pub/Sub) processors download messages, filter attachments, deduplicate events, and mark mail as read. Pub/Sub handlers ack immediately and offload work to a lightweight background executor to avoid webhook timeouts.
     - **Database Models**: `User`, `Event`, `TextInput`, `EmailAttachment`, `MeetingRequest`, `MeetingParticipant`, `MeetingMessage`, `GmailPushState`, and `CalWaitlist` capture user data, extraction history, conversations, and push state.
     - **Web Routes**: Blueprints in `app/routes` provide dashboard UI, REST endpoints, webhook handlers, and Chrome-extension APIs.
     - **Data Flow**: Inputs (manual, Gmail, Chrome extension) go through `process_text_to_events`, which orchestrates OpenAI extraction, sanitization, database writes, and optional calendar sync.
