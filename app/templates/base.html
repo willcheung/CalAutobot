@@ -67,16 +67,21 @@
                 </div>
 
                 <nav class="sidebar-nav">
+                    {% set current_endpoint = request.endpoint or '' %}
+                    {% set is_dashboard_active = current_endpoint == 'main_routes.dashboard' %}
+                    {% set is_event_types_active = current_endpoint.startswith('event_types_routes.') %}
+                    {% set is_availability_active = current_endpoint.startswith('availability_routes.') %}
+                    {% set is_settings_active = current_endpoint.startswith('settings_routes.') %}
                     {% if current_user.is_authenticated %}
-                        <a class="sidebar-link" href="{{ url_for('main_routes.dashboard') }}">
+                        <a class="sidebar-link{% if is_dashboard_active %} sidebar-link-active{% endif %}" href="{{ url_for('main_routes.dashboard') }}">
                             <i data-feather="grid"></i>
                             <span>Dashboard</span>
                         </a>
-                        <a class="sidebar-link" href="{{ url_for('event_types_routes.list_event_types') }}">
+                        <a class="sidebar-link{% if is_event_types_active %} sidebar-link-active{% endif %}" href="{{ url_for('event_types_routes.list_event_types') }}">
                             <i data-feather="calendar"></i>
                             <span>Event Types</span>
                         </a>
-                        <a class="sidebar-link" href="{{ url_for('availability_routes.edit_availability') }}">
+                        <a class="sidebar-link{% if is_availability_active %} sidebar-link-active{% endif %}" href="{{ url_for('availability_routes.edit_availability') }}">
                             <i data-feather="clock"></i>
                             <span>Availability</span>
                         </a>
@@ -84,10 +89,21 @@
                             <i data-feather="external-link"></i>
                             <span>View Public Page</span>
                         </a>
-                        <a class="sidebar-link" href="{{ url_for('settings_routes.calendar_settings') }}">
+                        <a class="sidebar-link{% if is_settings_active %} sidebar-link-active{% endif %}" href="{{ url_for('settings_routes.calendar_settings') }}">
                             <i data-feather="settings"></i>
                             <span>Settings</span>
                         </a>
+                        <div class="sidebar-email-cta">
+                            <p class="sidebar-email-cta__label">Let Cal, your AI scheduler, manage your meetings.</p>
+                            <p class="sidebar-email-cta__label">Just cc:</p>
+                            <div class="sidebar-email-cta__address">
+                                <span>Cal@CalAutobot.com</span>
+                                <button type="button" class="copy-email-btn" onclick="copyEmail();" title="Copy email address">
+                                    <i data-feather="copy"></i>
+                                </button>
+                            </div>
+                            
+                        </div>
                         <a class="sidebar-link sidebar-link-danger" href="{{ url_for('google_auth.logout') }}">
                             <i data-feather="log-out"></i>
                             <span>Logout</span>

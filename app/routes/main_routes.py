@@ -488,12 +488,6 @@ def privacy():
     """Display Privacy Policy page"""
     return render_template('privacy.html')
 
-@main_routes.route('/email-instructions')
-def email_instructions():
-    """Display email integration instructions"""
-    mailgun_domain = os.environ.get("MAILGUN_DOMAIN", "your-domain.com")
-    return render_template('email_instructions.html', mailgun_domain=mailgun_domain)
-
 @main_routes.route("/add_email", methods=["POST"])
 @login_required
 def add_email():
