@@ -212,11 +212,6 @@ def _extract_message_ids(history_records: List[dict]) -> Set[str]:
             message_id = message.get("id")
             if message_id:
                 message_ids.add(message_id)
-        for entry in record.get("labelsAdded", []):
-            message = entry.get("message", {})
-            message_id = message.get("id")
-            if message_id:
-                message_ids.add(message_id)
     return message_ids
 
 
