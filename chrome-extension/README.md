@@ -9,7 +9,7 @@ AI-powered Chrome extension that extracts calendar events from text and screensh
 - **Google Calendar Sync**: Automatically sync extracted events to your calendar
 - **Context Menu**: Right-click selected text to extract events
 - **Keyboard Shortcut**: Press Ctrl+Alt+C to process selected text
-- **Dashboard Integration**: Quick access to the main Calendar AI dashboard
+- **Bookings Integration**: Quick access to the main Calendar AI bookings page
 
 ## Installation
 
@@ -39,7 +39,7 @@ AI-powered Chrome extension that extracts calendar events from text and screensh
 
 ### Quick Actions
 - **Forward Email**: Shows instructions for email forwarding to Calendar AI
-- **Dashboard**: Opens the Calendar AI web dashboard
+- **Bookings**: Opens the Calendar AI web bookings page
 - **Context Menu**: Right-click any selected text and choose "Extract Calendar Events"
 - **Keyboard Shortcut**: Select text and press Ctrl+Alt+C for quick processing
 

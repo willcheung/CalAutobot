@@ -24,6 +24,7 @@ def create_booking_event(
     invitee_name: str,
     invitee_email: str,
     notes: Optional[str] = None,
+    source: str = "public_booking",
 ) -> Event:
     """Create a calendar event and persist it in the Event table."""
     end_dt = start_dt + timedelta(minutes=event_type.duration_minutes)
@@ -66,6 +67,8 @@ def create_booking_event(
         google_event_id=None,
         location=None,
         duration_minutes=event_type.duration_minutes,
+        status="scheduled",
+        source=source or "public_booking",
     )
 
     db.session.add(event)
@@ -192,6 +195,9 @@ def create_booking_event(
 
 def cancel_booking_event(user: User, event: Event) -> None:
     """Remove a booking from the database and Google Calendar if applicable."""
+    if event.status == "cancelled":
+        return
+
     if event.google_event_id:
         try:
             booking_calendar_id = getattr(user, "default_booking_calendar_id", None)
@@ -204,5 +210,9 @@ def cancel_booking_event(user: User, event: Event) -> None:
         except Exception as exc:  # noqa: BLE001
             logger.warning("Failed to delete Google Calendar event %s: %s", event.google_event_id, exc)
 
-    db.session.delete(event)
+    event.status = "cancelled"
+    event.is_synced = False
+    event.google_event_id = None
+    event.updated_at = datetime.utcnow()
+
     db.session.commit()

@@ -1,7 +1,7 @@
 # Calendar AI - Text to Calendar Events Service
 
 ## Overview
-Calendar AI is a Flask-based application that turns unstructured inputs (emails, documents, screenshots, itineraries) into structured Google Calendar events via OpenAI extraction. It provides a web dashboard, Gmail ingestion pipeline, and Chrome extension so users can review, edit, and automatically sync detected events. The new agent framework also supports meeting coordination via email so the assistant can negotiate times on the user's behalf. The goal is to reduce manual scheduling work while keeping a clear audit trail of the original content.
+Calendar AI is a Flask-based application that turns unstructured inputs (emails, documents, screenshots, itineraries) into structured Google Calendar events via OpenAI extraction. It provides a web bookings page, Gmail ingestion pipeline, and Chrome extension so users can review, edit, and automatically sync detected events. The new agent framework also supports meeting coordination via email so the assistant can negotiate times on the user's behalf. The goal is to reduce manual scheduling work while keeping a clear audit trail of the original content.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -23,7 +23,7 @@ Preferred communication style: Simple, everyday language.
     - **Google Calendar Integration**: Manages calendar creation, event CRUD, webhook registration, token refresh, optional Google Meet conferencing, and owner alerts via `app/services/google_calendar.py`.
     - **Gmail Ingestion**: Polling (cron) and push (Pub/Sub) processors download messages, filter attachments, deduplicate events, and mark mail as read. Pub/Sub handlers ack immediately and offload work to a lightweight background executor to avoid webhook timeouts.
     - **Database Models**: `User`, `Event`, `TextInput`, `EmailAttachment`, `MeetingRequest`, `MeetingParticipant`, `MeetingMessage`, `GmailPushState`, and `CalWaitlist` capture user data, extraction history, conversations, and push state.
-    - **Web Routes**: Blueprints in `app/routes` provide dashboard UI, REST endpoints, webhook handlers, and Chrome-extension APIs.
+    - **Web Routes**: Blueprints in `app/routes` provide bookings UI, REST endpoints, webhook handlers, and Chrome-extension APIs.
     - **Data Flow**: Inputs (manual, Gmail, Chrome extension) go through `process_text_to_events`, which orchestrates OpenAI extraction, sanitization, database writes, and optional calendar sync.
     - **Webhook System**: Google Calendar webhook verifies tokens, spawns background deletion workers, and keeps database in sync with remote deletions.
     - **Email Templates**: `templates/emails/limit_reached.html` notifies provisional users who hit their quota.
@@ -33,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Custom CSS with Inter font family and consistent color scheme (e.g., secondary light styling for Chrome extension buttons, blue primary for extract events).
 - **JavaScript**: Vanilla JS for UX enhancements and form validation.
 - **Icons**: Feather Icons.
-- **UI/UX Decisions**: Responsive design, consistent iconography, clear user journey (e.g., "Forward Email or Take Screenshot" -> "AI Processes Your Content" -> "Auto-Sync to Google Calendar"), optimized dashboard layout, mobile responsiveness with hidden navbar buttons and dedicated mobile sections.
+- **UI/UX Decisions**: Responsive design, consistent iconography, clear user journey (e.g., "Forward Email or Take Screenshot" -> "AI Processes Your Content" -> "Auto-Sync to Google Calendar"), optimized bookings layout, mobile responsiveness with hidden navbar buttons and dedicated mobile sections.
 
 ### Chrome Extension & Agents
 - **Functionality**: Chrome extension with popup, background service worker, and content scripts. Supports text input, context menu extraction, screenshot uploads, and Google authentication.

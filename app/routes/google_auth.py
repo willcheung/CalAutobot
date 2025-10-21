@@ -224,7 +224,7 @@ def callback():
             logger.error(f"Error auto-syncing events for provisional user {users_email}: {str(e)}")
             # Don't fail the signup process if sync fails
 
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 
 

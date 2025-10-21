@@ -254,6 +254,8 @@ class AttachmentProcessor:
                     event.event_name = sanitize_text_for_db(cleaned_event['event_name'])
                     event.event_description = sanitize_text_for_db(cleaned_event['event_description'])
                     event.extracted_at = datetime.utcnow()
+                    event.status = "scheduled"
+                    event.source = "extracted"
 
                     # Parse dates safely - start_date is required by database schema
                     if cleaned_event['start_date']:
@@ -554,6 +556,8 @@ class AttachmentProcessor:
                 event.end_datetime = event_data.get('end_datetime')
                 event.location = event_data.get('location', '')
                 event.is_synced = False
+                event.status = "scheduled"
+                event.source = "extracted"
                 
                 db.session.add(event)
             

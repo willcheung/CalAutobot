@@ -586,8 +586,8 @@ def send_confirmation_email(recipient_email: str, events_count: int, synced_coun
         logger.info(f"📧 Confirmation: {recipient_email} - {events_count} events processed, {synced_count} synced")
         
         base_url = get_base_url()
-        dashboard_url = f"{base_url}/dashboard"
-        logger.info(f"📧 Dashboard URL for {recipient_email}: {dashboard_url}")
+        bookings_url = f"{base_url}/bookings"
+        logger.info(f"📧 Bookings URL for {recipient_email}: {bookings_url}")
         
         # For now, just log - can add actual email template later if needed
         return True

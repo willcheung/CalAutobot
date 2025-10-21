@@ -145,7 +145,7 @@ class CalendarAIPopup {
     document.getElementById('screenshotBtn').addEventListener('click', () => this.takeScreenshot());
     
     // Quick actions
-    document.getElementById('dashboardBtn').addEventListener('click', () => this.openDashboard());
+    document.getElementById('bookingsBtn').addEventListener('click', () => this.openBookings());
     
     // Copy email button
     document.getElementById('copyEmailBtn').addEventListener('click', () => this.copyEmail());
@@ -418,9 +418,9 @@ class CalendarAIPopup {
 
   // Removed showForwardEmailInfo - now displayed directly in UI
 
-  openDashboard() {
-    // Always open dashboard directly without checking authentication
-    chrome.tabs.create({ url: `${this.apiBaseUrl}/dashboard` });
+  openBookings() {
+    // Always open bookings directly without checking authentication
+    chrome.tabs.create({ url: `${this.apiBaseUrl}/bookings` });
   }
 
   async copyEmail() {

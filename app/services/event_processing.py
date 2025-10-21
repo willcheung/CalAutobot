@@ -73,6 +73,8 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
             event.event_name = sanitize_text_for_db(cleaned_event['event_name'])
             event.event_description = sanitize_text_for_db(cleaned_event['event_description'])
             event.extracted_at = extraction_time
+            event.status = "scheduled"
+            event.source = "extracted"
 
             # Parse dates safely - start_date is required by database schema
             if cleaned_event['start_date']:

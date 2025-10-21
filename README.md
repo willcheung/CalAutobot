@@ -45,7 +45,7 @@ Calendar AI is a Flask-based web application that transforms text input (emails,
 - **TextInput**: Stores original text inputs for audit trail and reprocessing
 
 ### 5. Web Routes (`routes.py`)
-- Dashboard for event management
+- Bookings page for event management
 - Text input processing and event extraction
 - Event editing and calendar sync operations
 - RESTful API endpoints for CRUD operations

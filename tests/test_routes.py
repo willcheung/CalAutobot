@@ -2,7 +2,9 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from app import db
-from app.models import User
+from datetime import datetime, timedelta
+
+from app.models import Event, User
 
 
 def login(client, user_id):
@@ -94,3 +96,59 @@ def test_api_extract_events_returns_payload(monkeypatch, client, app_context):
         "source_type": "api",
         "auto_sync": False,
     }
+
+
+def test_bookings_view_filters_by_status(client, app_context):
+    user = User(username="bookings-user", email=f"bookings-{uuid4().hex}@example.com", timezone="UTC")
+    db.session.add(user)
+    db.session.commit()
+
+    login(client, user.id)
+
+    today = datetime.utcnow()
+    upcoming = Event(
+        user_id=user.id,
+        event_name="Upcoming Session",
+        start_date=(today + timedelta(days=2)).date(),
+        start_time=(today + timedelta(days=2)).time(),
+        status="scheduled",
+        source="public_booking",
+    )
+    past = Event(
+        user_id=user.id,
+        event_name="Past Session",
+        start_date=(today - timedelta(days=3)).date(),
+        start_time=(today - timedelta(days=3)).time(),
+        status="scheduled",
+        source="extracted",
+    )
+    cancelled = Event(
+        user_id=user.id,
+        event_name="Cancelled Session",
+        start_date=(today + timedelta(days=5)).date(),
+        start_time=(today + timedelta(days=5)).time(),
+        status="cancelled",
+        source="ai_booking",
+    )
+
+    db.session.add_all([upcoming, past, cancelled])
+    db.session.commit()
+
+    resp_upcoming = client.get("/bookings")
+    assert resp_upcoming.status_code == 200
+    html = resp_upcoming.data.decode()
+    assert "Upcoming Session" in html
+    assert "Past Session" not in html
+    assert "Cancelled Session" not in html
+
+    resp_past = client.get("/bookings", query_string={"status": "past"})
+    assert resp_past.status_code == 200
+    html = resp_past.data.decode()
+    assert "Past Session" in html
+    assert "Upcoming Session" not in html
+
+    resp_cancelled = client.get("/bookings", query_string={"status": "cancelled"})
+    assert resp_cancelled.status_code == 200
+    html = resp_cancelled.data.decode()
+    assert "Cancelled Session" in html
+    assert "Upcoming Session" not in html

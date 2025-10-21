@@ -488,7 +488,7 @@ document.addEventListener('keydown', function(e) {
     
     // Escape to close modals or go back
     if (e.key === 'Escape') {
-        const backButton = document.querySelector('.btn[href*="dashboard"]');
+        const backButton = document.querySelector('.btn[href*="bookings"]');
         if (backButton && window.location.pathname.includes('edit')) {
             window.history.back();
         }

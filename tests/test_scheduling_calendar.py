@@ -21,13 +21,14 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     booking_call = {}
 
-    def fake_create_booking_event(user, event_type, start_dt, invitee_name, invitee_email, notes):
+    def fake_create_booking_event(user, event_type, start_dt, invitee_name, invitee_email, notes, source="public_booking"):
         booking_call.update(
             {
                 "user_id": user.id,
                 "title": event_type.title,
                 "start": start_dt,
                 "invitee": invitee_email,
+                "source": source,
             }
         )
         return SimpleNamespace(google_event_id="calendar-event-xyz")
@@ -76,6 +77,7 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     assert booking_call["title"] == "Project Sync"
     assert booking_call["start"].isoformat() == "2025-02-01T10:00:00+00:00"
     assert booking_call["invitee"] == "participant@example.com"
+    assert booking_call["source"] == "ai_booking"
 
     assert captured_emails, "Expected scheduler to send a reply email"
     to_header, subject, extra = captured_emails[-1]

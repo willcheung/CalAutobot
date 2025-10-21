@@ -85,6 +85,8 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     original_event_id = booked_event.id
     original_token = booked_event.public_token
     assert original_token
+    assert booked_event.status == "scheduled"
+    assert booked_event.source == "public_booking"
     assert "payload" in captured
     assert captured.get("calendar_id") == "booking-calendar"
     assert captured["payload"]["event_name"] == "Host // Guest: Quick Chat"
@@ -131,12 +133,18 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     )
     assert booking_resp_two.status_code == 200
     assert b"This meeting is scheduled" in booking_resp_two.data
-    new_event = Event.query.filter_by(user_id=user.id).first()
-    assert new_event is not None
+    events = Event.query.filter_by(user_id=user.id).order_by(Event.id.asc()).all()
+    assert len(events) == 2
+    cancelled_event = next(e for e in events if e.id == original_event_id)
+    new_event = next(e for e in events if e.id != original_event_id)
+
+    assert cancelled_event.status == "cancelled"
+    assert cancelled_event.source == "public_booking"
+    assert new_event.status == "scheduled"
+    assert new_event.source == "public_booking"
     assert new_event.event_name == "Host // Guest: Quick Chat"
     assert new_event.event_description is not None
     assert "Created by Cal Autobot" in new_event.event_description
-    assert Event.query.filter_by(id=original_event_id).first() is None
 
 
 def test_public_booking_flow_handles_calendar_failure(client, app_context, monkeypatch):

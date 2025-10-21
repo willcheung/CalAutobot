@@ -1,9 +1,10 @@
 import logging
+import math
 import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Event, TextInput, UserEmail, CalWaitlist
+from app.models import User, Event, UserEmail, CalWaitlist
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 from app.services.google_calendar import (
@@ -21,6 +22,8 @@ from app.helpers.event_utils import (
     prepare_event_data_for_calendar,
     update_event_from_form,
     format_event_for_api,
+    get_event_start_datetime,
+    get_event_source_display,
 )
 from app.helpers.domain_utils import (
     get_base_url,
@@ -280,7 +283,7 @@ def gmail_renew_watch_webhook():
 @main_routes.route("/")
 def index():
     if current_user.is_authenticated:
-        return redirect(url_for("main_routes.dashboard"))
+        return redirect(url_for("main_routes.bookings"))
     return render_template("index.html", show_landing_header=True)
 
 @main_routes.route("/signup")
@@ -288,20 +291,102 @@ def signup():
     """Landing page that detects timezone and redirects to Google OAuth"""
     return render_template("signup_redirect.html")
 
-@main_routes.route("/dashboard")
+@main_routes.route("/bookings")
 @login_required
-def dashboard():
-    # Get user's events ordered by extraction datetime (oldest first)
-    events = Event.query.filter_by(user_id=current_user.id).order_by(Event.created_at.desc()).all()
-    text_inputs = TextInput.query.filter_by(user_id=current_user.id).order_by(TextInput.created_at.desc()).limit(10).all()
-    
-    # Get user's additional emails
-    additional_emails = UserEmail.query.filter_by(user_id=current_user.id).order_by(UserEmail.created_at.desc()).all()
+def bookings():
+    status = request.args.get("status", "upcoming").lower()
+    if status not in {"upcoming", "past", "cancelled"}:
+        status = "upcoming"
 
-    # Check if user has granted calendar scope
+    page = request.args.get("page", type=int, default=1)
+    page = max(page, 1)
+    per_page = 25
+
+    events = (
+        Event.query.filter_by(user_id=current_user.id)
+        .order_by(Event.start_date.asc(), Event.start_time.asc(), Event.created_at.asc())
+        .all()
+    )
+
+    now = datetime.utcnow()
+    upcoming, past, cancelled = [], [], []
+
+    for event in events:
+        start_dt = get_event_start_datetime(event)
+        status_value = (event.status or "scheduled").lower()
+        if status_value == "cancelled":
+            cancelled.append((event, start_dt))
+            continue
+
+        if start_dt >= now:
+            upcoming.append((event, start_dt))
+        else:
+            past.append((event, start_dt))
+
+    upcoming.sort(key=lambda item: item[1])
+    past.sort(key=lambda item: item[1], reverse=True)
+    cancelled.sort(key=lambda item: item[1], reverse=True)
+
+    if status == "past":
+        selected = past
+    elif status == "cancelled":
+        selected = cancelled
+    else:
+        status = "upcoming"
+        selected = upcoming
+
+    total = len(selected)
+    total_pages = max(1, math.ceil(total / per_page)) if total else 1
+    if page > total_pages:
+        page = total_pages
+
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    page_items = selected[start_idx:end_idx]
+
+    display_events = []
+    for event, start_dt in page_items:
+        source_label, badge_class, source_key = get_event_source_display(event)
+        display_events.append(
+            {
+                "event": event,
+                "start_dt": start_dt,
+                "source_label": source_label,
+                "badge_class": badge_class,
+                "source_key": source_key,
+            }
+        )
+
+    pagination = {
+        "page": page,
+        "pages": total_pages,
+        "has_prev": page > 1,
+        "has_next": end_idx < total,
+        "total": total,
+    }
+
+    counts = {
+        "upcoming": len(upcoming),
+        "past": len(past),
+        "cancelled": len(cancelled),
+    }
+
     has_calendar_scope = check_user_has_calendar_scope(current_user)
 
-    return render_template("dashboard.html", events=events, text_inputs=text_inputs, additional_emails=additional_emails, has_calendar_scope=has_calendar_scope)
+    return render_template(
+        "bookings.html",
+        events=display_events,
+        status=status,
+        pagination=pagination,
+        counts=counts,
+        has_calendar_scope=has_calendar_scope,
+    )
+
+@main_routes.route("/dashboard")
+@login_required
+def dashboard_redirect():
+    """Legacy /dashboard endpoint redirecting to bookings"""
+    return redirect(url_for("main_routes.bookings"), code=301)
 
 @main_routes.route("/extract_events", methods=["POST"])
 @login_required
@@ -312,7 +397,7 @@ def extract_events():
         if not text:
             logger.warning(f"User {current_user.id} submitted empty text")
             flash("Please enter some text to extract events from.", "error")
-            return redirect(url_for("main_routes.dashboard"))
+            return redirect(url_for("main_routes.bookings"))
 
         # Process text to events using helper function
         result = process_text_to_events(text, current_user, source_type="manual", auto_sync=True)
@@ -350,7 +435,7 @@ def extract_events():
         else:
             flash("Unable to extract events from the text. Please try rephrasing or shortening your text.", "error")
 
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 @main_routes.route("/edit_event/<int:event_id>")
 @login_required
@@ -394,7 +479,7 @@ def update_event(event_id):
         db.session.rollback()
         flash(f"Error updating event: {str(e)}", "error")
 
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 @main_routes.route("/sync_to_calendar/<int:event_id>", methods=["POST"])
 @login_required
@@ -403,7 +488,7 @@ def sync_to_calendar(event_id):
 
     if event.is_synced:
         flash("Event is already synced to Google Calendar.", "info")
-        return redirect(url_for("main_routes.dashboard"))
+        return redirect(url_for("main_routes.bookings"))
 
     try:
         event_data = prepare_event_data_for_calendar(event)
@@ -424,7 +509,7 @@ def sync_to_calendar(event_id):
         sentry_sdk.capture_exception(e)
         flash(f"Error syncing to Google Calendar: {str(e)}", "error")
 
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 def delete_event_internal(event, user, skip_google_calendar=False):
     """
@@ -476,7 +561,7 @@ def delete_event(event_id):
     else:
         flash(f"Error deleting event: {error_message}", "error")
 
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 @main_routes.route('/terms')
 def terms():
@@ -503,7 +588,7 @@ def add_email():
             if is_ajax:
                 return jsonify({"success": False, "error": error_msg}), 400
             flash(error_msg, "error")
-            return redirect(url_for("main_routes.dashboard"))
+            return redirect(url_for("main_routes.bookings"))
         
         # Validate email format
         import re
@@ -513,7 +598,7 @@ def add_email():
             if is_ajax:
                 return jsonify({"success": False, "error": error_msg}), 400
             flash(error_msg, "error")
-            return redirect(url_for("main_routes.dashboard"))
+            return redirect(url_for("main_routes.bookings"))
         
         # Check if email is already the user's primary email
         if email == current_user.email:
@@ -521,7 +606,7 @@ def add_email():
             if is_ajax:
                 return jsonify({"success": False, "error": error_msg}), 400
             flash(error_msg, "warning")
-            return redirect(url_for("main_routes.dashboard"))
+            return redirect(url_for("main_routes.bookings"))
         
         # Optimized single query to check all email conflicts at once
         # Check if email already exists for this user OR any other user (primary or additional)
@@ -533,14 +618,14 @@ def add_email():
             if is_ajax:
                 return jsonify({"success": False, "error": error_msg}), 400
             flash(error_msg, "warning")
-            return redirect(url_for("main_routes.dashboard"))
+            return redirect(url_for("main_routes.bookings"))
         
         if existing_user_email:
             error_msg = "This email is already associated with another account."
             if is_ajax:
                 return jsonify({"success": False, "error": error_msg}), 400
             flash(error_msg, "error")
-            return redirect(url_for("main_routes.dashboard"))
+            return redirect(url_for("main_routes.bookings"))
         
         # Add the email
         user_email = UserEmail(user_id=current_user.id, email=email)
@@ -572,7 +657,7 @@ def add_email():
             return jsonify({"success": False, "error": error_msg}), 500
         flash(error_msg, "error")
     
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 @main_routes.route("/remove_email/<int:email_id>", methods=["POST"])
 @login_required
@@ -605,7 +690,7 @@ def remove_email(email_id):
             return jsonify({"success": False, "error": error_msg}), 500
         flash(error_msg, "error")
     
-    return redirect(url_for("main_routes.dashboard"))
+    return redirect(url_for("main_routes.bookings"))
 
 @main_routes.route("/cal")
 def waitlist():

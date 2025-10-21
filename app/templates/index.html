@@ -5,8 +5,8 @@
 <!-- CTA Buttons after extraction -->
 <div class="text-center mt-4 mb-4" id="{{ button_id }}" style="display: none;">
     {% if current_user.is_authenticated %}
-        <a href="{{ url_for('main_routes.dashboard') }}" class="btn btn-accent btn-lg me-3">
-            <i data-feather="grid" class="me-2"></i>Go to Dashboard
+        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg me-3">
+            <i data-feather="grid" class="me-2"></i>Go to Bookings
         </a>
     {% else %}
         <a href="#" class="google-signin-btn google-signin-btn-large me-3" onclick="startGoogleLogin(); return false;">
@@ -118,8 +118,8 @@
                     </div>
                 {% else %}
                     <div class="hero-actions mt-4">
-                        <a href="{{ url_for('main_routes.dashboard') }}" class="btn btn-accent btn-lg">
-                            Go to Dashboard
+                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+                            Go to Bookings
                         </a>
                     </div>
                 {% endif %}
@@ -453,9 +453,9 @@ Confirmation Number: HTL789456<br><br>
         <div class="row mt-5">
             <div class="col-12 text-center">
                 {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('main_routes.dashboard') }}" class="btn btn-outline-primary btn-lg">
+                    <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-outline-primary btn-lg">
                         <i data-feather="grid" class="me-2"></i>
-                        Go to Dashboard
+                        Go to Bookings
                     </a>
                 {% else %}
                     <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
@@ -515,9 +515,9 @@ Confirmation Number: HTL789456<br><br>
                     </div>
                 {% else %}
                     <div class="mt-4">
-                        <a href="{{ url_for('main_routes.dashboard') }}" class="btn btn-accent btn-lg">
+                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
                             <i data-feather="grid" class="me-2"></i>
-                            Go to Dashboard
+                            Go to Bookings
                         </a>
                     </div>
                 {% endif %}
@@ -637,7 +637,7 @@ Confirmation Number: HTL789456<br><br>
                         </h2>
                         <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Yes! You can add multiple email addresses to your Calendar Autobot account. This allows you to forward emails from any of your email addresses (work, personal, etc.) to <a href="mailto:go@CalAutobot.com">go@CalAutobot.com</a> and they'll all be added to the same calendar You can manage your additional email addresses from your dashboard.
+                                Yes! You can add multiple email addresses to your Calendar Autobot account. This allows you to forward emails from any of your email addresses (work, personal, etc.) to <a href="mailto:go@CalAutobot.com">go@CalAutobot.com</a> and they'll all be added to the same calendar You can manage your additional email addresses from your Bookings page.
                             </div>
                         </div>
                     </div>
@@ -656,9 +656,9 @@ Confirmation Number: HTL789456<br><br>
                     <p class="mb-4">Sign up free with Google and start transforming your emails and photos into calendar events!</p>
                     
                     {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('main_routes.dashboard') }}" class="btn btn-accent btn-lg">
+                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
                             <i data-feather="grid" class="me-2"></i>
-                            Go to Dashboard
+                            Go to Bookings
                         </a>
                     {% else %}
                         <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">

@@ -580,6 +580,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                 invitee_name,
                                 invitee_email,
                                 _build_calendar_description(history, user.username or user.email, user.email),
+                                source="ai_booking",
                             )
                             calendar_event_id = created_event.google_event_id
                             if calendar_event_id:

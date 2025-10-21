@@ -1,5 +1,5 @@
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.helpers.text_processing import sanitize_text_for_db
 import dateutil.parser
 import logging
@@ -86,8 +86,57 @@ def calculate_event_duration_minutes(event):
     except Exception as e:
         logger.warning(f"Could not calculate duration for event {event.id}: {str(e)}")
         return None
-    
+
     return None
+
+def get_event_start_datetime(event):
+    """
+    Return a timezone-naive UTC datetime representing the event start.
+    """
+    try:
+        if event.start_datetime:
+            dt = dateutil.parser.isoparse(event.start_datetime)
+            if dt.tzinfo:
+                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return dt
+    except (ValueError, TypeError) as exc:
+        logger.debug("Failed to parse start_datetime for event %s: %s", getattr(event, "id", None), exc)
+
+    if event.start_date:
+        base_time = event.start_time or datetime.min.time()
+        return datetime.combine(event.start_date, base_time)
+
+    return event.created_at or datetime.utcnow()
+
+def infer_event_source(event):
+    """
+    Determine the source of an event using stored metadata and fallbacks.
+    """
+    source = (event.source or "unknown").lower()
+    if source != "unknown":
+        return source
+
+    if getattr(event, "text_input_id", None):
+        return "extracted"
+    if getattr(event, "public_token", None):
+        return "public_booking"
+    return "unknown"
+
+SOURCE_DISPLAY = {
+    "extracted": {"label": "Extracted Event", "badge_class": "badge bg-info"},
+    "public_booking": {"label": "Public Booking", "badge_class": "badge bg-primary"},
+    "ai_booking": {"label": "AI Booking", "badge_class": "badge bg-success"},
+    "unknown": {"label": "Manual Entry", "badge_class": "badge bg-secondary"},
+    "manual": {"label": "Manual Entry", "badge_class": "badge bg-secondary"},
+}
+
+def get_event_source_display(event):
+    """
+    Return (label, css_class) tuple describing the event source for UI badges.
+    """
+    source_key = infer_event_source(event)
+    meta = SOURCE_DISPLAY.get(source_key, SOURCE_DISPLAY["unknown"])
+    return meta["label"], meta["badge_class"], source_key
 
 def update_event_from_form(event, form_data):
     """
