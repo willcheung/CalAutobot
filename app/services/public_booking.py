@@ -138,7 +138,7 @@ def create_booking_event(
     if reschedule_url:
         description_sections.append(f"Reschedule: {reschedule_url}")
 
-    description_sections.append("Created by Cal Autobot")
+    description_sections.append("Powered by CalAutobot.com")
 
     description = "\n\n".join(description_sections)
 
@@ -151,11 +151,12 @@ def create_booking_event(
         event_payload["location"] = sanitized_location
 
     try:
-        google_event_id = create_calendar_event(
+        google_event_id, conference_url = create_calendar_event(
             user,
             event_payload,
             calendar_id=booking_calendar_id,
             add_google_meet=True,
+            return_conference_link=True,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error(
@@ -169,6 +170,8 @@ def create_booking_event(
 
     event.is_synced = bool(google_event_id)
     event.google_event_id = google_event_id
+    sanitized_conference = sanitize_text_for_db(conference_url) if conference_url else None
+    event.conference_url = sanitized_conference or None
 
     try:
         db.session.commit()

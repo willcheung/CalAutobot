@@ -6,8 +6,19 @@
 <div class="container mt-4 bookings-container">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-2">Bookings</h1>
-            <p class="text-muted mb-3">Review upcoming, past, and cancelled meetings coordinated by Calendar Autobot.</p>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 bookings-header">
+                <div>
+                    <h1 class="mb-2">Bookings</h1>
+                    <p class="text-muted mb-0">Review upcoming, past, and cancelled meetings coordinated by Calendar Autobot.</p>
+                </div>
+                <a class="bookings-cta" href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" rel="noopener noreferrer">
+                    <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome logo" class="bookings-cta__icon">
+                    <div class="bookings-cta__copy">
+                        <span class="bookings-cta__title">Capture events from any website</span>
+                        <span class="bookings-cta__subtitle">Turn them into calendar events with our free Chrome Extension</span>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
 
@@ -95,7 +106,8 @@
                                 <div class="meta-value">
                                     You{% if event.event_name and '//' in event.event_name %}, {{ event.event_name.split('//')[-1].strip() }}{% endif %}
                                 </div>
-                                {% if event.location %}
+                                {% set location_text = event.location %}
+                                {% if location_text and not (item.meeting_link and location_text.strip() == item.meeting_link.url) %}
                                     <div class="meta-subvalue">
                                         <i data-feather="map-pin" class="me-1"></i>{{ event.location }}
                                     </div>
@@ -112,13 +124,24 @@
                             </div>
                         </div>
 
-                        {% if event.event_description %}
-                            <div class="booking-card__notes">
-                                {% for line in event.event_description.split('\n') %}
-                                    {% if line.strip() %}
-                                        <p>{{ line.strip() }}</p>
-                                    {% endif %}
-                                {% endfor %}
+                        {% if item.meeting_link %}
+                            <div class="booking-card__link mt-2">
+                                <i data-feather="video" class="me-2"></i>
+                                <a href="{{ item.meeting_link.url }}" target="_blank" rel="noopener noreferrer">{{ item.meeting_link.label }}</a>
+                            </div>
+                        {% endif %}
+
+                        {% if item.description %}
+                            <div class="booking-card__notes" data-booking-notes>
+                                <div class="booking-card__notes-preview" data-booking-preview>
+                                    {{ item.description_preview.replace('\n', '<br>') | safe }}{% if item.is_truncated %}&hellip;{% endif %}
+                                </div>
+                                {% if item.is_truncated %}
+                                    <div class="booking-card__notes-full d-none" data-booking-full>
+                                        {{ item.description.replace('\n', '<br>') | safe }}
+                                    </div>
+                                    <button type="button" class="booking-card__more btn btn-link btn-sm p-0" data-booking-toggle aria-expanded="false">More</button>
+                                {% endif %}
                             </div>
                         {% endif %}
                     </div>

@@ -124,6 +124,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initAvailabilityCopyPopover();
     initVisibilityToggle();
+
+    // Toggle full booking descriptions
+    document.querySelectorAll('[data-booking-toggle]').forEach(button => {
+        button.addEventListener('click', () => {
+            const notesContainer = button.closest('[data-booking-notes]');
+            if (!notesContainer) {
+                return;
+            }
+
+            const preview = notesContainer.querySelector('[data-booking-preview]');
+            const full = notesContainer.querySelector('[data-booking-full]');
+            if (!preview || !full) {
+                return;
+            }
+
+            const isExpanded = !full.classList.contains('d-none');
+            if (isExpanded) {
+                full.classList.add('d-none');
+                preview.classList.remove('d-none');
+                button.textContent = 'More';
+                button.setAttribute('aria-expanded', 'false');
+            } else {
+                full.classList.remove('d-none');
+                preview.classList.add('d-none');
+                button.textContent = 'Less';
+                button.setAttribute('aria-expanded', 'true');
+            }
+        });
+    });
 });
 
 // Helper function to auto-resize textareas

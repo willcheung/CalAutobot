@@ -24,6 +24,8 @@ from app.helpers.event_utils import (
     format_event_for_api,
     get_event_start_datetime,
     get_event_source_display,
+    truncate_text,
+    extract_meeting_link,
 )
 from app.helpers.domain_utils import (
     get_base_url,
@@ -347,6 +349,9 @@ def bookings():
     display_events = []
     for event, start_dt in page_items:
         source_label, badge_class, source_key = get_event_source_display(event)
+        full_description = (event.event_description or "").strip()
+        description_preview, is_truncated = truncate_text(full_description, 200)
+        meeting_link = extract_meeting_link(event)
         display_events.append(
             {
                 "event": event,
@@ -354,6 +359,10 @@ def bookings():
                 "source_label": source_label,
                 "badge_class": badge_class,
                 "source_key": source_key,
+                "description": full_description,
+                "description_preview": description_preview,
+                "is_truncated": is_truncated,
+                "meeting_link": meeting_link,
             }
         )
 

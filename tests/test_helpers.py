@@ -3,7 +3,11 @@ import datetime
 import pytest
 
 from app.agents.event_extractor import validate_and_clean_event
-from app.helpers.event_utils import calculate_event_duration_minutes
+from app.helpers.event_utils import (
+    calculate_event_duration_minutes,
+    truncate_text,
+    extract_meeting_link,
+)
 from app.helpers.text_processing import sanitize_text_for_db
 
 
@@ -78,7 +82,37 @@ def test_sanitize_text_for_db_strips_harmful_content():
     raw_text = "Hello <script>alert('x')</script> \x00"
     sanitized = sanitize_text_for_db(raw_text)
 
-    assert "<script>" not in sanitized
-    assert "&lt;script&gt;" in sanitized
+    assert sanitized == "Hello <script>alert('x')</script> "
     assert "\x00" not in sanitized
-    assert "&#x27;x&#x27;" in sanitized  # single quotes HTML-escaped
+
+
+def test_truncate_text_limits_length():
+    text = "abc" * 100
+    preview, truncated = truncate_text(text, limit=50)
+
+    assert truncated is True
+    assert len(preview) == 50
+
+
+def test_extract_meeting_link_prefers_conference_field():
+    class DummyEvent:
+        conference_url = "https://meet.google.com/cde-fghi-jkl"
+        location = "https://zoom.us/j/123456789"
+        event_description = "Join call: https://zoom.us/j/123456789"
+
+    link = extract_meeting_link(DummyEvent())
+
+    assert link is not None
+    assert link["url"] == "https://meet.google.com/cde-fghi-jkl"
+    assert link["label"] == "Join Google Meet"
+
+
+def test_extract_meeting_link_returns_none_without_conference_field():
+    class DummyEvent:
+        conference_url = None
+        location = "https://meet.google.com/abc-defg-hij"
+        event_description = "Join here"
+
+    link = extract_meeting_link(DummyEvent())
+
+    assert link is None

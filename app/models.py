@@ -52,6 +52,7 @@ class Event(db.Model):
     end_time = db.Column(db.Time)
     end_datetime = db.Column(db.String(100))  # RFC3339 datetime string
     location = db.Column(db.String(500))
+    conference_url = db.Column(db.String(500), nullable=True)
     
     # Google Calendar integration
     google_event_id = db.Column(db.String(100))

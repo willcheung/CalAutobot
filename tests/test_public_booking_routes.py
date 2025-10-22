@@ -19,7 +19,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     def _capture_calendar_event(_user, payload, **_kwargs):
         captured["payload"] = payload
         captured["calendar_id"] = _kwargs.get("calendar_id")
-        return "fake-google-id"
+        return "fake-google-id", "https://meet.google.com/test-meeting"
 
     monkeypatch.setattr(
         "app.services.public_booking.create_calendar_event",
@@ -87,6 +87,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert original_token
     assert booked_event.status == "scheduled"
     assert booked_event.source == "public_booking"
+    assert booked_event.conference_url == "https://meet.google.com/test-meeting"
     assert "payload" in captured
     assert captured.get("calendar_id") == "booking-calendar"
     assert captured["payload"]["event_name"] == "Host // Guest: Quick Chat"
@@ -96,7 +97,7 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert "Location: Not specified" in description_text
     assert "Cancel:" in description_text
     assert "Reschedule:" in description_text
-    assert description_text.strip().endswith("Created by Cal Autobot")
+    assert description_text.strip().endswith("Powered by CalAutobot.com")
 
     reschedule_resp = client.get(
         f"/u/{user.handle}/{event_type.slug}",
@@ -144,7 +145,8 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert new_event.source == "public_booking"
     assert new_event.event_name == "Host // Guest: Quick Chat"
     assert new_event.event_description is not None
-    assert "Created by Cal Autobot" in new_event.event_description
+    assert "Powered by CalAutobot.com" in new_event.event_description
+    assert new_event.conference_url == "https://meet.google.com/test-meeting"
 
 
 def test_public_booking_flow_handles_calendar_failure(client, app_context, monkeypatch):

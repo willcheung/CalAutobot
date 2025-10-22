@@ -42,10 +42,10 @@ def test_process_text_to_events_creates_records(monkeypatch, app_context):
     assert len(result["events"]) == 1
     assert result["from_email"] == "sender@example.com"
 
-    # Text input stored with sanitized text
+    # Text input stored with raw text (control chars stripped only)
     text_input = TextInput.query.filter_by(user_id=user.id).first()
     assert text_input is not None
-    assert "&lt;b&gt;" in text_input.original_text
+    assert text_input.original_text == raw_text
 
     # Event stored and sanitized
     stored_event = Event.query.filter_by(user_id=user.id).first()

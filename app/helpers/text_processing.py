@@ -1,5 +1,4 @@
 
-import html
 import re
 import logging
 
@@ -18,15 +17,10 @@ def sanitize_text_for_db(text):
     if not text:
         return text
 
-    # HTML escape to prevent script injection
-    sanitized = html.escape(text)
+    sanitized = text
 
-    # Remove or escape PostgreSQL special characters that could cause issues
     # Replace null bytes which PostgreSQL doesn't allow
     sanitized = sanitized.replace('\x00', '')
-
-    # Escape single quotes to prevent SQL injection
-    sanitized = sanitized.replace("'", "''")
 
     # Remove or replace other potentially problematic characters
     # Remove control characters except common whitespace

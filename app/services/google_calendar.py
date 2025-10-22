@@ -370,12 +370,27 @@ def get_or_create_extraction_calendar(user, access_token):
         logger.error(f"Error creating Cal Event Extraction calendar: {str(e)}")
         raise Exception("Failed to create calendar. Please try again.")
 
+def _extract_conference_url(event_payload: dict) -> str | None:
+    """Attempt to pull a primary video conferencing URL from a Google event response."""
+    conference_url = event_payload.get("hangoutLink")
+    if conference_url:
+        return conference_url
+
+    conference_data = event_payload.get("conferenceData") or {}
+    entry_points = conference_data.get("entryPoints") or []
+    for entry in entry_points:
+        if entry.get("entryPointType") == "video" and entry.get("uri"):
+            return entry["uri"]
+    return None
+
+
 def create_calendar_event(
     user,
     event_data,
     use_extraction_calendar=False,
     calendar_id=None,
     add_google_meet: bool = False,
+    return_conference_link: bool = False,
 ):
     """
     Create an event in Google Calendar.
@@ -383,9 +398,13 @@ def create_calendar_event(
     Args:
         user: User object with Google token
         event_data: Dictionary with event details
+        use_extraction_calendar: Whether to use the extraction calendar
+        calendar_id: Optional explicit calendar id override
+        add_google_meet: Whether to request Google Meet conference data
+        return_conference_link: When True, return a tuple of (event_id, conference_url)
 
     Returns:
-        str: Google event ID if successful
+        str | tuple[str, str | None]: Google event ID (and optional conference URL)
     """
     try:
         logger.info(f"Creating calendar event: {event_data.get('event_name', 'Unnamed Event')}")
@@ -500,6 +519,9 @@ def create_calendar_event(
             result = response.json()
             event_id = result.get('id')
             logger.info(f"Successfully created calendar event with ID: {event_id}")
+            if return_conference_link:
+                conference_url = _extract_conference_url(result)
+                return event_id, conference_url
             return event_id
         elif response.status_code == 401:
             logger.error("Google Calendar authentication failed")

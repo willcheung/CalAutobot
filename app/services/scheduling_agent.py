@@ -655,9 +655,8 @@ def _build_calendar_description(history: List[Dict[str, str]], owner_name: str, 
         return f"Coordinated by Cal on behalf of {owner_name} ({owner_email})."
 
     lines = [
-        f"Coordinated by Cal on behalf of {owner_name} ({owner_email}).",
+        "Conversation summary:",
         "",
-        "Conversation summary:" ,
     ]
 
     for entry in history[-5:]:
@@ -668,5 +667,15 @@ def _build_calendar_description(history: List[Dict[str, str]], owner_name: str, 
         if body:
             lines.append(body)
         lines.append("")
+
+    while lines and lines[-1] == "":
+        lines.pop()
+
+    lines.extend(
+        [
+            "",
+            f"Coordinated by Cal on behalf of {owner_name} ({owner_email}).",
+        ]
+    )
 
     return "\n".join(lines).strip()

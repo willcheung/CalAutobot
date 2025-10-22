@@ -138,6 +138,49 @@ def get_event_source_display(event):
     meta = SOURCE_DISPLAY.get(source_key, SOURCE_DISPLAY["unknown"])
     return meta["label"], meta["badge_class"], source_key
 
+def truncate_text(value: str, limit: int = 100):
+    """
+    Truncate text to a maximum number of characters.
+
+    Returns the truncated text and a boolean flag indicating whether truncation occurred.
+    """
+    if not value:
+        return "", False
+
+    if len(value) <= limit:
+        return value, False
+
+    trimmed = value[:limit].rstrip()
+    return trimmed, True
+
+MEETING_PROVIDER_PREFERENCES = [
+    ("meet.google.com", "Join Google Meet"),
+    ("zoom.us", "Join Zoom Meeting"),
+    ("teams.microsoft.com", "Join Microsoft Teams"),
+    ("webex.com", "Join Webex Meeting"),
+    ("gotomeet.meet", "Join GoTo Meeting"),
+]
+
+def _label_for_meeting_url(url: str) -> str:
+    lowered = url.lower()
+    for domain, label in MEETING_PROVIDER_PREFERENCES:
+        if domain in lowered:
+            return label
+    if "meet.google.com" in lowered:
+        return "Join Google Meet"
+    return "Open Meeting Link"
+
+def extract_meeting_link(event):
+    """
+    Return a structured meeting link when an event has a stored conference URL.
+    Returns a dict with url and label or None if no link found.
+    """
+    conference_url = getattr(event, "conference_url", None)
+    if conference_url:
+        return {"url": conference_url, "label": _label_for_meeting_url(conference_url)}
+
+    return None
+
 def update_event_from_form(event, form_data):
     """
     Update event object with form data.
