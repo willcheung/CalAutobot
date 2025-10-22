@@ -687,17 +687,17 @@ def _build_calendar_description(history: List[Dict[str, str]], owner_name: str, 
         "",
     ]
 
-    for entry in history[-5:]:
+    for entry in history[-3:]:
         sender = entry.get("sender") or "unknown"
         timestamp = entry.get("timestamp") or ""
         body = (entry.get("body") or "").strip()
-        lines.append(f"- {timestamp} — {sender} wrote:")
         if body:
-            lines.append(body)
-        lines.append("")
-
-    while lines and lines[-1] == "":
-        lines.pop()
+            body = " ".join(body.split())
+            if len(body) > 160:
+                body = body[:157].rstrip() + "..."
+            lines.append(f"- {timestamp} — {sender}: {body}")
+        else:
+            lines.append(f"- {timestamp} — {sender}")
 
     lines.extend(
         [

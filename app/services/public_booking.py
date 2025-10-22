@@ -3,7 +3,7 @@ from typing import Optional
 import logging
 import secrets
 
-from flask import has_request_context, url_for
+from flask import current_app, has_request_context, url_for
 
 from app import db
 from app.helpers.text_processing import sanitize_text_for_db
@@ -92,35 +92,63 @@ def create_booking_event(
     cancel_url = None
     reschedule_url = None
 
-    if has_request_context():
-        handle = getattr(user, "handle", None) or str(user.id)
-        slug = getattr(event_type, "slug", None)
-        if slug and handle:
+    handle = getattr(user, "handle", None) or str(user.id)
+    slug = getattr(event_type, "slug", None)
+
+    def _build_management_links():
+        nonlocal cancel_url, reschedule_url
+        if not slug or not handle:
+            return
+        try:
+            cancel_url = url_for(
+                "public_booking.cancel_booking",
+                handle=handle,
+                slug=slug,
+                token=event.public_token,
+                _external=True,
+            )
+            reschedule_url = url_for(
+                "public_booking.event_type_page",
+                handle=handle,
+                slug=slug,
+                former_slot=start_dt.isoformat(),
+                date=start_dt.date().isoformat(),
+                reschedule_token=event.public_token,
+                _external=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Failed to build booking management links for booking %s: %s",
+                event.id,
+                exc,
+            )
+            cancel_url = None
+            reschedule_url = None
+
+    if slug and handle:
+        if has_request_context():
+            _build_management_links()
+        else:
             try:
-                cancel_url = url_for(
-                    "public_booking.cancel_booking",
-                    handle=handle,
-                    slug=slug,
-                    token=event.public_token,
-                    _external=True,
-                )
-                reschedule_url = url_for(
-                    "public_booking.event_type_page",
-                    handle=handle,
-                    slug=slug,
-                    former_slot=start_dt.isoformat(),
-                    date=start_dt.date().isoformat(),
-                    reschedule_token=event.public_token,
-                    _external=True,
-                )
-            except Exception as exc:  # noqa: BLE001
-                logger.warning(
-                    "Failed to build booking management links for booking %s: %s",
+                app_obj = current_app._get_current_object()
+            except RuntimeError:
+                app_obj = None
+
+            if app_obj and app_obj.config.get("SERVER_NAME"):
+                try:
+                    with app_obj.test_request_context():
+                        _build_management_links()
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to build booking management links outside request for booking %s: %s",
+                        event.id,
+                        exc,
+                    )
+            else:
+                logger.debug(
+                    "Skipping booking management link generation for booking %s (no request context and SERVER_NAME not set)",
                     event.id,
-                    exc,
                 )
-                cancel_url = None
-                reschedule_url = None
 
     description_sections = []
 
