@@ -31,7 +31,10 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
                 "source": source,
             }
         )
-        return SimpleNamespace(google_event_id="calendar-event-xyz")
+        return SimpleNamespace(
+            google_event_id="calendar-event-xyz",
+            conference_url="https://meet.google.com/test-link",
+        )
 
     monkeypatch.setattr("app.services.scheduling_agent.create_booking_event", fake_create_booking_event)
     captured_emails = []
@@ -84,3 +87,9 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     assert to_header == "owner@example.com"
     cc_list = sorted(extra.get("cc_recipients") or [])
     assert cc_list == ["participant@example.com"]
+    body = extra.get("text_body") or ""
+    assert "https://meet.google.com/test-link" in body
+
+    meeting_request = MeetingRequest.query.one()
+    confirmed_slot = meeting_request.confirmed_slot or {}
+    assert confirmed_slot.get("conference_url") == "https://meet.google.com/test-link"

@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 
 from app import db
 from app.models import (
+    Event,
     MeetingMessage,
     MeetingParticipant,
     MeetingRequest,
@@ -478,6 +479,19 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         if isinstance(confirmed_info, dict):
             existing_event_id = confirmed_info.get("google_event_id")
 
+        conference_url = None
+        if existing_event_id:
+            existing_event = (
+                Event.query.filter_by(user_id=user.id, google_event_id=existing_event_id).first()
+            )
+            if existing_event and existing_event.conference_url:
+                conference_url = existing_event.conference_url
+                if "conference_url" not in confirmed_info:
+                    updated_confirmed = dict(confirmed_info)
+                    updated_confirmed["conference_url"] = conference_url
+                    meeting_request.confirmed_slot = updated_confirmed
+                    confirmed_info = updated_confirmed
+
         if not existing_event_id:
             start_iso = confirmed_info.get("start")
             end_iso = confirmed_info.get("end")
@@ -579,14 +593,20 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                 slot_start,
                                 invitee_name,
                                 invitee_email,
-                                _build_calendar_description(history, user.username or user.email, user.email),
+                                _build_calendar_description(
+                                    history, user.username or user.email, user.email
+                                ),
                                 source="ai_booking",
                             )
                             calendar_event_id = created_event.google_event_id
+                            conference_url = getattr(created_event, "conference_url", None)
                             if calendar_event_id:
                                 updated_confirmed = dict(confirmed_info)
                                 updated_confirmed["google_event_id"] = calendar_event_id
+                                if conference_url:
+                                    updated_confirmed["conference_url"] = conference_url
                                 meeting_request.confirmed_slot = updated_confirmed
+                                confirmed_info = updated_confirmed
                         except Exception as calendar_err:
                             logger.warning(
                                 "Failed to create calendar event for meeting_request %s: %s",
@@ -600,6 +620,14 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     reply_text = agent_result.get("reply")
     if reply_text:
+        if action == "confirm_slot":
+            confirmed_info = meeting_request.confirmed_slot or {}
+            conference_url = None
+            if isinstance(confirmed_info, dict):
+                conference_url = confirmed_info.get("conference_url")
+            if conference_url and conference_url not in reply_text:
+                reply_text = reply_text.rstrip() + f"\n\nVideo conference: {conference_url}\n"
+
         all_participants = {p.email for p in meeting_request.participants}
         all_participants.add(user.email)
 

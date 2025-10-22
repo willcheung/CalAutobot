@@ -1744,18 +1744,22 @@ code, pre {
 }
 
 .booking-card__notes {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.035);
+    border-radius: 6px;
 }
 
 .booking-card__notes-preview,
 .booking-card__notes-full {
-    line-height: 1.35;
-    color: var(--text-color);
-    font-size: 0.92rem;
+    line-height: 1.3;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .booking-card__more {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
     color: #1d4ed8;
     text-decoration: none;
 }
