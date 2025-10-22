@@ -8,6 +8,7 @@ from app import db
 from flask import Blueprint, redirect, request, url_for, session
 from flask_login import login_required, login_user, logout_user
 from app.models import User, Event
+from app.services.event_types import create_event_type
 from app.services.users import assign_unique_handle
 from oauthlib.oauth2 import WebApplicationClient
 
@@ -108,9 +109,11 @@ def callback():
         user.email_count = 0  # Real users have no email limit
         db.session.add(user)
         logger.info(f"Created new user {users_email} with timezone {user_timezone}")
+        is_new_user = True
     else:
         # Check if this is a provisional user (no google_id) converting to real user
         is_provisional_user_signup = (user.google_id is None)
+        is_new_user = False
         
         # Capture old timezone before updating (needed for event conversion)
         old_timezone = user.timezone
@@ -139,6 +142,25 @@ def callback():
         logger.info(f"Stored refresh token for user {users_email}")
 
     db.session.commit()
+
+    # Create a default event type for new users
+    if is_new_user:
+        try:
+            create_event_type(
+                user_id=user.id,
+                title="30 min chat",
+                duration_minutes=30,
+                description="",
+                slug=None,
+                is_public=True,
+            )
+            logger.info("Created default event type for new user %s", users_email)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Failed to create default event type for user %s: %s",
+                users_email,
+                exc,
+            )
 
     login_user(user)
 
