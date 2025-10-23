@@ -255,6 +255,10 @@ function initEmailStack() {
     const styles = getComputedStyle(stackSection);
     const stackGap = parseFloat(styles.getPropertyValue('--email-stack-gap')) || 72;
     const leadIn = 0.2;
+    const stackSpacing = stackGap * 0.85;
+    const stackBaseOffset = -stackGap * 0.65;
+    const focusOffset = -stackGap * 2.4;
+    const entryOffset = stackGap * 1.4;
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
     function render(progress) {
@@ -263,26 +267,28 @@ function initEmailStack() {
         const active = normalized * steps;
         const stage = Math.floor(active);
         const fraction = active - stage;
+        const stackedCount = Math.max(stage, 0);
+        const stackTopOffset = stackBaseOffset - (stackedCount > 0 ? (stackedCount - 1) * stackSpacing : 0);
 
         cards.forEach((card, index) => {
             let translate = 0;
             let scale = 1;
 
             if (index < stage) {
-                const stackIndex = stage - index;
-                translate = stackIndex * stackGap;
-                scale = Math.max(0.88, 1 - stackIndex * 0.05);
-                card.style.zIndex = String(Math.max(stage - index, 0));
+                const orderFromTop = (stage - 1) - index;
+                translate = stackTopOffset + orderFromTop * stackSpacing;
+                scale = Math.max(0.9, 1 - Math.min(orderFromTop + 1, 4) * 0.04);
+                card.style.zIndex = String(10 + index);
             } else if (index === stage) {
-                translate = fraction * stackGap;
-                scale = 1 - fraction * 0.04;
-                card.style.zIndex = String(cards.length + 2);
+                const eased = fraction;
+                translate = (1 - eased) * entryOffset + eased * focusOffset;
+                scale = 1 - eased * 0.02;
+                card.style.zIndex = String(100);
             } else {
                 const aheadIndex = index - stage;
-                translate = -(Math.max(aheadIndex - 1, 0) + (1 - fraction)) * stackGap;
-                const shrink = Math.max(aheadIndex - 1 - fraction, 0);
-                scale = Math.max(0.9, 1 - shrink * 0.05);
-                card.style.zIndex = String(cards.length - index + stage + 1);
+                translate = entryOffset * (aheadIndex + (1 - fraction));
+                scale = 1 - Math.min(aheadIndex, 3) * 0.04;
+                card.style.zIndex = String(50 - index);
             }
 
             card.style.setProperty('--stack-translate', `${translate}px`);

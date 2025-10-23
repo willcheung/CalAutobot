@@ -288,6 +288,10 @@ def index():
         return redirect(url_for("main_routes.bookings"))
     return render_template("index.html", show_landing_header=True)
 
+@main_routes.route("/free-tool")
+def free_tool():
+    return render_template("free_tool.html", show_landing_header=True)
+
 @main_routes.route("/signup")
 def signup():
     """Landing page that detects timezone and redirects to Google OAuth"""

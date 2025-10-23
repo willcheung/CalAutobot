@@ -833,6 +833,110 @@ code, pre {
     margin-top: 2rem;
 }
 
+/* Email stack section */
+.email-stack {
+    --email-stack-gap: 72px;
+    --email-stack-header-height: 64px;
+    --email-stack-card-count: 5;
+    background: linear-gradient(180deg, rgba(41, 64, 164, 0.12) 0%, rgba(255, 255, 255, 0) 65%);
+    padding: 6rem 0 3rem;
+    position: relative;
+}
+
+.email-stack__title {
+    color: #1f2937;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.email-stack__scroller {
+    position: relative;
+    height: calc(var(--email-stack-card-count, 5) * 90vh);
+    margin-top: -12vh;
+    padding-top: 12vh;
+}
+
+.email-stack__stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.email-stack__card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: var(--email-stack-header-height);
+    transform: translate3d(0, var(--stack-translate, 0px), 0) scale(var(--stack-scale, 1));
+    opacity: var(--stack-opacity, 1);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+    will-change: transform, opacity;
+}
+
+.email-stack__card img {
+    width: min(90vw, 736px);
+    border-radius: 20px;
+    box-shadow: 0 28px 82px rgba(17, 24, 39, 0.28), 0 0 48px rgba(17, 24, 39, 0.18);
+    border: none;
+    background: #0f172a;
+}
+
+.email-stack__card[data-stack-index="4"] img {
+    width: min(52vw, 414px);
+}
+
+.email-stack__card--highlight img {
+    border: 5px solid #8bb5ff;
+}
+
+.email-stack::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 80px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.35) 100%);
+    pointer-events: none;
+}
+
+@media (max-width: 992px) {
+    .email-stack {
+        padding: 4rem 0 6rem;
+    }
+
+    .email-stack__stage {
+        align-items: flex-start;
+    }
+
+    .email-stack__card {
+        padding-top: 0;
+    }
+
+    .email-stack__card img {
+        width: min(98vw, 621px);
+        border-radius: 16px;
+    }
+
+    .email-stack__card[data-stack-index="4"] img {
+        width: min(60vw, 345px);
+    }
+}
+
+@media (max-width: 576px) {
+    .email-stack__scroller {
+        height: calc(var(--email-stack-card-count, 5) * 105vh);
+    }
+
+    .email-stack__subtitle {
+        font-size: 0.95rem;
+    }
+}
+
 /* Email CTA */
 .email-cta-wrapper {
     display: inline-flex;
