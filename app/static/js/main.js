@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initAvailabilityCopyPopover();
     initVisibilityToggle();
+    initEmailStack();
 
     // Toggle full booking descriptions
     document.querySelectorAll('[data-booking-toggle]').forEach(button => {
@@ -232,6 +233,100 @@ function showToast(message, type = 'info') {
             toast.remove();
         }
     }, 5000);
+}
+
+function initEmailStack() {
+    const stackSection = document.querySelector('.email-stack');
+    if (!stackSection) {
+        return;
+    }
+
+    const scroller = stackSection.querySelector('.email-stack__scroller');
+    const cards = Array.from(stackSection.querySelectorAll('.email-stack__card'));
+    if (!scroller || cards.length === 0) {
+        return;
+    }
+
+    const steps = cards.length - 1;
+    if (steps <= 0) {
+        return;
+    }
+
+    const styles = getComputedStyle(stackSection);
+    const stackGap = parseFloat(styles.getPropertyValue('--email-stack-gap')) || 72;
+    const leadIn = 0.2;
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+    function render(progress) {
+        const clamped = clamp(progress, 0, 1);
+        const normalized = clamped <= leadIn ? 0 : (clamped - leadIn) / (1 - leadIn);
+        const active = normalized * steps;
+        const stage = Math.floor(active);
+        const fraction = active - stage;
+
+        cards.forEach((card, index) => {
+            let translate = 0;
+            let scale = 1;
+
+            if (index < stage) {
+                const stackIndex = stage - index;
+                translate = stackIndex * stackGap;
+                scale = Math.max(0.88, 1 - stackIndex * 0.05);
+                card.style.zIndex = String(Math.max(stage - index, 0));
+            } else if (index === stage) {
+                translate = fraction * stackGap;
+                scale = 1 - fraction * 0.04;
+                card.style.zIndex = String(cards.length + 2);
+            } else {
+                const aheadIndex = index - stage;
+                translate = -(Math.max(aheadIndex - 1, 0) + (1 - fraction)) * stackGap;
+                const shrink = Math.max(aheadIndex - 1 - fraction, 0);
+                scale = Math.max(0.9, 1 - shrink * 0.05);
+                card.style.zIndex = String(cards.length - index + stage + 1);
+            }
+
+            card.style.setProperty('--stack-translate', `${translate}px`);
+            card.style.setProperty('--stack-scale', scale.toFixed(3));
+            card.style.setProperty('--stack-opacity', '1');
+        });
+    }
+
+    let rafId = null;
+
+    function update() {
+        const rect = scroller.getBoundingClientRect();
+        const total = scroller.offsetHeight - window.innerHeight;
+        const progress = total <= 0 ? 0 : clamp((window.innerHeight - rect.top) / total, 0, 1);
+        render(progress);
+        rafId = window.requestAnimationFrame(update);
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+        render(0);
+        rafId = window.requestAnimationFrame(update);
+        return;
+    }
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                if (rafId === null) {
+                    rafId = window.requestAnimationFrame(update);
+                }
+            } else if (rafId !== null) {
+                window.cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+        });
+    }, { threshold: 0, root: null });
+
+    observer.observe(scroller);
+    stackSection.style.setProperty('--email-stack-card-count', cards.length);
+    render(0);
+
+    window.addEventListener('resize', () => {
+        stackSection.style.setProperty('--email-stack-card-count', cards.length);
+    }, { passive: true });
 }
 
 function initAvailabilityCopyPopover() {
