@@ -643,6 +643,18 @@ window.startGoogleLogin = function() {
     }
 }
 
+window.connectGoogleCalendar = function() {
+    try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const connectUrl = '/google_login/calendar';
+        const redirectUrl = `${connectUrl}?timezone=${encodeURIComponent(timezone)}`;
+        window.location.href = redirectUrl;
+    } catch (error) {
+        console.error('Error detecting timezone:', error);
+        window.location.href = '/google_login/calendar';
+    }
+}
+
 // Function to copy email address
 window.copyEmailAddress = function(email, button) {
     const emailToCopy = (email || 'go@CalAutobot.com').trim();

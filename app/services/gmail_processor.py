@@ -491,7 +491,7 @@ def send_provisional_summary_email(recipient_email: str, events_data: List):
         from flask import render_template
         
         base_url = get_base_url()
-        signup_url = f"{base_url}/signup"
+        signup_url = f"{base_url}/google_login?full=1"
         
         # Render email template
         html_body = render_template(

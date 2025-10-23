@@ -6,7 +6,7 @@ import os
 import requests
 from app import db
 from flask import Blueprint, redirect, request, url_for, session
-from flask_login import login_required, login_user, logout_user
+from flask_login import current_user, login_required, login_user, logout_user
 from app.models import User, Event
 from app.services.event_types import create_event_type
 from app.services.users import assign_unique_handle
@@ -26,6 +26,10 @@ client = WebApplicationClient(GOOGLE_CLIENT_ID)
 google_auth = Blueprint("google_auth", __name__)
 
 
+BASIC_SCOPES = ["openid", "email", "profile"]
+CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar"
+
+
 @google_auth.route("/google_login")
 def login():
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
@@ -40,15 +44,46 @@ def login():
     if email:
         session['signup_email'] = email
 
+    full_access = request.args.get('full') == '1'
+    if full_access:
+        session['oauth_flow'] = 'calendar'
+        request_uri = client.prepare_request_uri(
+            authorization_endpoint,
+            redirect_uri=request.url_root.rstrip('/') + REDIRECT_URL,
+            scope=BASIC_SCOPES + [CALENDAR_SCOPE],
+            access_type="offline",
+            include_granted_scopes="true",
+            prompt="consent",
+        )
+    else:
+        session['oauth_flow'] = 'basic'
+        request_uri = client.prepare_request_uri(
+            authorization_endpoint,
+            redirect_uri=request.url_root.rstrip('/') + REDIRECT_URL,
+            scope=BASIC_SCOPES,
+            include_granted_scopes="true",
+            prompt="select_account",
+        )
+    return redirect(request_uri)
+
+
+@google_auth.route("/google_login/calendar")
+@login_required
+def connect_calendar():
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+    timezone = request.args.get('timezone') or current_user.timezone or 'UTC'
+    session['user_timezone'] = timezone
+    session['oauth_flow'] = 'calendar'
+
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=request.url_root.rstrip('/') + REDIRECT_URL,
-        scope=[
-            "email",
-            "https://www.googleapis.com/auth/calendar"
-        ],
-        access_type="offline",  # Request offline access to get refresh token
-        prompt="consent"  # Only prompt for account selection, not consent for returning users
+        scope=BASIC_SCOPES + [CALENDAR_SCOPE],
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",
     )
     return redirect(request_uri)
 
@@ -88,6 +123,8 @@ def callback():
         google_id = userinfo["sub"]
     else:
         return "User email not available or not verified by Google.", 400
+
+    oauth_flow = session.pop('oauth_flow', 'basic')
 
     # Get timezone from session
     user_timezone = session.get('user_timezone', 'UTC')
@@ -133,13 +170,18 @@ def callback():
     if not user.handle:
         assign_unique_handle(user, users_name)
 
-    # Update the Google token for Calendar API access
-    user.google_token = json.dumps(token_data)
+    had_calendar_access = bool(user.google_token)
+    received_calendar_scope = CALENDAR_SCOPE in (token_data.get('scope') or '')
 
-    # Save refresh token separately for better management
-    if token_data.get('refresh_token'):
-        user.google_refresh_token = token_data.get('refresh_token')
-        logger.info(f"Stored refresh token for user {users_email}")
+    if oauth_flow == 'calendar' or received_calendar_scope:
+        user.google_token = json.dumps(token_data)
+        if token_data.get('refresh_token'):
+            user.google_refresh_token = token_data.get('refresh_token')
+            logger.info(f"Stored refresh token for user {users_email}")
+    elif not had_calendar_access:
+        # Ensure we don't leave a stale token if the user revoked access
+        user.google_token = None
+        user.google_refresh_token = None
 
     db.session.commit()
 
@@ -175,8 +217,10 @@ def callback():
         # or by re-processing their recent emails
         logger.info(f"New user {users_email} signed up after email invitation")
 
-    # Auto-sync events for provisional users who just signed up
-    if is_provisional_user_signup:
+    gained_calendar_access = bool(user.google_token) and not had_calendar_access
+
+    # Auto-sync events for provisional users who just signed up or anyone who just granted calendar access
+    if is_provisional_user_signup or gained_calendar_access:
         try:
             from app.services.google_calendar import create_calendar_event
             from app.helpers.event_utils import prepare_event_data_for_calendar
@@ -185,7 +229,10 @@ def callback():
             import logging
             logger = logging.getLogger(__name__)
             
-            logger.info(f"✅ Provisional user {users_email} signed up, auto-syncing existing events")
+            logger.info(
+                "✅ User %s gained calendar access, auto-syncing existing events",
+                users_email,
+            )
             
             # Get user's unsynced events
             unsynced_events = Event.query.filter_by(user_id=user.id, is_synced=False).all()
