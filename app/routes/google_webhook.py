@@ -3,11 +3,13 @@ import json
 import logging
 import hmac
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
+
+import sentry_sdk
 from flask import Blueprint, request, jsonify
+
 from app import db
 from app.models import User, Event
-import sentry_sdk
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -323,6 +325,69 @@ def setup_calendar_webhook():
         logger.error(f"Error setting up calendar webhook: {str(e)}")
         sentry_sdk.capture_exception(e)
         return jsonify({"error": "Internal server error"}), 500
+
+@google_webhook.route("/webhook/google-calendar/renew-watch", methods=["POST"])
+def renew_calendar_watch():
+    """Cron-friendly endpoint to refresh Google Calendar push channels."""
+    try:
+        api_key = request.args.get("key") or request.headers.get("X-API-Key")
+        expected_key = os.environ.get("WEBHOOK_API_KEY", "calendar-ai-webhook-2024")
+        if api_key != expected_key:
+            logger.warning("Unauthorized calendar watch renewal attempt from %s", request.remote_addr)
+            return {"status": "error", "message": "Unauthorized access"}, 401
+
+        now = datetime.utcnow()
+        renew_threshold = now + timedelta(hours=12)
+
+        candidates = (
+            User.query.filter(User.webhook_expiration.isnot(None))
+            .filter(User.webhook_expiration <= renew_threshold)
+            .all()
+        )
+
+        if not candidates:
+            logger.info("No calendar webhooks due for renewal")
+            return {"status": "ok", "renewed": 0}, 200
+
+        from app.services.google_calendar import (
+            setup_calendar_webhook_for_user,
+            refresh_google_token,
+        )
+
+        renewed = 0
+        failures = []
+        for user in candidates:
+            try:
+                if not user.extraction_calendar_id:
+                    continue
+                access_token = refresh_google_token(user)
+                if not access_token:
+                    failures.append(user.email)
+                    continue
+                setup_calendar_webhook_for_user(
+                    user,
+                    access_token=access_token,
+                    calendar_id=user.extraction_calendar_id,
+                )
+                renewed += 1
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Failed to renew calendar webhook for %s: %s",
+                    user.email,
+                    exc,
+                )
+                failures.append(user.email)
+
+        return {
+            "status": "ok",
+            "renewed": renewed,
+            "failed": failures,
+        }, 200
+
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Calendar webhook renewal failed: %s", exc)
+        return {"status": "error", "message": "Renewal failed"}, 500
+
 
 @google_webhook.route("/webhook/google-calendar/test", methods=["GET", "POST"])
 def test_google_calendar_webhook():
