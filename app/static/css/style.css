@@ -171,6 +171,31 @@
     margin-right: 12px;
 }
 
+.google-signin-btn-dark {
+    background-color: #202124;
+    border-color: #3c4043;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.google-signin-btn-dark:hover {
+    background-color: #2d2e30;
+    border-color: #5f6368;
+    color: #fff;
+}
+
+.google-signin-btn-dark:focus {
+    background-color: #2d2e30;
+    border-color: #8ab4f8;
+    color: #fff;
+}
+
+.google-signin-btn-dark:active {
+    background-color: #1a1a1c;
+    border-color: #3c4043;
+    color: #fff;
+}
+
 .google-calendar-connect-btn {
     display: inline-flex;
     align-items: center;
@@ -491,12 +516,6 @@
     color: #495057 !important;
     text-decoration: none !important;
     transform: translateY(0);
-}
-
-.cta-section .chrome-extension-btn:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.3);
-    color: #495057;
 }
 
 /* Features section Chrome extension button styling (white background sections) */
@@ -891,8 +910,19 @@ code, pre {
     width: min(52vw, 414px);
 }
 
+.email-stack__card--highlight .email-stack__highlight-frame {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 24px;
+    background: linear-gradient(130deg, #ff4fd8 0%, #a855f7 45%, #6366f1 80%, #3b82f6 100%);
+    box-sizing: border-box;
+}
+
 .email-stack__card--highlight img {
-    border: 5px solid #8bb5ff;
+    display: block;
+    border-radius: 20px;
 }
 
 .email-stack::after {
@@ -902,6 +932,133 @@ code, pre {
     height: 80px;
     background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.35) 100%);
     pointer-events: none;
+}
+
+.other-uses-section {
+    background: #f8fafc;
+    padding: 6rem 0;
+}
+
+.other-uses-flow {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 12px;
+}
+
+.other-uses-step {
+    flex: 1 1 220px;
+    background: #ffffff;
+    border: 1px solid #dde5f5;
+    border-radius: 20px;
+    padding: 28px;
+    min-width: 220px;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+}
+
+.other-uses-step__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.other-uses-step__badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #2563eb;
+}
+
+.other-uses-step__header i {
+    width: 22px;
+    height: 22px;
+    color: #1f2937;
+}
+
+.other-uses-step h5 {
+    margin-bottom: 0;
+    font-size: 1.05rem;
+}
+
+.other-uses-step p {
+    margin-bottom: 0;
+    color: #4b5563;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.other-uses-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    flex: 0 0 auto;
+}
+
+.other-uses-arrow i {
+    width: 28px;
+    height: 28px;
+}
+
+.other-uses-cta {
+    margin-top: 3rem;
+}
+
+.other-uses-cta-wrapper {
+    background: #ffffff;
+    border-radius: 999px;
+    border: 1px solid #dde5f5;
+    padding: 12px 18px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    gap: 0.75rem;
+}
+
+.email-address-chip {
+    font-weight: 600;
+    color: #0f172a;
+    text-decoration: none;
+}
+
+.email-address-chip:hover {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.copy-email-btn.copy-email-btn-light {
+    background: #eef2ff;
+    border: 1px solid rgba(79, 70, 229, 0.35);
+    color: #1f2937;
+    padding: 0.45rem;
+    border-radius: 12px;
+}
+
+.copy-email-btn.copy-email-btn-light:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(79, 70, 229, 0.5);
+    transform: none;
+}
+
+.copy-email-btn.copy-email-btn-light svg {
+    width: 18px;
+    height: 18px;
+}
+
+.section-cta {
+    margin: 3rem 0;
+}
+
+.section-cta .google-signin-btn {
+    min-width: 260px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 992px) {
@@ -924,6 +1081,31 @@ code, pre {
 
     .email-stack__card[data-stack-index="4"] img {
         width: min(60vw, 345px);
+    }
+
+    .other-uses-section {
+        padding: 4rem 0;
+    }
+
+    .other-uses-flow {
+        flex-direction: column;
+        gap: 16px;
+        overflow-x: visible;
+        padding-bottom: 0;
+    }
+
+    .other-uses-step {
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+    }
+
+    .other-uses-arrow {
+        transform: rotate(90deg);
+        margin: 0 auto;
+    }
+
+    .other-uses-arrow i {
+        width: 24px;
+        height: 24px;
     }
 }
 
@@ -1102,7 +1284,7 @@ code, pre {
 
 .faq-section {
     padding: 4rem 0;
-    background-color: #f8f9fa;
+    background: linear-gradient(180deg, #eef2ff 0%, #f8faff 60%, #ffffff 100%);
 }
 
 .accordion {
@@ -1437,8 +1619,8 @@ code, pre {
 
 /* Footer */
 .footer {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: #000;
+    color: #f9fafb;
     padding: 2rem 0;
     margin-top: auto;
 }
@@ -1929,10 +2111,12 @@ code, pre {
 }
 
 .footer a {
+    color: #f9fafb;
     text-decoration: none;
 }
 
 .footer a:hover {
+    color: #e5e7eb;
     text-decoration: underline;
 }
 

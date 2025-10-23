@@ -644,33 +644,37 @@ window.startGoogleLogin = function() {
 }
 
 // Function to copy email address
-window.copyEmailAddress = function() {
-    const email = 'go@CalAutobot.com';
-    navigator.clipboard.writeText(email).then(() => {
+window.copyEmailAddress = function(email, button) {
+    const emailToCopy = (email || 'go@CalAutobot.com').trim();
+    return navigator.clipboard.writeText(emailToCopy).then(() => {
         showToast('Email copied to clipboard!', 'success');
-        
-        // Temporarily change the copy icon to a check mark
-        const copyBtn = document.querySelector('.copy-email-btn');
-        if (copyBtn) {
-            const copyIcon = copyBtn.querySelector('i[data-feather]');
-            if (copyIcon) {
-                copyIcon.setAttribute('data-feather', 'check');
-                feather.replace();
-                
-                // Revert back to copy icon after 2 seconds
-                setTimeout(() => {
-                    copyIcon.setAttribute('data-feather', 'copy');
-                    feather.replace();
-                }, 2000);
-            }
+
+        const targetButton = button instanceof Element
+            ? button
+            : document.querySelector(`.copy-email-btn[data-email="${emailToCopy.toLowerCase()}"]`) ||
+              (!email ? document.querySelector('.copy-email-btn[data-email="go@calautobot.com"]') : null);
+
+        if (targetButton && typeof feather !== 'undefined') {
+            const swapIcon = (iconName) => {
+                if (!feather.icons[iconName]) return;
+                targetButton.innerHTML = feather.icons[iconName].toSvg({ width: 18, height: 18 });
+            };
+
+            swapIcon('check');
+
+            setTimeout(() => {
+                swapIcon('copy');
+            }, 2000);
         }
     }).catch(() => {
-        showToast('Failed to copy email. Please copy manually: go@CalAutobot.com', 'error');
+        showToast(`Failed to copy email. Please copy manually: ${emailToCopy}`, 'error');
     });
-}
+};
 
 // Legacy function for backwards compatibility
-window.copyEmail = window.copyEmailAddress;
+window.copyEmail = function(email, button) {
+    return window.copyEmailAddress(email, button);
+};
 
 // Initialize tooltips (if Bootstrap tooltips are needed in the future)
 function initializeTooltips() {

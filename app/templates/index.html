@@ -1,30 +1,4 @@
-
 {% extends "base.html" %}
-
-{% macro cta_buttons(button_id) %}
-<!-- CTA Buttons after extraction -->
-<div class="text-center mt-4 mb-4" id="{{ button_id }}" style="display: none;">
-    {% if current_user.is_authenticated %}
-        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg me-3">
-            <i data-feather="grid" class="me-2"></i>Go to Bookings
-        </a>
-    {% else %}
-        <a href="#" class="google-signin-btn google-signin-btn-large me-3" onclick="startGoogleLogin(); return false;">
-            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Sign up free with Google
-        </a>
-        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
-            <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-            Take web screenshots with Chrome Extension
-        </a>
-    {% endif %}
-</div>
-{% endmacro %}
 
 {% block title %}Calendar Autobot | Turn Emails and Pictures to Calendar Events{% endblock %}
 
@@ -77,48 +51,278 @@
   }
 }
 </script>
+
+<style>
+    .waitlist-hero {
+        background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
+        padding: 80px 0 100px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .waitlist-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-bottom: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .waitlist-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 24px;
+    }
+
+    .waitlist-subtitle {
+        font-size: 1.35rem;
+        font-weight: 300;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 700px;
+        margin: 0 auto 40px;
+    }
+
+    .problem-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+
+    .problem-card {
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+        border-left: 4px solid #ef4444;
+    }
+
+    .problem-card h4 {
+        color: #ef4444;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .solution-section {
+        padding: 80px 0;
+        background: white;
+    }
+
+    .benefit-card {
+        text-align: center;
+        padding: 40px 24px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s;
+        height: 100%;
+    }
+
+    .benefit-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .benefit-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 28px;
+    }
+
+    .cta-section {
+        padding: 80px 0;
+        background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
+        color: white;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 32px;
+        margin-top: 48px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #6366f1;
+        display: block;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-top: 8px;
+    }
+
+    .use-cases-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+
+    .use-case-card {
+        background: white;
+        padding: 32px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        height: 100%;
+    }
+
+    .use-case-card h4 {
+        color: #1a1f36;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 1.2rem;
+    }
+
+    .use-case-card .scenario {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+        font-style: italic;
+    }
+
+    .comparison-section {
+        padding: 80px 0;
+        background: white;
+    }
+
+    .comparison-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .comparison-table table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .comparison-table th {
+        background: #f8f9fa;
+        padding: 20px;
+        font-weight: 600;
+        color: #1a1f36;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .comparison-table td {
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+        color: #4b5563;
+    }
+
+    .comparison-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .check-icon {
+        color: #10b981;
+        font-weight: bold;
+    }
+
+    .cross-icon {
+        color: #ef4444;
+        font-weight: bold;
+    }
+
+    .faq-section {
+        padding: 80px 0;
+        background: #f8f9fa;
+    }
+
+    .faq-item {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .faq-item h4 {
+        color: #1a1f36;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+    }
+
+    .faq-item p {
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+        .waitlist-title {
+            font-size: 2.5rem;
+        }
+
+        .waitlist-subtitle {
+            font-size: 1.1rem;
+        }
+    }
+</style>
 {% endblock %}
 
-{% block banner %}
-<div class="announcement-banner" style="background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); padding: 12px 20px; text-align: center; color: white; position: sticky; top: 0; z-index: 1000;">
-    <div class="container">
-        <p style="margin: 0; font-size: 0.95rem; font-weight: 400;">
-            🚀 <strong>Meet Cal</strong> — your AI scheduling assistant. Let Cal take over the back-and-forth of scheduling so you can focus on building relationships and closing deals. 
-            <a href="{{ url_for('main_routes.waitlist') }}" style="color: #FCD34D; text-decoration: underline; font-weight: 500; margin-left: 8px;">Join waitlist</a>
-        </p>
-    </div>
-</div>
-{% endblock %}
+{% block banner %}{% endblock %}
 
 {% block content %}
 
-<div class="hero-section">
+<div class="waitlist-hero">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-8 text-center">
+            <div class="col-lg-10 text-center">
                 <div class="hero-badge">
-                    🚀 Early Access
+                    AI Executive Assistant
                 </div>
-                
-                <h1 class="hero-title">Stop Wasting Time Scheduling. <br/>Let AI Do It for You.</h1>
-                <p class="hero-subtitle">
-                    No typing. No copy-paste. Turn emails, pictures, or websites into Google Calendar events. 
+
+                <h1 class="waitlist-title">Stop the Scheduling<br/>Back-and-Forth</h1>
+
+                <p class="waitlist-subtitle">
+                    Meet Cal — your AI scheduling assistant for Google Calendar. 
+                    No more endless "what time works for you?" 
+                    Just CC Cal and focus on what matters: closing deals and building relationships.
                 </p>
-                
+
                 {% if not current_user.is_authenticated %}
                     <div class="hero-actions mt-4">
-                        <p class="mb-2" style="font-size: 0.9rem; font-weight: 300;">Try it free. Forward any email to:</p>
-                        <div class="email-cta-wrapper">
-                            <a href="mailto:go@CalAutobot.com" class="email-address-link">
-                                <i data-feather="mail" style="width: 20px; height: 20px;"></i>
-                                go@CalAutobot.com
-                            </a>
-                            <button class="copy-email-btn" onclick="copyEmailAddress(); return false;" title="Copy email address">
-                                <i data-feather="copy" style="width: 18px; height: 18px;"></i>
-                            </button>
-                        </div>
+                        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
+                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Sign up free with Google
+                        </a>
 
-                        <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">Take web screenshots without leaving your tab using our <a style="color: #81D4FA; text-decoration: underline;" href="https://chromewebstore.google.com/detail/calautobot-pictures-to-go/lmempdbkammjlmomcgjglolnmebeedok">Chrome Extension</a></p>
+                        <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
+                            No credit card required. Get started in seconds.
+                        </p>
                     </div>
                 {% else %}
                     <div class="hero-actions mt-4">
@@ -136,6 +340,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-7 text-center">
                 <h2 class="email-stack__title">See Cal work through a real inbox</h2>
+                <p class="email-stack__subtitle">Just CC <strong>Cal@CalAutobot.com</strong> and watch the meeting come together.</p>
             </div>
         </div>
     </div>
@@ -145,414 +350,313 @@
                 <img src="{{ url_for('static', filename='images/email1.jpg') }}" alt="Inbox showing Cal cc'd onto an email">
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="1">
-                <img src="{{ url_for('static', filename='images/email2.jpg') }}" alt="Cal proposing meeting times back to the thread">
+                <div class="email-stack__highlight-frame">
+                    <img src="{{ url_for('static', filename='images/email2.jpg') }}" alt="Cal proposing meeting times back to the thread">
+                </div>
             </figure>
             <figure class="email-stack__card" data-stack-index="2">
                 <img src="{{ url_for('static', filename='images/email3.jpg') }}" alt="Recipient confirming a time with Cal">
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="3">
-                <img src="{{ url_for('static', filename='images/email4.jpg') }}" alt="Cal confirming the meeting and updating calendars">
+                <div class="email-stack__highlight-frame">
+                    <img src="{{ url_for('static', filename='images/email4.jpg') }}" alt="Cal confirming the meeting and updating calendars">
+                </div>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="4">
-                <img src="{{ url_for('static', filename='images/meeting.jpg') }}" alt="Meeting preparation view generated by Cal">
+                <div class="email-stack__highlight-frame">
+                    <img src="{{ url_for('static', filename='images/meeting.jpg') }}" alt="Meeting preparation view generated by Cal">
+                </div>
             </figure>
         </div>
     </div>
 </section>
 
-<div class="example-section">
+<div class="problem-section">
     <div class="container">
-        <div class="row">
-            <div class="col-12 text-center mb-5">
-                <h2>Try Live Examples</h2>
-                <p class="text-muted">See how our AI extracts events from different types of content</p>
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">The Scheduling Tax on Your Business</h2>
+                <p class="text-muted">"Here's my Calendly link" kills momentum and feels transactional</p>
             </div>
         </div>
         
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <!-- Tab Navigation -->
-                <ul class="nav nav-pills justify-content-center mb-4" id="exampleTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="sports-tab" data-bs-toggle="pill" data-bs-target="#sports-example" type="button" role="tab" aria-controls="sports-example" aria-selected="true">
-                            <i data-feather="award" class="me-2"></i>Sports Schedule
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="photo-tab" data-bs-toggle="pill" data-bs-target="#photo-example" type="button" role="tab" aria-controls="photo-example" aria-selected="false">
-                            <i data-feather="camera" class="me-2"></i>Photo Events
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="travel-tab" data-bs-toggle="pill" data-bs-target="#travel-example" type="button" role="tab" aria-controls="travel-example" aria-selected="false">
-                            <i data-feather="briefcase" class="me-2"></i>Travel Itinerary
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="school-tab" data-bs-toggle="pill" data-bs-target="#school-example" type="button" role="tab" aria-controls="school-example" aria-selected="false">
-                            <i data-feather="book-open" class="me-2"></i>School Events
-                        </button>
-                    </li>
-                </ul>
-
-                <!-- Tab Content -->
-                <div class="tab-content" id="exampleTabContent">
-                    <!-- Sports Schedule Tab -->
-                    <div class="tab-pane fade show active" id="sports-example" role="tabpanel" aria-labelledby="sports-tab">
-                        <div class="example-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Real Madrid Match Schedule</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample4()" id="extractBtn4">
-                                    <i data-feather="calendar" class="me-1"></i>Extract
-                                </button>
-                            </div>
-                            
-                            <div class="mt-4" id="extractedEvents4" style="display: none;">
-                                <h5 class="text-success mb-3">
-                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
-                                </h5>
-                                <div class="row g-2">
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Villarreal ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 4, 2025 • 12:00 PM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Getafe vs Real Madrid ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 19, 2025 • 12:00 PM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Juventus ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 22, 2025 • 12:00 PM • UEFA Champions League - Matchday 3 of 8</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Barcelona ⚽</h6>
-                                            <p class="mb-0 text-muted small">Oct 26, 2025 • 8:15 AM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Real Madrid vs Valencia ⚽</h6>
-                                            <p class="mb-0 text-muted small">Nov 1, 2025 • 1:00 PM</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Liverpool vs Real Madrid ⚽</h6>
-                                            <p class="mb-0 text-muted small">Nov 4, 2025 • 12:00 PM • UEFA Champions League - Matchday 4 of 8</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {{ cta_buttons('ctaButtons4') }}
-                            </div>
-                            
-                            <div class="example-text text-center">
-                                <img src="{{ url_for('static', filename='images/sports-schedule.png') }}" alt="Real Madrid match schedule" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Photo Events Tab -->
-                    <div class="tab-pane fade" id="photo-example" role="tabpanel" aria-labelledby="photo-tab">
-                        <div class="example-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Photo of Events</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample3()" id="extractBtn3">
-                                    <i data-feather="calendar" class="me-1"></i>Extract
-                                </button>
-                            </div>
-                            
-                            <div class="mt-4" id="extractedEvents3" style="display: none;">
-                                <h5 class="text-success mb-3">
-                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
-                                </h5>
-                                <div class="row g-2">
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Napa Valley Wine Festival</h6>
-                                            <p class="mb-0 text-muted small">Apr 12, 2025 • 2:00 PM - 8:00 PM • Riverside Park Amphitheater</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Book Club Meeting</h6>
-                                            <p class="mb-0 text-muted small">Every Thursday • 7:00 PM - 8:30 PM • Central Library</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Art Gallery Opening</h6>
-                                            <p class="mb-0 text-muted small">Apr 18, 2025 • 6:00 PM - 10:00 PM • Downtown Art Center</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {{ cta_buttons('ctaButtons3') }}
-                            </div>
-                            
-                            <div class="example-text text-center">
-                                <img src="{{ url_for('static', filename='images/wine-festival.PNG') }}" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Travel Itinerary Tab -->
-                    <div class="tab-pane fade" id="travel-example" role="tabpanel" aria-labelledby="travel-tab">
-                        <div class="example-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Flight and Hotel Itinerary</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample2()" id="extractBtn2">
-                                    <i data-feather="calendar" class="me-1"></i>Extract
-                                </button>
-                            </div>
-                            
-                            <div class="mt-4" id="extractedEvents2" style="display: none;">
-                                <h5 class="text-success mb-3">
-                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
-                                </h5>
-                                <div class="row g-2">
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Flight UA 2847 (SFO → JFK)</h6>
-                                            <p class="mb-0 text-muted small">Mar 28, 2025 • 8:15 AM PDT - 4:45 PM EDT • San Francisco to New York</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Hotel Check-in - Marriott Downtown</h6>
-                                            <p class="mb-0 text-muted small">Mar 28, 2025 • 3:00 PM • Confirmation: HTL789456 • 123 Business District, New York, NY</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Hotel Check-out - Marriott Downtown</h6>
-                                            <p class="mb-0 text-muted small">Mar 30, 2025 • 11:00 AM • Confirmation: HTL789456 • 123 Business District, New York, NY</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {{ cta_buttons('ctaButtons2') }}
-                            </div>
-                            
-                            <div class="example-text">
-                                <code style="font-size: 0.7rem; line-height: 1.2;">
-<strong>Subject: Your Flight and Hotel Confirmation<br>
-From: noreply@united.com<br><br></strong>
-
-Flight Details:<br>
-United Airlines Flight UA 2847<br>
-March 28, 2025<br>
-Departure: 8:15 AM PDT - San Francisco International Airport (SFO)<br>
-Arrival: 4:45 PM EDT - John F. Kennedy International Airport (JFK)<br>
-Duration: 5 hours 30 minutes<br><br>
-
-Hotel: Marriott Downtown<br>
-Address: 123 Business District, New York, NY<br>
-Check-in: March 28, 2025 at 3:00 PM<br>
-Check-out: March 30, 2025 at 11:00 AM<br>
-Nights: 2<br>
-Room Type: King Deluxe<br>
-Confirmation Number: HTL789456<br><br>
-                                </code>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- School Events Tab -->
-                    <div class="tab-pane fade" id="school-example" role="tabpanel" aria-labelledby="school-tab">
-                        <div class="example-card">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h3 class="mb-0">Back to School Events</h3>
-                                <button class="btn btn-primary btn-sm" onclick="extractExample1()" id="extractBtn1">
-                                    <i data-feather="calendar" class="me-1"></i>Extract
-                                </button>
-                            </div>
-                            
-                            <div class="mt-4" id="extractedEvents1" style="display: none;">
-                                <h5 class="text-success mb-3">
-                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
-                                </h5>
-                                <div class="row g-2">
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">9th Grade/New Student Orientation</h6>
-                                            <p class="mb-0 text-muted small">Aug 12, 2025 • 2:00 PM - 5:30 PM • Bow Gym</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">School Photos/Student ID Cards</h6>
-                                            <p class="mb-0 text-muted small">Aug 13, 2025 • 9:00 AM - 3:00 PM • Bow Gym</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Welcome-Back BBQ</h6>
-                                            <p class="mb-0 text-muted small">Aug 15, 2025 • 12:00 PM - 1:00 PM • Senior Quad</p>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="event-preview-card">
-                                            <h6 class="mb-1">Welcome-Back Dance</h6>
-                                            <p class="mb-0 text-muted small">Aug 22, 2025 • 7:30 PM - 10:30 PM • Senior Quad</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                {{ cta_buttons('ctaButtons1') }}
-                            </div>
-                            
-                            <div class="example-text">
-                                <code style="font-size: 0.7rem; line-height: 1.2;">
-                                <strong>9th Grade/New Student Orientation</strong><br>
-                                Date: Tuesday, Aug. 12, 2025<br>
-                                Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
-                                Location: Bow Gym<br><br>
-
-                                <strong>School Photos/Student ID Cards</strong><br>
-                                9th Graders & New to HS Students: Aug. 12 during orientation<br>
-                                10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
-                                Location: Bow Gym<br><br>
-
-                                <strong>Welcome-Back BBQ</strong><br>
-                                Date: Friday, Aug. 15, 2025<br>
-                                Time: During lunch<br>
-                                Location: Senior Quad<br>
-                                A fun and free event for all students with food, games, and music!<br><br>
-
-                                <strong>Welcome-Back Dance</strong><br>
-                                Date: Friday, Aug. 22, 2025<br>
-                                Time: 7:30-10:30 pm<br>
-                                Location: Senior Quad
-                                </code>
-                            </div>
-                        </div>
-                    </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="problem-card">
+                    <h4>Time Drain</h4>
+                    <p class="mb-0">Sales reps spend 5+ hours per week on scheduling logistics instead of selling</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="problem-card">
+                    <h4>Deal Killer</h4>
+                    <p class="mb-0">"Here's my Calendly link" is cold and impersonal, with 40% drop off rate.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="problem-card">
+                    <h4>Revenue Leak</h4>
+                    <p class="mb-0">Every scheduling delay is a competitor getting ahead.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="features-section">
+<div class="solution-section">
     <div class="container">
-        <div class="row">
-            <div class="col-12 text-center mb-5">
-                <h2>How It Works</h2>
-                <p class="text-muted">Simple, fast, and intelligent event extraction</p>
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">How Our AI Scheduling Tool Works</h2>
+                <p class="text-muted">Natural appointment scheduling and meeting coordination, powered by AI</p>
             </div>
         </div>
         
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-feather="mail"></i>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i data-feather="mail" style="width: 30px; height: 30px; color: white;"></i>
                     </div>
-                    <h4>Forward Email or Take Web Screenshot</h4>
-                    <p>Forward your emails to us or use our Chrome extension to capture screenshots of events. Works with any text or image content.</p>
+                    <h4>Just CC Cal</h4>
+                    <p class="text-muted mb-0">Reply to any scheduling email and CC cal@yourdomain.com. Cal reads the thread and understands context.</p>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-feather="cpu"></i>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i data-feather="zap" style="width: 30px; height: 30px; color: white;"></i>
                     </div>
-                    <h4>AI Processes Your Content</h4>
-                    <p>Our advanced AI analyzes your emails, documents, and images to extract event details like dates, times, locations, and descriptions with high accuracy.</p>
+                    <h4>AI Handles Everything</h4>
+                    <p class="text-muted mb-0">Cal proposes times, negotiates availability, handles time zones, and creates Google Calendar events automatically.</p>
                 </div>
             </div>
             
             <div class="col-md-4">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i data-feather="calendar"></i>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i data-feather="check-circle" style="width: 30px; height: 30px; color: white;"></i>
                     </div>
-                    <h4>Auto-Sync to Google Calendar</h4>
-                    <p>Extracted events are automatically added to your Google Calendar. Review, edit, or approve events before they sync - you stay in complete control.</p>
+                    <h4>Meeting Confirmed</h4>
+                    <p class="text-muted mb-0">All participants receive calendar invites instantly. No links, no apps, no friction.</p>
                 </div>
             </div>
         </div>
         
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-outline-primary btn-lg">
-                        <i data-feather="grid" class="me-2"></i>
-                        Go to Bookings
-                    </a>
-                {% else %}
-                    <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-                        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Sign up free with Google
-                    </a>
-                    <div class="mt-2">
-                        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
-                        <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                            Take web screenshots with Chrome Extension
-                    </a>
-                    </div>
-                {% endif %}
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-number">5+ hrs</span>
+                <div class="stat-label">Saved per week</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">Zero</span>
+                <div class="stat-label">Apps to install</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">30 sec</span>
+                <div class="stat-label">Setup time</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">100%</span>
+                <div class="stat-label">Email-based</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="why-section">
+<div class="section-cta text-center">
+    {% if not current_user.is_authenticated %}
+        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
+            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign up free with Google
+        </a>
+    {% else %}
+        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+            Go to Bookings
+        </a>
+    {% endif %}
+</div>
+
+<div class="use-cases-section">
     <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
-                <h2 class="mb-4">Why We Created This</h2>
-                <p class="lead text-muted mb-4">
-                    As a parent of two kids, I was drowning in stream of school events, afterschool activities, and endless emails from teachers, coaches, and school portals. Every week meant manually copying dates from different places and frantically adding events to our family calendar.
-                </p>
-                <p class="text-muted mb-4">
-                    There had to be a better way. That's why we built Calendar Autobot - to help busy parents, students, and anyone juggling multiple schedules get their time back.
-                </p>
-                <p class="text-success fw-medium">
-                    <i data-feather="heart" class="me-2"></i>
-                    This service is completely free because we believe everyone deserves more time for what matters most.
-                </p>
-                
-                {% if not current_user.is_authenticated %}
-                    <div class="mt-4">
-                        <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Sign up free with Google
-                        </a>
-                        <div class="mt-3">
-                            <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
-                                <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                                Take web screenshots with Chrome Extension
-                            </a>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="mt-4">
-                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
-                            <i data-feather="grid" class="me-2"></i>
-                            Go to Bookings
-                        </a>
-                    </div>
-                {% endif %}
+                <h2 class="mb-3">Who Uses Cal Autobot?</h2>
+                <p class="text-muted">Real appointment scheduling scenarios across industries</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="use-case-card">
+                    <h4><i data-feather="trending-up" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Sales Teams</h4>
+                    <p class="scenario">"Can we schedule a demo to discuss your needs?"</p>
+                    <p class="text-muted mb-0">Sales reps schedule 10-20 demos per week. Cal eliminates the back-and-forth, letting reps focus on prospect relationships instead of calendar coordination. Faster scheduling = faster pipeline velocity.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="use-case-card">
+                    <h4><i data-feather="users" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Recruiters</h4>
+                    <p class="scenario">"Let's find time for your interview with the hiring manager."</p>
+                    <p class="text-muted mb-0">Coordinating interviews across multiple calendars is time-consuming. Cal handles availability checks, time zones, and calendar invites automatically, reducing time-to-hire and improving candidate experience.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="use-case-card">
+                    <h4><i data-feather="briefcase" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Solopreneurs &amp; Small Business</h4>
+                    <p class="scenario">"Can I line up consultations without living in my inbox?"</p>
+                    <p class="text-muted mb-0">Owners juggling fulfillment, sales, and support let Cal capture meeting requests straight from email. No portals to monitor, no manual reminders—just confirmed bookings so you can keep serving clients.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="comparison-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Cal Autobot vs Traditional Scheduling Tools</h2>
+                <p class="text-muted">How Cal compares to Calendly, Doodle, and manual scheduling</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Cal Autobot</th>
+                                <th>Calendly/Cal.com</th>
+                                <th>Manual Scheduling</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Setup required</strong></td>
+                                <td><span class="check-icon">✓</span> 30 seconds (just CC Cal)</td>
+                                <td><span class="cross-icon">✗</span> Account + profile setup</td>
+                                <td><span class="check-icon">✓</span> None</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Personal touch</strong></td>
+                                <td><span class="check-icon">✓</span> Natural email conversation</td>
+                                <td><span class="cross-icon">✗</span> "Click my link" = impersonal</td>
+                                <td><span class="check-icon">✓</span> Personal but time-consuming</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Time investment</strong></td>
+                                <td><span class="check-icon">✓</span> 0 minutes per meeting</td>
+                                <td><span class="cross-icon">✗</span> Still requires link sharing</td>
+                                <td><span class="cross-icon">✗</span> 5-10 min per meeting</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Google Calendar sync</strong></td>
+                                <td><span class="check-icon">✓</span> Automatic</td>
+                                <td><span class="check-icon">✓</span> Automatic</td>
+                                <td><span class="cross-icon">✗</span> Manual entry</td>
+                            </tr>
+                            <tr>
+                                <td><strong>App required</strong></td>
+                                <td><span class="check-icon">✓</span> No, just email</td>
+                                <td><span class="cross-icon">✗</span> Recipient visits website</td>
+                                <td><span class="check-icon">✓</span> No</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Public booking page</strong></td>
+                                <td><span class="check-icon">✓</span> Personalized page when you need it</td>
+                                <td><span class="check-icon">✓</span> Standard scheduling link</td>
+                                <td><span class="cross-icon">✗</span> None</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-cta text-center">
+    {% if not current_user.is_authenticated %}
+        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
+            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign up free with Google
+        </a>
+    {% else %}
+        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+            Go to Bookings
+        </a>
+    {% endif %}
+</div>
+
+<div class="other-uses-section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Other Ways to Use Cal Autobot</h2>
+                <p class="text-muted">Our <a href="/free-tool">free tool</a> turns emails, pictures, and itineraries into calendar events.</p>
+            </div>
+        </div>
+
+        <div class="other-uses-flow">
+            <div class="other-uses-step">
+                <div class="other-uses-step__header">
+                    <span class="other-uses-step__badge">Step 1</span>
+                    <i data-feather="camera"></i>
+                </div>
+                <h5>Capture the details</h5>
+                <p>Snap a photo or forward the email - holds the event info.</p>
+            </div>
+
+            <div class="other-uses-arrow">
+                <i data-feather="arrow-right"></i>
+            </div>
+
+            <div class="other-uses-step">
+                <div class="other-uses-step__header">
+                    <span class="other-uses-step__badge">Step 2</span>
+                    <i data-feather="mail"></i>
+                </div>
+                <h5>Forward to Cal</h5>
+                <p>Email it to <strong>Cal@CalAutobot.com</strong> - no portals, forms, or uploads to manage.</p>
+            </div>
+
+            <div class="other-uses-arrow">
+                <i data-feather="arrow-right"></i>
+            </div>
+
+            <div class="other-uses-step">
+                <div class="other-uses-step__header">
+                    <span class="other-uses-step__badge">Step 3</span>
+                    <i data-feather="calendar"></i>
+                </div>
+                <h5>Event created for you</h5>
+                <p>Cal syncs event details to Google Calendar so you don't have to manually create them.</p>
+            </div>
+        </div>
+
+        <div class="other-uses-cta text-center">
+            <p class="mb-3 fw-semibold text-dark">Forward your emails or pictures to</p>
+            <div class="email-cta-wrapper other-uses-cta-wrapper">
+                <a href="mailto:Cal@CalAutobot.com" class="email-address-chip">Cal@CalAutobot.com</a>
+                <button class="copy-email-btn copy-email-btn-light" data-email="cal@calautobot.com" onclick="copyEmailAddress('Cal@CalAutobot.com', this); return false;" title="Copy email address">
+                    <i data-feather="copy"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -560,466 +664,84 @@ Confirmation Number: HTL789456<br><br>
 
 <div class="faq-section">
     <div class="container">
-        <div class="row">
-            <div class="col-12 text-center mb-5">
-                <h2>Frequently Asked Questions</h2>
-                <p class="text-muted">Everything you need to know about Calendar Autobot</p>
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Frequently Asked Questions</h2>
+                <p class="text-muted">Everything you need to know about Cal</p>
             </div>
         </div>
         
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="accordion" id="faqAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false" aria-controls="faq1">
-                                How does Calendar Autobot work?
-                            </button>
-                        </h2>
-                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Calendar Autobot uses advanced AI to analyze your text input (emails, documents, website screenshots) and automatically extracts event information like dates, times, locations, and descriptions. It then creates these events in your Google Calendar with just one click.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
-                                Do you create a separate calendar for events?
-                            </button>
-                        </h2>
-                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! We automatically create a "Cal Autobot" calendar in your Google Calendar account. This keeps all extracted events organized separately from your personal calendar, making it easy to manage and review them without cluttering your main calendar.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6" aria-expanded="false" aria-controls="faq6">
-                                Is Calendar Autobot free to use?
-                            </button>
-                        </h2>
-                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! Calendar Autobot is always free to use. Simply sign up with your Google account and start extracting events from your text and photos right away.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">
-                                What types of content can I process?
-                            </button>
-                        </h2>
-                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                You can process various types of content including email confirmations, flight itineraries, hotel bookings, meeting invites, event flyers, screenshots of calendars, and any text containing event information. The AI is designed to handle different formats and layouts.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">
-                                Is my data secure and private?
-                            </button>
-                        </h2>
-                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes, your privacy is our priority. We cannot access your main Google Calendar events and create a new "Cal Autobot" calendar. We use secure encryption for all data transmission. Your text input is processed by AI but not permanently stored. Read our <a href="{{ url_for('main_routes.privacy') }}">Privacy Policy</a> for full details.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5" aria-expanded="false" aria-controls="faq5">
-                                Can I edit events before they're added to my calendar?
-                            </button>
-                        </h2>
-                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Absolutely! After extraction, you can review and edit all event details including title, date, time, location, and description before syncing to your Google Calendar. You have full control over what gets added.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7" aria-expanded="false" aria-controls="faq7">
-                                What if the AI doesn't extract events correctly?
-                            </button>
-                        </h2>
-                        <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Our AI is highly accurate, but there's always room for it to make mistakes. If extraction doesn't work as expected, you can manually adjust the details. Send a note to <a href="https://calautobot.featurebase.app/">our support site</a> with any issues.
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8" aria-expanded="false" aria-controls="faq8">
-                                Can I add multiple email addresses to my account?
-                            </button>
-                        </h2>
-                        <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                            <div class="accordion-body">
-                                Yes! You can add multiple email addresses to your Calendar Autobot account. This allows you to forward emails from any of your email addresses (work, personal, etc.) to <a href="mailto:go@CalAutobot.com">go@CalAutobot.com</a> and they'll all be added to the same calendar You can manage your additional email addresses from your Bookings page.
-                            </div>
-                        </div>
-                    </div>
+                <div class="faq-item">
+                    <h4>How does Cal compare to Calendly for Google Calendar scheduling?</h4>
+                    <p>Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It works entirely through email by reading conversation threads and coordinating directly with participants. This maintains the personal touch of email while automating the logistics. Calendly forces people to interact with a separate tool, which creates friction and a 40% drop-off rate.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>Does Cal work with Google Calendar?</h4>
+                    <p>Yes, Cal is designed specifically for Google Calendar integration. It automatically checks your availability, proposes meeting times based on your calendar, and creates Google Calendar events for all participants once a time is confirmed. Everything syncs seamlessly without any manual data entry.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>How much does Cal cost for appointment scheduling?</h4>
+                    <p>Cal is currently in private beta. Join the waitlist to get early access pricing, which will be significantly discounted compared to our future standard rates. Early adopters receive special lifetime pricing as a thank you for being among the first to trust Cal with their scheduling.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>Is Cal better than manual scheduling for online meeting coordination?</h4>
+                    <p>Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It eliminates the back-and-forth email chains ("Does Tuesday at 2pm work?" "How about Wednesday?") while maintaining the personal touch that scheduling links lack. You get the efficiency of automation with the warmth of direct communication.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>How quickly can I start using Cal for appointment scheduling?</h4>
+                    <p>Setup takes about 30 seconds. Once you have access, you simply CC cal@yourdomain.com on any scheduling email thread. Cal reads the conversation context and begins coordinating immediately. No complex configuration, no calendar permissions to manage, no training required.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h4>What makes Cal different from other AI scheduling assistants?</h4>
+                    <p>Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling links that feel transactional, Cal participates in email threads just like a real executive assistant would. It understands context, handles time zone confusion, and adapts to conversational scheduling requests rather than forcing people into rigid booking flows.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="cta-section">
+<div class="cta-section" id="cta">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 text-center">
-                <div class="cta-card">
-                    <h2 class="mb-3">Ready to Get Started?</h2>
-                    <p class="mb-4">Sign up free with Google and start transforming your emails and photos into calendar events!</p>
-                    
-                    {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
-                            <i data-feather="grid" class="me-2"></i>
-                            Go to Bookings
-                        </a>
-                    {% else %}
-                        <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                <h2 class="mb-4">Smart, Simpler Scheduling</h2>
+                <p class="mb-4" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">
+                    Join forward-thinking teams who are eliminating scheduling friction
+                </p>
+                
+                {% if not current_user.is_authenticated %}
+                    <div class="hero-actions mt-4">
+                        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
+                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
-                            Start with Google
+                            Sign up free with Google
                         </a>
-                        <div class="mt-1">
-                            <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
-                                <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome Extension" class="chrome-icon">
-                                Take web screenshots with Chrome Extension
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
+
+                        <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
+                            No credit card required.
+                        </p>
+                    </div>
+                {% else %}
+                    <div class="hero-actions mt-4">
+                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+                            Go to Bookings
+                        </a>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<style>
-.event-preview-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    transition: all 0.3s ease;
-}
-
-.event-preview-card:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.example-card {
-    position: relative;
-}
-
-.extract-loading {
-    position: relative;
-    overflow: hidden;
-}
-
-.extract-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Custom styling for nav pills */
-.nav-pills .nav-link {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    color: #6c757d;
-    margin: 0 4px;
-    border-radius: 25px;
-    padding: 12px 20px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    text-decoration: none;
-}
-
-.nav-pills .nav-link:hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #dee2e6;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.nav-pills .nav-link.active {
-    background: #007bff;
-    border-color: #007bff;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-}
-
-.nav-pills .nav-link i {
-    font-size: 16px;
-}
-
-/* Tab content styling */
-.tab-content {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-.example-card {
-    padding: 30px;
-    border: none;
-}
-
-/* Make examples section stand out */
-.example-section {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 60px 0;
-    margin: 0;
-}
-</style>
-
-<script>
-function extractExample1() {
-    const btn = document.getElementById('extractBtn1');
-    const eventsDiv = document.getElementById('extractedEvents1');
-    const ctaDiv = document.getElementById('ctaButtons1');
-    
-    // Button loading state
-    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
-    btn.disabled = true;
-    btn.classList.add('extract-loading');
-    
-    // Add shimmer effect to example text
-    const exampleText = btn.closest('.example-card').querySelector('.example-text');
-    exampleText.classList.add('extract-loading');
-    
-    // Simulate AI processing delay
-    setTimeout(() => {
-        // Remove loading effects
-        exampleText.classList.remove('extract-loading');
-        btn.classList.remove('extract-loading');
-        
-        // Show extracted events with animation
-        eventsDiv.style.display = 'block';
-        eventsDiv.classList.add('fade-in');
-        
-        // Show CTA buttons
-        ctaDiv.style.display = 'block';
-        ctaDiv.classList.add('fade-in');
-        
-        // Update button
-        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        // Replace feather icons
-        feather.replace();
-        
-        // Hide button after a moment
-        setTimeout(() => {
-            btn.style.display = 'none';
-        }, 2000);
-    }, 2000);
-}
-
-function extractExample2() {
-    const btn = document.getElementById('extractBtn2');
-    const eventsDiv = document.getElementById('extractedEvents2');
-    const ctaDiv = document.getElementById('ctaButtons2');
-    
-    // Button loading state
-    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
-    btn.disabled = true;
-    btn.classList.add('extract-loading');
-    
-    // Add shimmer effect to example text
-    const exampleText = btn.closest('.example-card').querySelector('.example-text');
-    exampleText.classList.add('extract-loading');
-    
-    // Simulate AI processing delay
-    setTimeout(() => {
-        // Remove loading effects
-        exampleText.classList.remove('extract-loading');
-        btn.classList.remove('extract-loading');
-        
-        // Show extracted events with animation
-        eventsDiv.style.display = 'block';
-        eventsDiv.classList.add('fade-in');
-        
-        // Show CTA buttons
-        ctaDiv.style.display = 'block';
-        ctaDiv.classList.add('fade-in');
-        
-        // Update button
-        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        // Replace feather icons
-        feather.replace();
-        
-        // Hide button after a moment
-        setTimeout(() => {
-            btn.style.display = 'none';
-        }, 2000);
-    }, 2500);
-}
-
-function extractExample3() {
-    const btn = document.getElementById('extractBtn3');
-    const eventsDiv = document.getElementById('extractedEvents3');
-    const ctaDiv = document.getElementById('ctaButtons3');
-    
-    // Button loading state
-    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
-    btn.disabled = true;
-    btn.classList.add('extract-loading');
-    
-    // Add shimmer effect to example image
-    const exampleText = btn.closest('.example-card').querySelector('.example-text');
-    exampleText.classList.add('extract-loading');
-    
-    // Simulate AI processing delay for image
-    setTimeout(() => {
-        // Remove loading effects
-        exampleText.classList.remove('extract-loading');
-        btn.classList.remove('extract-loading');
-        
-        // Show extracted events with animation
-        eventsDiv.style.display = 'block';
-        eventsDiv.classList.add('fade-in');
-        
-        // Show CTA buttons
-        ctaDiv.style.display = 'block';
-        ctaDiv.classList.add('fade-in');
-        
-        // Update button
-        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        // Replace feather icons
-        feather.replace();
-        
-        // Hide button after a moment
-        setTimeout(() => {
-            btn.style.display = 'none';
-        }, 2000);
-    }, 3000);
-}
-
-function extractExample4() {
-    const btn = document.getElementById('extractBtn4');
-    const eventsDiv = document.getElementById('extractedEvents4');
-    const ctaDiv = document.getElementById('ctaButtons4');
-    
-    // Button loading state
-    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
-    btn.disabled = true;
-    btn.classList.add('extract-loading');
-    
-    // Add shimmer effect to example image
-    const exampleText = btn.closest('.example-card').querySelector('.example-text');
-    exampleText.classList.add('extract-loading');
-    
-    // Simulate AI processing delay for image
-    setTimeout(() => {
-        // Remove loading effects
-        exampleText.classList.remove('extract-loading');
-        btn.classList.remove('extract-loading');
-        
-        // Show extracted events with animation
-        eventsDiv.style.display = 'block';
-        eventsDiv.classList.add('fade-in');
-        
-        // Show CTA buttons
-        ctaDiv.style.display = 'block';
-        ctaDiv.classList.add('fade-in');
-        
-        // Update button
-        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        // Replace feather icons
-        feather.replace();
-        
-        // Hide button after a moment
-        setTimeout(() => {
-            btn.style.display = 'none';
-        }, 2000);
-    }, 3000);
-}
-
-// Reset examples when tab changes
-document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('#exampleTabs button[data-bs-toggle="pill"]');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function() {
-            // Reset all examples
-            for (let i = 1; i <= 4; i++) {
-                const btn = document.getElementById(`extractBtn${i}`);
-                const eventsDiv = document.getElementById(`extractedEvents${i}`);
-                
-                if (btn && eventsDiv) {
-                    // Reset button
-                    btn.innerHTML = '<i data-feather="calendar" class="me-1"></i>Extract';
-                    btn.disabled = false;
-                    btn.className = 'btn btn-primary btn-sm';
-                    btn.style.display = 'inline-block';
-                    
-                    // Hide events
-                    eventsDiv.style.display = 'none';
-                    eventsDiv.classList.remove('fade-in');
-                }
-            }
-            
-            // Replace feather icons
-            feather.replace();
-        });
-    });
-});
-</script>
 {% endblock %}

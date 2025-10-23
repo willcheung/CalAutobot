@@ -4,7 +4,7 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Event, UserEmail, CalWaitlist
+from app.models import User, Event, UserEmail
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 from app.services.google_calendar import (
@@ -704,48 +704,6 @@ def remove_email(email_id):
         flash(error_msg, "error")
     
     return redirect(url_for("main_routes.bookings"))
-
-@main_routes.route("/cal")
-def waitlist():
-    """Cal AI scheduling assistant waitlist page"""
-    return render_template("cal.html")
-
-@main_routes.route("/cal/join", methods=["POST"])
-def join_waitlist():
-    """Handle waitlist signup"""
-    try:
-        email = request.form.get("email", "").strip().lower()
-        
-        if not email:
-            flash("Please enter your email address.", "error")
-            return redirect(url_for("main_routes.waitlist"))
-        
-        # Basic email validation
-        if "@" not in email or "." not in email:
-            flash("Please enter a valid email address.", "error")
-            return redirect(url_for("main_routes.waitlist"))
-        
-        # Check if email already exists
-        existing = CalWaitlist.query.filter_by(email=email).first()
-        if existing:
-            flash("You're already on the waitlist! We'll be in touch soon.", "info")
-            return redirect(url_for("main_routes.waitlist"))
-        
-        # Add to waitlist
-        waitlist_entry = CalWaitlist(email=email)
-        db.session.add(waitlist_entry)
-        db.session.commit()
-        
-        logger.info(f"New Cal waitlist signup: {email}")
-        flash("🎉 You're on the list! We'll reach out soon with early access.", "success")
-        return redirect(url_for("main_routes.waitlist"))
-        
-    except Exception as e:
-        logger.error(f"Error adding to waitlist: {str(e)}")
-        sentry_sdk.capture_exception(e)
-        db.session.rollback()
-        flash("Something went wrong. Please try again.", "error")
-        return redirect(url_for("main_routes.waitlist"))
 
 @main_routes.route("/api/extract_events", methods=["POST"])
 @login_required

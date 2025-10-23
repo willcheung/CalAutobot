@@ -79,16 +79,7 @@
 </script>
 {% endblock %}
 
-{% block banner %}
-<div class="announcement-banner" style="background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%); padding: 12px 20px; text-align: center; color: white; position: sticky; top: 0; z-index: 1000;">
-    <div class="container">
-        <p style="margin: 0; font-size: 0.95rem; font-weight: 400;">
-            🚀 <strong>Meet Cal</strong> — your AI scheduling assistant. Let Cal take over the back-and-forth of scheduling so you can focus on building relationships and closing deals. 
-            <a href="{{ url_for('main_routes.waitlist') }}" style="color: #FCD34D; text-decoration: underline; font-weight: 500; margin-left: 8px;">Join waitlist</a>
-        </p>
-    </div>
-</div>
-{% endblock %}
+{% block banner %}{% endblock %}
 
 {% block content %}
 
@@ -109,7 +100,7 @@
                                 <i data-feather="mail" style="width: 20px; height: 20px;"></i>
                                 go@CalAutobot.com
                             </a>
-                            <button class="copy-email-btn" onclick="copyEmailAddress(); return false;" title="Copy email address">
+                            <button class="copy-email-btn" data-email="go@calautobot.com" onclick="copyEmailAddress('go@CalAutobot.com', this); return false;" title="Copy email address">
                                 <i data-feather="copy" style="width: 18px; height: 18px;"></i>
                             </button>
                         </div>
@@ -647,7 +638,7 @@ Confirmation Number: HTL789456<br><br>
     </div>
 </div>
 
-<div class="cta-section">
+<div class="cta-section" id="cta">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 text-center">
