@@ -206,6 +206,8 @@ def calendar_settings():
 
     if pending_changes:
         db.session.commit()
+        # Refresh calendar cache to avoid expired attributes triggering N+1 queries
+        calendars_by_id = {cal.calendar_id: cal for cal in current_user.calendars}
 
     calendar_preferences = []
     for calendar_id, calendar in calendars_by_id.items():
