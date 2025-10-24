@@ -71,6 +71,11 @@ class Event(db.Model):
     
     # Link to original text input
     text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'))
+    
+    # Composite index for bookings page performance
+    __table_args__ = (
+        db.Index('idx_user_status_date', 'user_id', 'status', 'start_date', 'start_time'),
+    )
 
 class UserEmail(db.Model):
     id = db.Column(db.Integer, primary_key=True)
