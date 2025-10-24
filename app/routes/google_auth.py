@@ -135,7 +135,6 @@ def callback():
 
     user = User.query.filter_by(email=users_email).first()
     is_provisional_user_signup = False  # Track if this is a provisional user upgrading
-    old_timezone = None  # Track old timezone for event conversion
     
     if not user:
         user = User()
@@ -152,13 +151,7 @@ def callback():
         is_provisional_user_signup = (user.google_id is None)
         is_new_user = False
         
-        # Capture old timezone before updating (needed for event conversion)
-        old_timezone = user.timezone
-        
-        # Only update timezone if it's different (optimization)
-        if user.timezone != user_timezone:
-            user.timezone = user_timezone
-            logger.info(f"Updated timezone for user {users_email}: {old_timezone} -> {user_timezone}")
+        # Never update timezone for existing users - they can change it in settings
         
         if is_provisional_user_signup:
             # Upgrade provisional user to real authenticated user
