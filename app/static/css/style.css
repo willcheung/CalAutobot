@@ -1134,13 +1134,89 @@ code, pre {
     }
 }
 
-@media (max-width: 576px) {
-    .email-stack__scroller {
-        height: calc(var(--email-stack-card-count, 5) * 105vh);
+/* Mobile: Horizontal Swipe Carousel */
+@media (max-width: 768px) {
+    .email-stack {
+        padding: clamp(2rem, 6vw, 4rem) 0;
     }
-
+    
+    .email-stack__title {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+        padding: 0 1rem;
+    }
+    
     .email-stack__subtitle {
-        font-size: 0.95rem;
+        font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+        padding: 0 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    /* Replace vertical scroll with horizontal carousel */
+    .email-stack__scroller {
+        height: auto;
+        margin-top: 0;
+        padding-top: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    
+    /* Hide scrollbar */
+    .email-stack__scroller::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Horizontal flex layout */
+    .email-stack__stage {
+        position: static;
+        height: auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding: 0 1rem 2rem 1rem;
+        pointer-events: auto;
+    }
+    
+    /* Cards side-by-side */
+    .email-stack__card {
+        position: static;
+        flex: 0 0 85%;
+        transform: none !important;
+        opacity: 1 !important;
+        padding-top: 0;
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+    }
+    
+    .email-stack__card img {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(17, 24, 39, 0.2);
+    }
+    
+    .email-stack__card[data-stack-index="4"] img {
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    /* Highlight frame adjustment */
+    .email-stack__card--highlight .email-stack__highlight-frame {
+        padding: 2px;
+        border-radius: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .email-stack__card {
+        flex: 0 0 90%;
     }
 }
 
