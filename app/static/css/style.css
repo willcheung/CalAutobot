@@ -1198,6 +1198,7 @@ code, pre {
         max-width: 100%;
         border-radius: 12px;
         box-shadow: 0 8px 24px rgba(17, 24, 39, 0.2);
+        border: 2px solid #e5e7eb;
     }
     
     .email-stack__card[data-stack-index="4"] img {
@@ -1205,6 +1206,7 @@ code, pre {
         max-width: 280px;
         margin: 0 auto;
         display: block;
+        border: none;
     }
     
     /* Highlight frame adjustment */

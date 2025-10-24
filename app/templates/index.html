@@ -404,19 +404,31 @@
     <div class="email-stack__scroller">
         <div class="email-stack__stage">
             <figure class="email-stack__card" data-stack-index="0">
-                <img src="{{ url_for('static', filename='images/email1.jpg') }}" alt="Inbox showing Cal cc'd onto an email" loading="lazy">
+                <picture>
+                    <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email1-mobile.jpg') }}">
+                    <img src="{{ url_for('static', filename='images/email1.jpg') }}" alt="Inbox showing Cal cc'd onto an email" loading="lazy">
+                </picture>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="1">
                 <div class="email-stack__highlight-frame">
-                    <img src="{{ url_for('static', filename='images/email2.jpg') }}" alt="Cal proposing meeting times back to the thread" loading="lazy">
+                    <picture>
+                        <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email2-mobile.jpg') }}">
+                        <img src="{{ url_for('static', filename='images/email2.jpg') }}" alt="Cal proposing meeting times back to the thread" loading="lazy">
+                    </picture>
                 </div>
             </figure>
             <figure class="email-stack__card" data-stack-index="2">
-                <img src="{{ url_for('static', filename='images/email3.jpg') }}" alt="Recipient confirming a time with Cal" loading="lazy">
+                <picture>
+                    <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email3-mobile.jpg') }}">
+                    <img src="{{ url_for('static', filename='images/email3.jpg') }}" alt="Recipient confirming a time with Cal" loading="lazy">
+                </picture>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="3">
                 <div class="email-stack__highlight-frame">
-                    <img src="{{ url_for('static', filename='images/email4.jpg') }}" alt="Cal confirming the meeting and updating calendars" loading="lazy">
+                    <picture>
+                        <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email4-mobile.jpg') }}">
+                        <img src="{{ url_for('static', filename='images/email4.jpg') }}" alt="Cal confirming the meeting and updating calendars" loading="lazy">
+                    </picture>
                 </div>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="4">
