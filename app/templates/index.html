@@ -55,7 +55,7 @@
 <style>
     .waitlist-hero {
         background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
-        padding: 80px 0 100px;
+        padding: clamp(2.5rem, 8vw, 5rem) 0 clamp(3rem, 10vw, 6.25rem);
         color: white;
         position: relative;
         overflow: hidden;
@@ -77,37 +77,38 @@
         padding: 6px 16px;
         background: rgba(255, 255, 255, 0.1);
         border-radius: 20px;
-        font-size: 0.85rem;
-        margin-bottom: 24px;
+        font-size: clamp(0.75rem, 2vw, 0.85rem);
+        margin-bottom: clamp(1rem, 3vw, 1.5rem);
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .waitlist-title {
-        font-size: 3.5rem;
+        font-size: clamp(2rem, 7vw, 3.5rem);
         font-weight: 700;
         line-height: 1.2;
-        margin-bottom: 24px;
+        margin-bottom: clamp(1rem, 3vw, 1.5rem);
     }
 
     .waitlist-subtitle {
-        font-size: 1.35rem;
+        font-size: clamp(1rem, 3vw, 1.35rem);
         font-weight: 300;
         color: rgba(255, 255, 255, 0.9);
         max-width: 700px;
-        margin: 0 auto 40px;
+        margin: 0 auto clamp(1.5rem, 4vw, 2.5rem);
+        line-height: 1.6;
     }
 
     .problem-section {
-        padding: 80px 0;
+        padding: clamp(2.5rem, 8vw, 5rem) 0;
         background: #f8f9fa;
     }
 
     .problem-card {
         background: white;
-        padding: 32px;
+        padding: clamp(1.5rem, 4vw, 2rem);
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        margin-bottom: 24px;
+        margin-bottom: clamp(1rem, 3vw, 1.5rem);
         border-left: 4px solid #ef4444;
     }
 
@@ -115,16 +116,17 @@
         color: #ef4444;
         font-weight: 600;
         margin-bottom: 12px;
+        font-size: clamp(1.1rem, 3vw, 1.25rem);
     }
 
     .solution-section {
-        padding: 80px 0;
+        padding: clamp(2.5rem, 8vw, 5rem) 0;
         background: white;
     }
 
     .benefit-card {
         text-align: center;
-        padding: 40px 24px;
+        padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1rem, 3vw, 1.5rem);
         background: #f8f9fa;
         border-radius: 12px;
         transition: all 0.3s;
