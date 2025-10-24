@@ -65,7 +65,21 @@
     
     <div class="layout">
         {% if display_sidebar %}
-            <aside class="sidebar">
+            <!-- Mobile header with hamburger menu (hidden on desktop) -->
+            <div class="mobile-header">
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                    <i data-feather="menu"></i>
+                </button>
+                <a class="mobile-brand" href="{{ url_for('main_routes.index') }}">
+                    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="CalAutobot" width="32" height="32">
+                    <span>CalAutobot</span>
+                </a>
+            </div>
+            
+            <!-- Sidebar backdrop for mobile (hidden on desktop) -->
+            <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+            
+            <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <a class="sidebar-brand" href="{{ url_for('main_routes.index') }}">
                         <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="calAutobot.com" width="38" height="38">

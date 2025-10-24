@@ -811,6 +811,125 @@ body {
     opacity: 0.9;
 }
 
+/* Mobile Header - Hidden on desktop (>=992px) */
+.mobile-header {
+    display: none;
+}
+
+.mobile-menu-toggle {
+    display: none;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+/* Mobile Navigation - Only active on screens <992px */
+@media (max-width: 991.98px) {
+    /* Show mobile header */
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: linear-gradient(180deg, #1f2432 0%, #2c3142 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    
+    .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .mobile-menu-toggle:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .mobile-menu-toggle:active {
+        transform: scale(0.95);
+    }
+    
+    .mobile-menu-toggle svg {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .mobile-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .mobile-brand:hover {
+        color: #ffffff;
+    }
+    
+    .mobile-brand img {
+        border-radius: 8px;
+    }
+    
+    /* Convert sidebar to drawer */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -240px;
+        height: 100vh;
+        width: 240px;
+        z-index: 1050;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+    }
+    
+    .sidebar.sidebar-open {
+        left: 0;
+    }
+    
+    /* Backdrop overlay */
+    .sidebar-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 1040;
+    }
+    
+    .sidebar-backdrop.backdrop-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Full-width content on mobile */
+    .layout {
+        flex-direction: column;
+    }
+    
+    .layout-content {
+        width: 100%;
+        padding-top: 0;
+    }
+}
+
 .layout-content {
     flex: 1;
     min-width: 0;
