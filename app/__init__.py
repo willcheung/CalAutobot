@@ -1,11 +1,7 @@
 import os
 import logging
 import threading
-import sentry_sdk
 from datetime import datetime, timedelta
-from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-from sentry_sdk.integrations.logging import LoggingIntegration
 
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -13,18 +9,6 @@ from flask_login import LoginManager, current_user
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-# Initialize Sentry for error tracking (only if DSN is provided)
-sentry_dsn = os.environ.get("SENTRY_DSN")
-if sentry_dsn:
-    sentry_sdk.init(
-        dsn=sentry_dsn,
-        traces_sample_rate=1,
-        # Enable logs to be sent to Sentry
-        enable_logs=True,
-        send_default_pii=True,
-        environment=os.environ.get("FLASK_ENV", "production"),
-    )
 
 # Configure structured logging
 logging.basicConfig(
@@ -162,7 +146,11 @@ def load_user(user_id):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error loading user {user_id}: {str(e)}")
-        sentry_sdk.capture_exception(e)
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(e)
+        except ImportError:
+            pass
         return None
 
 
@@ -196,7 +184,11 @@ def method_not_allowed_error(error):
 @app.errorhandler(500)
 def internal_error(error):
     logger.error(f"500 error: {str(error)}")
-    sentry_sdk.capture_exception(error)
+    try:
+        import sentry_sdk
+        sentry_sdk.capture_exception(error)
+    except ImportError:
+        pass
     db.session.rollback()
     return render_template('error.html',
                            error_code=500,
@@ -206,7 +198,11 @@ def internal_error(error):
 @app.errorhandler(Exception)
 def handle_exception(e):
     logger.error(f"Unhandled exception: {str(e)}", exc_info=True)
-    sentry_sdk.capture_exception(e)
+    try:
+        import sentry_sdk
+        sentry_sdk.capture_exception(e)
+    except ImportError:
+        pass
     db.session.rollback()
 
     # Return JSON error for AJAX requests
@@ -222,6 +218,12 @@ def handle_exception(e):
     return render_template('error.html',
                            error_code=500,
                            error_message="An unexpected error occurred"), 500
+
+
+@app.route('/health')
+def health_check():
+    """Simple health check endpoint that responds immediately"""
+    return jsonify({'status': 'ok', 'timestamp': datetime.utcnow().isoformat()}), 200
 
 
 @app.before_request
@@ -256,12 +258,40 @@ with app.app_context():
     app.register_blueprint(availability_routes)
     app.register_blueprint(public_booking)
 
-    # Create all tables including the new UserEmail table
-    db.create_all()
-
     # Setup Chrome extension API routes
     from app.routes.chrome_extension_api import setup_chrome_extension_routes
     setup_chrome_extension_routes(app)
 
     # Import extension support routes
     from app.routes import extension_support  # noqa: F401
+    
+    # Initialize Sentry for error tracking (lazy load after app is ready)
+    sentry_dsn = os.environ.get("SENTRY_DSN")
+    if sentry_dsn:
+        try:
+            import sentry_sdk
+            from sentry_sdk.integrations.flask import FlaskIntegration
+            from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+            
+            sentry_sdk.init(
+                dsn=sentry_dsn,
+                traces_sample_rate=1,
+                enable_logs=True,
+                send_default_pii=True,
+                environment=os.environ.get("FLASK_ENV", "production"),
+                integrations=[
+                    FlaskIntegration(),
+                    SqlalchemyIntegration(),
+                ]
+            )
+            logger.info("Sentry initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Sentry: {e}")
+    
+    # Create tables - skip only if explicitly disabled for faster startup
+    # Set SKIP_DB_INIT=true to skip table creation (use only if tables already exist)
+    if os.environ.get("SKIP_DB_INIT") != "true":
+        try:
+            db.create_all()
+        except Exception as e:
+            logger.warning(f"Database initialization warning: {e}")

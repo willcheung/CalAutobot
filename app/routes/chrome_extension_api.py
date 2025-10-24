@@ -25,8 +25,6 @@ def add_dynamic_cors_headers(response):
 def setup_chrome_extension_routes(app):
     """Setup Chrome extension API routes"""
     
-    logger.info("🔧 Setting up Chrome extension API routes...")
-    
     @app.route('/api/extension/process', methods=['POST', 'OPTIONS'])
     def extension_process_events():
         """
