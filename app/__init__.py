@@ -1,6 +1,8 @@
 import os
 import logging
+import threading
 import sentry_sdk
+from datetime import datetime, timedelta
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -108,11 +110,55 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'google_auth.login'
 
+
+def renew_webhook_async(user_id):
+    """Background task to renew Google Calendar webhook for a user."""
+    try:
+        # Create new app context and DB session for thread safety
+        with app.app_context():
+            from app.models import User
+            from app.services.google_calendar import (
+                setup_calendar_webhook_for_user,
+                refresh_google_token,
+            )
+            
+            # Fresh query in this thread's session
+            user = User.query.get(user_id)
+            if not user or not user.extraction_calendar_id:
+                return
+            
+            # Refresh access token and renew webhook
+            access_token = refresh_google_token(user)
+            setup_calendar_webhook_for_user(
+                user=user,
+                access_token=access_token,
+                calendar_id=user.extraction_calendar_id,
+            )
+            logger.info(f"✅ Renewed webhook for {user.email} in background")
+            
+    except Exception as e:
+        logger.warning(f"Background webhook renewal failed for user {user_id}: {e}")
+
+
 @login_manager.user_loader
 def load_user(user_id):
     from app.models import User
     try:
-        return User.query.get(int(user_id))
+        user = User.query.get(int(user_id))
+        
+        # Spawn background thread to renew webhook if needed
+        if user and user.webhook_expiration:
+            renew_threshold = datetime.utcnow() + timedelta(hours=12)
+            if user.webhook_expiration <= renew_threshold:
+                thread = threading.Thread(
+                    target=renew_webhook_async,
+                    args=(user.id,),
+                    daemon=True
+                )
+                thread.start()
+                logger.info(f"⏰ Spawned background webhook renewal for {user.email}")
+        
+        return user
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error loading user {user_id}: {str(e)}")
