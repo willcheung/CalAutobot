@@ -3185,6 +3185,7 @@ code, pre {
         padding: 24px;
     }
     .booking-calendar {
+        min-width: 0;
         border-top: 1px solid #e5e9f2;
         border-bottom: 1px solid #e5e9f2;
     }
