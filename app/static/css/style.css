@@ -1202,10 +1202,6 @@ code, pre {
     }
     
     .email-stack__card[data-stack-index="4"] img {
-        width: 100%;
-        max-width: 280px;
-        margin: 0 auto;
-        display: block;
         border: none;
     }
     
