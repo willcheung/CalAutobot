@@ -1203,6 +1203,8 @@ code, pre {
     
     .email-stack__card[data-stack-index="4"] img {
         border: none;
+        width: 100%;
+        display:block;
     }
     
     /* Highlight frame adjustment */

@@ -308,50 +308,36 @@ def bookings():
     page = max(page, 1)
     per_page = 25
 
-    events = (
-        Event.query.filter_by(user_id=current_user.id)
-        .order_by(Event.start_date.asc(), Event.start_time.asc(), Event.created_at.asc())
-        .all()
-    )
-
     now = datetime.utcnow()
-    upcoming, past, cancelled = [], [], []
+    base_query = Event.query.filter_by(user_id=current_user.id)
 
-    for event in events:
-        start_dt = get_event_start_datetime(event)
-        status_value = (event.status or "scheduled").lower()
-        if status_value == "cancelled":
-            cancelled.append((event, start_dt))
-            continue
+    # Build status-specific query with SQL filtering and sorting
+    if status == "cancelled":
+        query = base_query.filter(Event.status == "cancelled").order_by(
+            Event.start_date.desc(), Event.start_time.desc(), Event.created_at.desc()
+        )
+    elif status == "past":
+        query = base_query.filter(
+            Event.status != "cancelled",
+            Event.start_date < now.date()
+        ).order_by(
+            Event.start_date.desc(), Event.start_time.desc(), Event.created_at.desc()
+        )
+    else:  # upcoming
+        query = base_query.filter(
+            Event.status != "cancelled",
+            Event.start_date >= now.date()
+        ).order_by(
+            Event.start_date.asc(), Event.start_time.asc(), Event.created_at.asc()
+        )
 
-        if start_dt >= now:
-            upcoming.append((event, start_dt))
-        else:
-            past.append((event, start_dt))
-
-    upcoming.sort(key=lambda item: item[1])
-    past.sort(key=lambda item: item[1], reverse=True)
-    cancelled.sort(key=lambda item: item[1], reverse=True)
-
-    if status == "past":
-        selected = past
-    elif status == "cancelled":
-        selected = cancelled
-    else:
-        status = "upcoming"
-        selected = upcoming
-
-    total = len(selected)
-    total_pages = max(1, math.ceil(total / per_page)) if total else 1
-    if page > total_pages:
-        page = total_pages
-
-    start_idx = (page - 1) * per_page
-    end_idx = start_idx + per_page
-    page_items = selected[start_idx:end_idx]
-
+    # Paginate at database level
+    pagination_obj = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Build display events only for current page
     display_events = []
-    for event, start_dt in page_items:
+    for event in pagination_obj.items:
+        start_dt = get_event_start_datetime(event)
         source_label, badge_class, source_key = get_event_source_display(event)
         full_description = (event.event_description or "").strip()
         description_preview, is_truncated = truncate_text(full_description, 200)
@@ -371,17 +357,24 @@ def bookings():
         )
 
     pagination = {
-        "page": page,
-        "pages": total_pages,
-        "has_prev": page > 1,
-        "has_next": end_idx < total,
-        "total": total,
+        "page": pagination_obj.page,
+        "pages": pagination_obj.pages,
+        "has_prev": pagination_obj.has_prev,
+        "has_next": pagination_obj.has_next,
+        "total": pagination_obj.total,
     }
 
+    # Efficient COUNT queries for tab badges
     counts = {
-        "upcoming": len(upcoming),
-        "past": len(past),
-        "cancelled": len(cancelled),
+        "upcoming": base_query.filter(
+            Event.status != "cancelled",
+            Event.start_date >= now.date()
+        ).count(),
+        "past": base_query.filter(
+            Event.status != "cancelled",
+            Event.start_date < now.date()
+        ).count(),
+        "cancelled": base_query.filter(Event.status == "cancelled").count(),
     }
 
     has_calendar_scope = check_user_has_calendar_scope(current_user)
