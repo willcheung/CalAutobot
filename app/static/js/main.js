@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
         feather.replace();
     }
     
+    // Initialize mobile menu
+    initializeMobileMenu();
+    
     // Initialize email management
     initializeEmailManagement();
     
@@ -947,5 +950,61 @@ function removeEmailFromList(emailId) {
         noEmailsMessage.id = 'no-emails-message';
         noEmailsMessage.textContent = 'No additional emails added yet.';
         container.appendChild(noEmailsMessage);
+    }
+}
+
+function initializeMobileMenu() {
+    const menuToggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    
+    if (!menuToggle || !sidebar || !backdrop) {
+        return; // Elements don't exist on this page
+    }
+    
+    // Toggle sidebar on hamburger click
+    menuToggle.addEventListener('click', function() {
+        toggleSidebar();
+    });
+    
+    // Close sidebar when backdrop is clicked
+    backdrop.addEventListener('click', function() {
+        closeSidebar();
+    });
+    
+    // Close sidebar when a link is clicked (for navigation)
+    const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Don't close for external links
+            if (!this.hasAttribute('target')) {
+                closeSidebar();
+            }
+        });
+    });
+    
+    // Close sidebar on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('sidebar-open')) {
+            closeSidebar();
+        }
+    });
+    
+    function toggleSidebar() {
+        sidebar.classList.toggle('sidebar-open');
+        backdrop.classList.toggle('backdrop-visible');
+        
+        // Prevent body scroll when sidebar is open
+        if (sidebar.classList.contains('sidebar-open')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+    
+    function closeSidebar() {
+        sidebar.classList.remove('sidebar-open');
+        backdrop.classList.remove('backdrop-visible');
+        document.body.style.overflow = '';
     }
 }
