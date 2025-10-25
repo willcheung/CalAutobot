@@ -48,7 +48,16 @@
                 <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="CalAutobot logo" width="36" height="36">
                 <span>CalAutobot</span>
             </a>
-            <nav class="landing-nav">
+            <button class="landing-menu-toggle" id="landingMenuToggle" type="button" aria-label="Toggle navigation" aria-controls="landingNavMenu" aria-expanded="false">
+                <i data-feather="menu"></i>
+            </button>
+            <nav class="landing-nav" id="landingNavMenu" aria-label="Primary site navigation">
+                <div class="landing-nav-links">
+                    <a class="landing-link" href="{{ url_for('main_routes.index') }}#how-it-works">How it works</a>
+                    <a class="landing-link" href="{{ url_for('main_routes.index') }}#product">Product</a>
+                    <a class="landing-link" href="{{ url_for('main_routes.index') }}#email-to-calendar">Emails, Images → Calendar</a>
+                    <a class="landing-link" href="{{ url_for('main_routes.index') }}#pricing">Pricing</a>
+                </div>
                 <a class="google-signin-btn google-signin-btn-dark google-signin-btn-large" href="#" onclick="startGoogleLogin(); return false;">
                     <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -155,7 +164,7 @@
         </div>
     </div>
 
-    {% if request.endpoint in ('main_routes.index', 'main_routes.free_tool') %}
+    {% if request.endpoint in ('main_routes.index', 'main_routes.image_to_calendar') %}
         <!-- Footer -->
         <footer class="footer{% if not display_sidebar %} mt-5{% endif %}">
             <div class="container">

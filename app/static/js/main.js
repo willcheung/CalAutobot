@@ -5,8 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
         feather.replace();
     }
     
-    // Initialize mobile menu
+    // Initialize mobile menus
     initializeMobileMenu();
+    initializeLandingMenu();
     
     // Initialize email management
     initializeEmailManagement();
@@ -25,9 +26,12 @@ document.addEventListener('DOMContentLoaded', function() {
         card.classList.add('fade-in');
     });
     
-    // Form validation
+    // Form validation (skip async forms)
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
+        if (form.dataset.globalHandlers === 'off') {
+            return;
+        }
         form.addEventListener('submit', function(e) {
             if (!validateForm(this)) {
                 e.preventDefault();
@@ -59,7 +63,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Loading states for forms
     const submitButtons = document.querySelectorAll('button[type="submit"]');
     submitButtons.forEach(button => {
-        button.closest('form').addEventListener('submit', function() {
+        const parentForm = button.closest('form');
+        if (!parentForm || parentForm.dataset.globalHandlers === 'off') {
+            return;
+        }
+        parentForm.addEventListener('submit', function() {
             button.disabled = true;
             const originalContent = Array.from(button.childNodes).map(node => node.cloneNode(true));
             
@@ -128,6 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initAvailabilityCopyPopover();
     initVisibilityToggle();
     initEmailStack();
+    initPricingWaitlistForm();
 
     // Toggle full booking descriptions
     document.querySelectorAll('[data-booking-toggle]').forEach(button => {
@@ -336,6 +345,73 @@ function initEmailStack() {
     window.addEventListener('resize', () => {
         stackSection.style.setProperty('--email-stack-card-count', cards.length);
     }, { passive: true });
+}
+
+function initPricingWaitlistForm() {
+    const form = document.querySelector('.pricing-waitlist-form');
+    if (!form) {
+        return;
+    }
+
+    const feedbackEl = form.querySelector('.pricing-waitlist-feedback');
+    const submitButton = form.querySelector('.pricing-waitlist-submit');
+
+    const setFeedback = (state, message) => {
+        if (!feedbackEl) {
+            return;
+        }
+        if (state) {
+            feedbackEl.dataset.state = state;
+        } else {
+            delete feedbackEl.dataset.state;
+        }
+        feedbackEl.textContent = message || '';
+    };
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+
+        if (!form.checkValidity()) {
+            if (typeof form.reportValidity === 'function') {
+                form.reportValidity();
+            }
+            return;
+        }
+
+        setFeedback('loading', 'Submitting...');
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const data = await response.json().catch(() => null);
+            const state = data?.status || (response.ok ? 'success' : 'error');
+            const message = data?.message || (response.ok ? 'All set!' : 'Unable to submit right now.');
+            setFeedback(state, message);
+
+            if (response.ok && state === 'success') {
+                form.reset();
+            }
+        } catch (error) {
+            console.error('Waitlist submission failed', error);
+            setFeedback('error', 'Network error. Please try again.');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+        }
+    });
 }
 
 function initAvailabilityCopyPopover() {
@@ -1006,5 +1082,45 @@ function initializeMobileMenu() {
         sidebar.classList.remove('sidebar-open');
         backdrop.classList.remove('backdrop-visible');
         document.body.style.overflow = '';
+    }
+}
+
+function initializeLandingMenu() {
+    const toggle = document.getElementById('landingMenuToggle');
+    const nav = document.getElementById('landingNavMenu');
+
+    if (!toggle || !nav) {
+        return;
+    }
+
+    const mobileMediaQuery = window.matchMedia('(max-width: 767.98px)');
+
+    toggle.addEventListener('click', () => {
+        const isOpen = nav.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    // Close menu after selecting a link on mobile
+    nav.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+            if (mobileMediaQuery.matches) {
+                nav.classList.remove('is-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    });
+
+    // Reset state when resizing to desktop
+    const handleMediaChange = (event) => {
+        if (!event.matches) {
+            nav.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+    };
+
+    if (mobileMediaQuery.addEventListener) {
+        mobileMediaQuery.addEventListener('change', handleMediaChange);
+    } else if (mobileMediaQuery.addListener) {
+        mobileMediaQuery.addListener(handleMediaChange);
     }
 }

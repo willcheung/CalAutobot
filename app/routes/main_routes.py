@@ -1,10 +1,11 @@
 import logging
 import math
 import os
+import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Event, UserEmail
+from app.models import User, Event, UserEmail, CalWaitlist
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 from app.services.google_calendar import (
@@ -15,6 +16,8 @@ from app.services.google_calendar import (
 )
 from datetime import datetime
 import sentry_sdk
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 
 # Import helper modules
 from app.services.event_processing import process_text_to_events
@@ -306,9 +309,50 @@ def index():
         return redirect(url_for("main_routes.bookings"))
     return render_template("index.html", show_landing_header=True)
 
-@main_routes.route("/free-tool")
-def free_tool():
-    return render_template("free_tool.html", show_landing_header=True)
+@main_routes.route("/waitlist", methods=["POST"])
+def join_waitlist():
+    """Capture waitlist submissions for premium plans."""
+    redirect_url = url_for("main_routes.index") + "#pricing"
+    email = (request.form.get("waitlist_email") or "").strip()
+    wants_json = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or request.accept_mimetypes["application/json"] >= request.accept_mimetypes["text/html"]
+    )
+
+    def respond(message, category="success", status=200):
+        if wants_json:
+            return jsonify({"status": category, "message": message}), status
+        flash(message, category)
+        return redirect(redirect_url)
+
+    if not email:
+        return respond("Please enter your email to join the waitlist.", "error", 400)
+
+    email_normalized = email.lower()
+    email_pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+    if not re.match(email_pattern, email_normalized):
+        return respond("Please enter a valid email address.", "error", 400)
+
+    try:
+        existing = CalWaitlist.query.filter(func.lower(CalWaitlist.email) == email_normalized).first()
+        if existing:
+            return respond("You're already on the waitlist! We'll be in touch soon.", "info", 200)
+
+        waitlist_entry = CalWaitlist(email=email_normalized)
+        db.session.add(waitlist_entry)
+        db.session.commit()
+        return respond("Thanks! We'll reach out when the Small Business plan opens up.", "success", 201)
+    except IntegrityError:
+        db.session.rollback()
+        return respond("You're already on the waitlist! We'll be in touch soon.", "info", 200)
+    except Exception as exc:
+        db.session.rollback()
+        logger.exception("Failed to save waitlist submission: %s", exc)
+        return respond("Something went wrong. Please try again in a moment.", "error", 500)
+
+@main_routes.route("/image-to-calendar")
+def image_to_calendar():
+    return render_template("image_to_calendar.html", show_landing_header=True)
 
 @main_routes.route("/signup")
 def signup():

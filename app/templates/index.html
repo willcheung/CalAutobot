@@ -1,18 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Cal Autobot | Stop the Scheduling Back-and-Forth{% endblock %}
+{% block title %}Cal | AI Scheduling Assistant in Email{% endblock %}
 
 {% block head %}
 <!-- SEO Meta Tags -->
 <meta name="description" content="CC Cal on any email thread and your AI scheduling assistant takes over—follow-ups, availability, Google Calendar invites, and itinerary extraction from emails, PDFs, or screenshots.">
-<meta name="keywords" content="AI scheduling assistant, email scheduling, Gmail meeting assistant, calendar event extraction, Cal Autobot, stop scheduling back-and-forth">
+<meta name="keywords" content="AI scheduling assistant, AI scheduler, email scheduling, Gmail meeting assistant, calendar event extraction, Cal Autobot, stop scheduling back-and-forth">
 <meta name="author" content="Cal Autobot">
 <meta name="robots" content="index, follow">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://CalAutobot.com/">
-<meta property="og:title" content="Cal Autobot | Stop the Scheduling Back-and-Forth">
+<meta property="og:title" content="Cal Autobot | AI Scheduling Assistant in Email">
 <meta property="og:description" content="Meet Cal—the AI assistant that joins your email threads, negotiates meeting times, and creates Google Calendar events from emails, PDFs, and screenshots.">
 <meta property="og:image" content="{{ url_for('static', filename='images/logo.png') }}">
 <meta property="og:site_name" content="Calendar Autobot">
@@ -20,7 +20,7 @@
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:url" content="https://CalAutobot.com/">
-<meta property="twitter:title" content="Cal Autobot | Stop the Scheduling Back-and-Forth">
+<meta property="twitter:title" content="Cal Autobot | AI Scheduling Assistant in Email">
 <meta property="twitter:description" content="CC Cal and let the AI assistant handle follow-ups, scheduling, and Google Calendar invites—even from forwarded PDFs or screenshots.">
 <meta property="twitter:image" content="{{ url_for('static', filename='images/logo.png') }}">
 
@@ -34,7 +34,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Cal Autobot",
+  "name": "Cal AI scheduling assistant",
   "description": "AI scheduling assistant that joins email threads, negotiates meeting times, and converts forwarded emails or documents into Google Calendar events",
   "url": "https://CalAutobot.com",
   "applicationCategory": "Productivity",
@@ -218,17 +218,21 @@
     .intro-card__media {
         flex: 1;
         background: #f8fafc;
-        border: 1px dashed #cbd5f5;
         border-radius: 14px;
-        min-height: 200px;
+        min-height: 220px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #94a3b8;
-        font-size: 0.95rem;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        padding: 0.75rem;
+        overflow: hidden;
+        box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.08);
+    }
+
+    .intro-card__media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 10px;
     }
 
     .pricing-section {
@@ -265,17 +269,29 @@
     }
 
     .plan-price {
+        display: flex;
+        align-items: baseline;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+    }
+
+    .plan-price-current {
         font-size: clamp(2rem, 4vw, 2.8rem);
         font-weight: 700;
         color: #111827;
-        margin-bottom: 1rem;
     }
 
-    .plan-price span {
+    .plan-price-original {
+        font-size: clamp(1.25rem, 3vw, 1.5rem);
+        color: #9ca3af;
+        text-decoration: line-through;
+    }
+
+    .plan-price-unit {
         font-size: 1rem;
         font-weight: 500;
         color: #6b7280;
-        margin-left: 0.25rem;
     }
 
     .pricing-cta {
@@ -312,6 +328,97 @@
         transform: translateY(-1px);
     }
 
+    .pricing-waitlist-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pricing-waitlist-input-group {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.35rem;
+        border-radius: 999px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+    .pricing-waitlist-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        color: #0f172a;
+    }
+
+    .pricing-waitlist-input:focus {
+        outline: none;
+    }
+
+    .pricing-waitlist-submit {
+        border: none;
+        border-radius: 999px;
+        background: #4f46e5;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .pricing-waitlist-submit:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+    }
+
+    .pricing-waitlist-helper {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .pricing-price-note {
+        margin-bottom: 1rem;
+        font-weight: 600;
+        color: #059669;
+    }
+
+    .pricing-waitlist-feedback {
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin: 0;
+        min-height: 1.2em;
+    }
+
+    .pricing-waitlist-feedback[data-state="success"] {
+        color: #059669;
+    }
+
+    .pricing-waitlist-feedback[data-state="info"] {
+        color: #0ea5e9;
+    }
+
+    .pricing-waitlist-feedback[data-state="error"] {
+        color: #dc2626;
+    }
+
+    .pricing-waitlist-feedback[data-state="loading"] {
+        color: #6b7280;
+    }
+
+    @media (max-width: 576px) {
+        .pricing-waitlist-input-group {
+            flex-direction: column;
+            border-radius: 18px;
+        }
+
+        .pricing-waitlist-submit {
+            width: 100%;
+        }
+    }
+
     .pricing-features {
         list-style: none;
         padding: 0;
@@ -326,10 +433,14 @@
         color: #4b5563;
     }
 
-    .pricing-features i {
+    .pricing-features .feather,
+    .pricing-features i,
+    .pricing-features [data-feather="check"] {
         color: #10b981;
+        stroke: #10b981;
         width: 18px;
         height: 18px;
+        flex-shrink: 0;
     }
 
     .use-cases-section {
@@ -542,7 +653,7 @@
                         </a>
 
                         <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
-                            No credit card required. Get started in seconds.
+                            No credit card required. Zero setup.
                         </p>
                     </div>
                 {% else %}
@@ -556,11 +667,11 @@
         </div>
     </div>
 </div>
-<section class="email-stack">
+<section class="email-stack" id="how-it-works">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-7 text-center">
-                <h2 class="email-stack__title">See Cal work through a real inbox</h2>
+                <h2 class="email-stack__title">See Cal work like your real assistant</h2>
                 <p class="email-stack__subtitle">Just CC <strong>Cal@CalAutobot.com</strong> and watch the meeting come together.</p>
             </div>
         </div>
@@ -604,38 +715,46 @@
     </div>
 </section>
 
-<section class="product-intro-section">
+<section class="product-intro-section" id="product">
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
-                <h2 class="mb-3">How Cal Fits Into Your Day</h2>
-                <p class="text-muted">Give prospects the white-glove experience while Cal handles the scheduling mechanics.</p>
+                <h2 class="mb-3">Your AI assistant and scheduling app</h2>
+                <p class="text-muted">Discover a variety of our advanced features. Unlimited and free for individuals.</p>
             </div>
         </div>
 
         <div class="product-intro-grid">
             <div class="intro-card">
                 <h3>Just CC Cal</h3>
-                <p>Loop in <strong>Cal@CalAutobot.com</strong> on any thread and we read the full context before proposing times. No portals, no new workflow to learn.</p>
-                <div class="intro-card__media" aria-hidden="true">Image placeholder</div>
+                <p>Loop in <strong>Cal@CalAutobot.com</strong> on any thread and Cal reads the full context before proposing times, just like a human scheduler.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-cc-cal.jpg') }}" alt="Product shot showing Cal cc'd on an email thread" loading="lazy">
+                </div>
             </div>
 
             <div class="intro-card">
                 <h3>Watch multiple calendars for conflicts</h3>
-                <p>Cal keeps an eye on your primary, team, and room calendars so you never double-book. Pick the source of truth and we orchestrate the rest.</p>
-                <div class="intro-card__media" aria-hidden="true">Image placeholder</div>
+                <p>Cal keeps an eye on multiple calendars so you never double-book. Pick the source of truth and we orchestrate the rest.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-calendar-conflicts.jpg') }}" alt="Calendar view highlighting conflict detection across schedules" loading="lazy">
+                </div>
             </div>
 
             <div class="intro-card">
                 <h3>We get timezones</h3>
-                <p>Colleagues in Sydney, clients in New York? Cal normalizes everyone’s availability and replies with localized times without you lifting a finger.</p>
-                <div class="intro-card__media" aria-hidden="true">Image placeholder</div>
+                <p>Colleagues in Sydney, clients in New York? Cal replies with localized times without you lifting a finger.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-timezone.jpg') }}" alt="Availability comparison across global timezones" loading="lazy">
+                </div>
             </div>
 
             <div class="intro-card">
                 <h3>Public booking page? We have that too</h3>
-                <p>Need something sharable for cold outreach or events? Toggle on your branded booking page and let Cal keep it in sync with your inbox workflow.</p>
-                <div class="intro-card__media" aria-hidden="true">Image placeholder</div>
+                <p>Need something sharable for your inbound leads? Toggle on your branded booking page and let Cal keep it in sync with your email bookings.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-public-page.jpg') }}" alt="Preview of a public booking page powered by Cal" loading="lazy">
+                </div>
             </div>
         </div>
     </div>
@@ -682,7 +801,7 @@
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
                 <h2 class="mb-3">Who Uses Cal Autobot?</h2>
-                <p class="text-muted">Real appointment scheduling scenarios across industries</p>
+                <p class="text-muted">Solopreneurs and service professionals are already using Cal</p>
             </div>
         </div>
         
@@ -798,12 +917,12 @@
     {% endif %}
 </div>
 
-<div class="other-uses-section">
+<div class="other-uses-section" id="email-to-calendar">
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
-                <h2 class="mb-3">Other Ways to Save Time Cal Autobot</h2>
-                <p class="text-muted">Our <a href="/free-tool">free tool</a> turns emails, pictures, and itineraries into calendar events.</p>
+                <h2 class="mb-3">Other Ways to Save Time with Cal</h2>
+                <p class="text-muted">Our event extraction turns emails, pictures, and itineraries into calendar events. <a href="/image-to-calendar">Learn more.</a></p>
             </div>
         </div>
 
@@ -813,8 +932,8 @@
                     <span class="other-uses-step__badge">Step 1</span>
                     <i data-feather="camera"></i>
                 </div>
-                <h5>Capture the details</h5>
-                <p>Snap a photo of the event or forward your appointment confirmation emails.</p>
+                <h5>Emails, itineraries, flyers, you name it</h5>
+                <p>Snap a photo of the event or forward your event confirmation emails.</p>
             </div>
 
             <div class="other-uses-arrow">
@@ -839,7 +958,7 @@
                     <span class="other-uses-step__badge">Step 3</span>
                     <i data-feather="calendar"></i>
                 </div>
-                <h5>Event created for you</h5>
+                <h5>Event created in Google Calendar</h5>
                 <p>Cal syncs event details to Google Calendar so you don't have to manually create them.</p>
             </div>
         </div>
@@ -860,39 +979,72 @@
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
-                <h2 class="mb-3">Simple pricing for every team</h2>
-                <p class="text-muted">Start for free, then upgrade when you need more seats and automations.</p>
+                <h2 class="mb-3">Free for solopreneurs and hustlers</h2>
+                <p class="text-muted">Start for free with unlimited bookings and event types, then upgrade when you need more customizations and branding.</p>
             </div>
         </div>
 
         <div class="pricing-grid">
             <div class="pricing-card">
-                <h3>Free</h3>
+                <h3>Free for Individuals</h3>
                 <p class="plan-subtitle">Perfect for solo founders and personal scheduling</p>
-                <div class="plan-price">$0<span>/ forever</span></div>
-                <a href="#" class="pricing-cta pricing-cta-primary" onclick="startGoogleLogin(); return false;">Get started</a>
+                <div class="plan-price">
+                    <span class="plan-price-current">$0</span>
+                    <span class="plan-price-unit">/ forever</span>
+                </div>
+                <a href="#" class="pricing-cta pricing-cta-primary google-signin-btn google-signin-btn-dark" onclick="startGoogleLogin(); return false;">
+                    <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Sign up free with Google
+                </a>
                 <p class="fw-semibold mb-2">Includes:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>One active inbox assistant</li>
-                    <li><i data-feather="check"></i>Google Calendar syncing</li>
-                    <li><i data-feather="check"></i>Context-aware email replies</li>
-                    <li><i data-feather="check"></i>Inline file & itinerary parsing</li>
-                    <li><i data-feather="check"></i>Personal booking page</li>
+                    <li><i data-feather="check"></i>Email AI assistant</li>
+                    <li><i data-feather="check"></i>Unlimited email scheduling</li>
+                    <li><i data-feather="check"></i>Unlimited bookings</li>
+                    <li><i data-feather="check"></i>Unlimited calendars</li>
+                    <li><i data-feather="check"></i>Unlimited event types</li>
+                    <li><i data-feather="check"></i>Reminder email</li>
+                    <li><i data-feather="check"></i>Public booking page</li>
+                    <li><i data-feather="check"></i>Availability settings</li>
+                    <li><i data-feather="check"></i>Unlimited event extraction (images & emails)</li>
                 </ul>
             </div>
 
             <div class="pricing-card">
-                <h3>Team</h3>
-                <p class="plan-subtitle">For sales pods, recruiting teams, and CS desks</p>
-                <div class="plan-price">$29<span>/ seat / mo</span></div>
-                <a href="#" class="pricing-cta pricing-cta-secondary" onclick="startGoogleLogin(); return false;">Start free trial</a>
+                <h3>Small Business</h3>
+                <p class="plan-subtitle">For businesses that want custom AI assistant and branding</p>
+                <div class="plan-price">
+                    <span class="plan-price-original">$36</span>
+                    <span class="plan-price-current">$18</span>
+                    <span class="plan-price-unit">/ user / mo</span>
+                </div>
+                <p class="pricing-waitlist-helper pricing-price-note">50% off for waitlist customers</p>
+                <form class="pricing-waitlist-form" method="post" action="{{ url_for('main_routes.join_waitlist') }}" data-global-handlers="off" novalidate>
+                    <div class="pricing-waitlist-input-group">
+                        <input 
+                            type="email" 
+                            name="waitlist_email" 
+                            class="pricing-waitlist-input" 
+                            placeholder="name@company.com" 
+                            aria-label="Work email address" 
+                            required>
+                        <button type="submit" class="pricing-waitlist-submit">Join waitlist</button>
+                    </div>
+                    <p class="pricing-waitlist-feedback" aria-live="polite"></p>
+                </form>
                 <p class="fw-semibold mb-2">Everything in Free, plus:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Multiple inbox assistants</li>
-                    <li><i data-feather="check"></i>Priority routing across calendars</li>
-                    <li><i data-feather="check"></i>Shared templates & tone controls</li>
-                    <li><i data-feather="check"></i>CRM & webhook handoffs</li>
-                    <li><i data-feather="check"></i>Dedicated success channel</li>
+                    <li><i data-feather="check"></i>Remove CalAutobot branding</li>
+                    <li><i data-feather="check"></i>Customize AI assistant</li>
+                    <li><i data-feather="check"></i>Personalize AI tone & style</li>
+                    <li><i data-feather="check"></i>Make AI smarter with your business context</li>
+                    <li><i data-feather="check"></i>Custom AI assistant email domain</li>
+                    <li><i data-feather="check"></i>Custom booking page with your branding</li>
                 </ul>
             </div>
         </div>
@@ -950,7 +1102,7 @@
             <div class="col-lg-8 text-center">
                 <h2 class="mb-4">Smart, Simpler Scheduling</h2>
                 <p class="mb-4" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">
-                    Join forward-thinking teams who are eliminating scheduling friction
+                    Join forward-thinking individuals who are eliminating scheduling friction
                 </p>
                 
                 {% if not current_user.is_authenticated %}
@@ -966,7 +1118,7 @@
                         </a>
 
                         <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
-                            No credit card required.
+                            No credit card required. Zero setup.
                         </p>
                     </div>
                 {% else %}
