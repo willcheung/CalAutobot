@@ -20,6 +20,9 @@ import pytz
 
 public_booking = Blueprint("public_booking", __name__)
 
+# Cache common timezones list to avoid rebuilding on every page load
+_COMMON_TIMEZONES = list(pytz.common_timezones)
+
 
 def _get_user_or_404(user_id: int) -> User:
     return User.query.filter_by(id=user_id).first_or_404()
@@ -62,10 +65,9 @@ def _render_event_type_page(user: User, slug: str):
     owner_timezone = tz.zone
     owner_timezone_label = f"{owner_timezone.replace('_', ' ')} ({datetime.now(tz).strftime('%Z')})"
 
-    timezone_options = []
-    for zone in [owner_timezone] + list(pytz.common_timezones):
-        if zone not in timezone_options:
-            timezone_options.append(zone)
+    # Build timezone options with owner timezone first, then all common timezones
+    timezone_options = [owner_timezone] if owner_timezone not in _COMMON_TIMEZONES else []
+    timezone_options.extend(_COMMON_TIMEZONES)
 
     date_str = request.args.get("date")
     if date_str:
