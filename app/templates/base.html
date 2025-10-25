@@ -112,7 +112,7 @@
                         </a>
                         <a class="sidebar-link{% if is_settings_active %} sidebar-link-active{% endif %}" href="{{ url_for('settings_routes.calendar_settings') }}">
                             <i data-feather="settings"></i>
-                            <span>Settings{% if not current_user.google_token %} ⚠️{% endif %}</span>
+                            <span>Settings{% if calendar_needs_connection() %} <span title="Please connect your Google Calendar">⚠️</span>{% endif %}</span>
                         </a>
                         <div class="sidebar-email-cta">
                             <p class="sidebar-email-cta__label">Let Cal, your AI executive assistant, book your meetings.</p>

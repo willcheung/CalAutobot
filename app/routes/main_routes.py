@@ -38,6 +38,23 @@ logger = logging.getLogger(__name__)
 
 main_routes = Blueprint("main_routes", __name__)
 
+def calendar_needs_connection():
+    """Check if the current user needs to (re)connect their Google Calendar"""
+    from flask_login import current_user
+    
+    if not current_user.is_authenticated:
+        return False
+    
+    # No token at all
+    if not current_user.google_token:
+        return True
+    
+    # Has token but no refresh token - will eventually fail
+    if not current_user.google_refresh_token:
+        return True
+    
+    return False
+
 @main_routes.app_context_processor
 def inject_domain_utils():
     """Make domain utility functions available in templates"""
@@ -45,7 +62,8 @@ def inject_domain_utils():
         'get_base_url': get_base_url,
         'get_mailgun_forward_email': get_mailgun_forward_email,
         'is_production': is_production,
-        'is_development': is_development
+        'is_development': is_development,
+        'calendar_needs_connection': calendar_needs_connection
     }
 
 @main_routes.route("/health")
