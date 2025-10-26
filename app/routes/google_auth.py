@@ -135,6 +135,7 @@ def callback():
 
     user = User.query.filter_by(email=users_email).first()
     is_provisional_user_signup = False  # Track if this is a provisional user upgrading
+    old_timezone = (user.timezone if user else None) or 'UTC'
     
     if not user:
         user = User()
