@@ -2,6 +2,21 @@
 {% block title %}AI Assistant Settings{% endblock %}
 {% block content %}
 <div class="container mt-4 settings-container">
+    <style>
+        .followup-inline-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            max-width: 320px;
+        }
+        .followup-inline-control select {
+            width: 90px;
+        }
+        .followup-inline-label {
+            font-size: 0.95rem;
+            color: #6c757d;
+        }
+    </style>
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div>
             <h1 class="mb-1">AI Assistant</h1>
@@ -36,7 +51,7 @@
 
                 <div class="mb-4">
                     <label class="form-label" for="follow_up_first_delay_days">First follow-up</label>
-                    <div class="input-group input-group-compact">
+                    <div class="followup-inline-control">
                         <select
                             class="form-select form-control-compact"
                             id="follow_up_first_delay_days"
@@ -50,7 +65,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="input-group-text">day{% if first_delay != 1 %}s{% endif %} after Cal's last reply</span>
+                        <span class="followup-inline-label">days after Cal's last reply</span>
                     </div>
                     <div class="form-text">
                         Cal waits this many days after sending availability before nudging the thread.
@@ -59,7 +74,7 @@
 
                 <div class="mb-4">
                     <label class="form-label" for="follow_up_second_delay_days_display">Second follow-up</label>
-                    <div class="input-group input-group-compact">
+                    <div class="followup-inline-control">
                         <select
                             class="form-select form-control-compact"
                             id="follow_up_second_delay_days"
@@ -73,7 +88,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="input-group-text">day{% if second_delay != 1 %}s{% endif %} after Cal's last follow-up</span>
+                        <span class="followup-inline-label">days after Cal's last follow-up</span>
                     </div>
                     <div class="form-text">
                         Choose when the second reminder goes out (must be later than the first follow-up).
@@ -83,7 +98,7 @@
                 <h5 class="text-uppercase text-muted fs-6 mt-4 mb-3">Meeting reminder</h5>
                 <div class="mb-4">
                     <label class="form-label" for="meeting_reminder_lead_hours_select">Reminder timing</label>
-                    <div class="input-group input-group-compact">
+                    <div class="followup-inline-control">
                         <select
                             class="form-select form-control-compact"
                             id="meeting_reminder_lead_hours_select"
@@ -95,7 +110,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="input-group-text">hour{% if reminder_lead != 1 %}s{% endif %} before the meeting</span>
+                        <span class="followup-inline-label">hours before the meeting</span>
                     </div>
                     <div class="form-text">
                         Cal sends a friendly reminder to everyone on the invite this many hours before start.
