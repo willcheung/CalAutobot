@@ -10,11 +10,10 @@
             max-width: 320px;
         }
         .followup-inline-control select {
-            width: 90px;
+            width: 60px;
         }
-        .followup-inline-label {
-            font-size: 0.95rem;
-            color: #6c757d;
+        h6.form-label {
+            font-size: 0.8rem;
         }
     </style>
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
@@ -50,7 +49,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label" for="follow_up_first_delay_days">First follow-up</label>
+                    <h6 class="form-label"><label for="follow_up_first_delay_days">First follow-up</label></h6>
                     <div class="followup-inline-control">
                         <select
                             class="form-select form-control-compact"
@@ -65,7 +64,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="followup-inline-label">days after Cal's last reply</span>
+                        <span class="followup-inline-label">days after no replies</span>
                     </div>
                     <div class="form-text">
                         Cal waits this many days after sending availability before nudging the thread.
@@ -73,7 +72,7 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label" for="follow_up_second_delay_days_display">Second follow-up</label>
+                    <h6 class="form-label"><label for="follow_up_second_delay_days_display">Second follow-up</label></h6>
                     <div class="followup-inline-control">
                         <select
                             class="form-select form-control-compact"
@@ -88,14 +87,14 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="followup-inline-label">days after Cal's last follow-up</span>
+                        <span class="followup-inline-label">days after no replies</span>
                     </div>
                     <div class="form-text">
                         Choose when the second reminder goes out (must be later than the first follow-up).
                     </div>
                 </div>
 
-                <h5 class="text-uppercase text-muted fs-6 mt-4 mb-3">Meeting reminder</h5>
+                <h5 class="text-uppercase text-muted fs-6 mt-5 mb-3">Meeting reminder</h5>
                 <div class="mb-4">
                     <label class="form-label" for="meeting_reminder_lead_hours_select">Reminder timing</label>
                     <div class="followup-inline-control">
@@ -110,10 +109,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <span class="followup-inline-label">hours before the meeting</span>
-                    </div>
-                    <div class="form-text">
-                        Cal sends a friendly reminder to everyone on the invite this many hours before start.
+                        <span class="followup-inline-label">hours before the meeting starts</span>
                     </div>
                 </div>
 
