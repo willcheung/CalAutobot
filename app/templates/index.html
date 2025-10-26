@@ -629,7 +629,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-10 text-center">
                 <div class="hero-badge">
-                    AI Executive Assistant
+                    AI Scheduling Assistant
                 </div>
 
                 <h1 class="waitlist-title"><strong>Cal,</strong> can you find a time<br/> for us to meet next week?</h1>
@@ -726,8 +726,8 @@
 
         <div class="product-intro-grid">
             <div class="intro-card">
-                <h3>Just CC Cal, 24/7 response</h3>
-                <p>Loop in <strong>Cal@CalAutobot.com</strong> on any thread and Cal reads the full context before proposing times, just like a human scheduler working 24/7.</p>
+                <h3>Auto follow-ups, reminders, 24/7 </h3>
+                <p>Cal reads the full email context, propose times, follows up, and send reminders. Just like a human assistant working 24/7.</p>
                 <div class="intro-card__media">
                     <img src="{{ url_for('static', filename='images/product-cc-cal.jpg') }}" alt="Product shot showing Cal cc'd on an email thread" loading="lazy">
                 </div>
@@ -932,7 +932,7 @@
                     <span class="other-uses-step__badge">Step 1</span>
                     <i data-feather="camera"></i>
                 </div>
-                <h5>Emails, itineraries, flyers, you name it</h5>
+                <h5>Itineraries, flyers, images, you name it</h5>
                 <p>Snap a photo of the event or forward your event confirmation emails.</p>
             </div>
 
@@ -1003,15 +1003,16 @@
                 </a>
                 <p class="fw-semibold mb-2">Includes:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Email AI assistant</li>
-                    <li><i data-feather="check"></i>Unlimited email scheduling</li>
+                    <li><i data-feather="check"></i>Email AI assistant 🤖</li>
+                    <li><i data-feather="check"></i>Unlimited email scheduling 🤖</li>
                     <li><i data-feather="check"></i>Unlimited bookings</li>
                     <li><i data-feather="check"></i>Unlimited calendars</li>
                     <li><i data-feather="check"></i>Unlimited event types</li>
-                    <li><i data-feather="check"></i>Reminder email</li>
+                    <li><i data-feather="check"></i>Follow up email 🤖</li>
+                    <li><i data-feather="check"></i>Email reminders 🤖</li>
                     <li><i data-feather="check"></i>Public booking page</li>
                     <li><i data-feather="check"></i>Availability settings</li>
-                    <li><i data-feather="check"></i>Unlimited event extraction (images & emails)</li>
+                    <li><i data-feather="check"></i>Unlimited event extraction (images & emails) 🤖</li>
                 </ul>
             </div>
 
@@ -1040,10 +1041,10 @@
                 <p class="fw-semibold mb-2">Everything in Free, plus:</p>
                 <ul class="pricing-features">
                     <li><i data-feather="check"></i>Remove CalAutobot branding</li>
-                    <li><i data-feather="check"></i>Customize AI assistant</li>
+                    <li><i data-feather="check"></i>Customize AI assistant outside of email</li>
                     <li><i data-feather="check"></i>Personalize AI tone & style</li>
                     <li><i data-feather="check"></i>Make AI smarter with your business context</li>
-                    <li><i data-feather="check"></i>Custom AI assistant email domain</li>
+                    <li><i data-feather="check"></i>Custom AI assistant email (AI-name@yourcompany.com)</li>
                     <li><i data-feather="check"></i>Custom booking page with your branding</li>
                 </ul>
             </div>
@@ -1062,34 +1063,110 @@
         
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <div class="faq-item">
-                    <h4>How does Cal compare to Calendly for Google Calendar scheduling?</h4>
-                    <p>Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It works entirely through email by reading conversation threads and coordinating directly with participants. This maintains the personal touch of email while automating the logistics. Calendly forces people to interact with a separate tool, which creates friction and a 40% drop-off rate.</p>
-                </div>
-                
-                <div class="faq-item">
-                    <h4>Does Cal work with Google Calendar?</h4>
-                    <p>Yes, Cal is designed specifically for Google Calendar integration. It automatically checks your availability, proposes meeting times based on your calendar, and creates Google Calendar events for all participants once a time is confirmed. Everything syncs seamlessly without any manual data entry.</p>
-                </div>
-                
-                <div class="faq-item">
-                    <h4>How much does Cal cost for appointment scheduling?</h4>
-                    <p>Cal Autobot is free. In the future, we'll have more advance features for a small monthly subscription.</p>
-                </div>
-                
-                <div class="faq-item">
-                    <h4>Is Cal better than manual scheduling for online meeting coordination?</h4>
-                    <p>Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It eliminates the back-and-forth email chains ("Does Tuesday at 2pm work?" "How about Wednesday?") while maintaining the personal touch that scheduling links lack. You get the efficiency of automation with the warmth of direct communication.</p>
-                </div>
-                
-                <div class="faq-item">
-                    <h4>How quickly can I start using Cal for appointment scheduling?</h4>
-                    <p>Setup takes about 30 seconds. Once you have access, you simply CC Cal@CalAutobot.com on any scheduling email thread. Cal reads the conversation context and begins coordinating immediately. No complex configuration, no calendar permissions to manage, no training required.</p>
-                </div>
-                
-                <div class="faq-item">
-                    <h4>What makes Cal different from other AI scheduling assistants?</h4>
-                    <p>Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling links that feel transactional, Cal participates in email threads just like a real executive assistant would. It understands context, handles time zone confusion, and adapts to conversational scheduling requests rather than forcing people into rigid booking flows.</p>
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne" aria-expanded="false" aria-controls="faqCollapseOne">
+                                How does Cal compare to Calendly for Google Calendar scheduling?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It works entirely through email by reading conversation threads and coordinating directly with participants. This maintains the personal touch of email while automating the logistics. Calendly forces people to interact with a separate tool, which creates friction and a 40% drop-off rate.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo">
+                                Does Cal work with Google Calendar?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseTwo" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwo" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes, Cal is designed specifically for Google Calendar integration. It automatically checks your availability, proposes meeting times based on your calendar, and creates Google Calendar events for all participants once a time is confirmed. Everything syncs seamlessly without any manual data entry.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree" aria-expanded="false" aria-controls="faqCollapseThree">
+                                How much does Cal cost for appointment scheduling?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseThree" class="accordion-collapse collapse" aria-labelledby="faqHeadingThree" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cal Autobot is free. In the future, we'll have more advance features for a small monthly subscription.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFour" aria-expanded="false" aria-controls="faqCollapseFour">
+                                Is Cal better than manual scheduling for online meeting coordination?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It eliminates the back-and-forth email chains ("Does Tuesday at 2pm work?" "How about Wednesday?") while maintaining the personal touch that scheduling links lack. You get the efficiency of automation with the warmth of direct communication.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingFive">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFive" aria-expanded="false" aria-controls="faqCollapseFive">
+                                How quickly can I start using Cal for appointment scheduling?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseFive" class="accordion-collapse collapse" aria-labelledby="faqHeadingFive" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Setup takes about 30 seconds. Once you have access, you simply CC Cal@CalAutobot.com on any scheduling email thread. Cal reads the conversation context and begins coordinating immediately. No complex configuration, no calendar permissions to manage, no training required.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingSix">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSix" aria-expanded="false" aria-controls="faqCollapseSix">
+                                What makes Cal different from other AI scheduling assistants?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseSix" class="accordion-collapse collapse" aria-labelledby="faqHeadingSix" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling links that feel transactional, Cal participates in email threads just like a real executive assistant would. It understands context, handles time zone confusion, and adapts to conversational scheduling requests rather than forcing people into rigid booking flows.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingSeven">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSeven" aria-expanded="false" aria-controls="faqCollapseSeven">
+                                Do you also have a booking page and public links like Calendly?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseSeven" class="accordion-collapse collapse" aria-labelledby="faqHeadingSeven" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes. Cal generates a polished public booking page with your event types, availability, and branding so you can share a link in signatures, on websites, or by text. Invitees can still self-book when it makes sense, while you keep Cal running in email threads for high-touch scheduling.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faqHeadingEight">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseEight" aria-expanded="false" aria-controls="faqCollapseEight">
+                                I'm a physical small business—can I use your booking tool?
+                            </button>
+                        </h2>
+                        <div id="faqCollapseEight" class="accordion-collapse collapse" aria-labelledby="faqHeadingEight" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Absolutely. Service-based shops use Cal to confirm appointments over email, send reminders, and capture walk-in leads via the public booking page. You can define appointment lengths, business hours, multiple calendars so Cal fits everything from salons and clinics to repair services.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
