@@ -1,18 +1,19 @@
+{% set selected_tab = active_tab or 'calendars' %}
 <div class="settings-nav">
     <a
-        class="settings-nav-link {% if active_tab == 'assistant' %}active{% endif %}"
-        href="{{ url_for('settings_routes.assistant_settings') }}"
-    >
-        AI Assistant
-    </a>
-    <a
-        class="settings-nav-link {% if active_tab == 'calendars' %}active{% endif %}"
+        class="settings-nav-link {% if selected_tab == 'calendars' %}active{% endif %}"
         href="{{ url_for('settings_routes.calendar_settings') }}"
     >
         Calendars
     </a>
     <a
-        class="settings-nav-link {% if active_tab == 'profile' %}active{% endif %}"
+        class="settings-nav-link {% if selected_tab == 'assistant' %}active{% endif %}"
+        href="{{ url_for('settings_routes.assistant_settings') }}"
+    >
+        AI Assistant
+    </a>
+    <a
+        class="settings-nav-link {% if selected_tab == 'profile' %}active{% endif %}"
         href="{{ url_for('settings_routes.profile_settings') }}"
     >
         Profile
