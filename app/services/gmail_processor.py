@@ -20,6 +20,8 @@ def check_new_emails():
     """
     Main function to check for new emails from Gmail.
     Optimized for 5-minute polling intervals.
+
+    Not used anymore - replaced by pub/sub webhook processing via ThreadPoolExecutor.
     """
     start_time = datetime.utcnow()
     try:
