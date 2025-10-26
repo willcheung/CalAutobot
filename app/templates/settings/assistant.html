@@ -15,6 +15,7 @@
     <div class="settings-section card shadow-sm">
         <div class="card-body">
             <form method="post" class="settings-form">
+                <h5 class="text-uppercase text-muted fs-6 mb-3">Follow-ups</h5>
                 <div class="mb-4">
                     <div class="form-check form-switch">
                         <input
@@ -56,23 +57,24 @@
                     <label class="form-label" for="follow_up_second_delay_days_display">Second follow-up</label>
                     <select
                         class="form-select form-control-compact"
-                        id="follow_up_second_delay_days_display"
-                        disabled
+                        id="follow_up_second_delay_days"
+                        name="follow_up_second_delay_days"
+                        {% if not follow_up_enabled %}disabled{% endif %}
                     >
                         {% for day in day_options %}
                             <option value="{{ day }}" {% if day == second_delay %}selected{% endif %}>
-                                {{ day }} day{% if day != 1 %}s{% endif %} after Cal's last reply
+                                {{ day }} day{% if day != 1 %}s{% endif %} after Cal's last follow-up
                             </option>
                         {% endfor %}
                     </select>
                     <div class="form-text">
-                        Automatically scheduled exactly one day after the first follow-up (capped at 30 days).
+                        Choose when the second reminder goes out (must be later than the first follow-up).
                     </div>
-                    <input type="hidden" name="follow_up_second_delay_days" id="follow_up_second_delay_days" value="{{ second_delay }}">
                 </div>
 
+                <h5 class="text-uppercase text-muted fs-6 mt-4 mb-3">Meeting reminder</h5>
                 <div class="mb-4">
-                    <label class="form-label" for="meeting_reminder_lead_hours">Meeting reminder</label>
+                    <label class="form-label" for="meeting_reminder_lead_hours">Reminder timing</label>
                     <select
                         class="form-select form-control-compact"
                         id="meeting_reminder_lead_hours"
@@ -102,30 +104,20 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const firstSelect = document.getElementById("follow_up_first_delay_days");
-    const secondSelect = document.getElementById("follow_up_second_delay_days_display");
-    const secondHidden = document.getElementById("follow_up_second_delay_days");
+    const secondSelect = document.getElementById("follow_up_second_delay_days");
     const toggle = document.getElementById("follow_up_enabled");
-
-    function syncSecond() {
-        const firstValue = parseInt(firstSelect.value, 10) || 1;
-        const computed = Math.min(30, firstValue + 1);
-        secondSelect.value = computed.toString();
-        secondHidden.value = computed.toString();
-    }
 
     function syncDisabledState() {
         const enabled = toggle.checked;
         firstSelect.disabled = !enabled;
+        secondSelect.disabled = !enabled;
         firstSelect.closest(".mb-4").classList.toggle("opacity-50", !enabled);
         secondSelect.closest(".mb-4").classList.toggle("opacity-50", !enabled);
     }
 
-    firstSelect.addEventListener("change", syncSecond);
     toggle.addEventListener("change", () => {
-        syncSecond();
         syncDisabledState();
     });
-    syncSecond();
     syncDisabledState();
 });
 </script>

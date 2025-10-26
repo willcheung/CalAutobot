@@ -264,10 +264,10 @@ def calendar_settings():
 
 def _sanitize_follow_up_values(first_value: int, second_value: int) -> tuple[int, int]:
     first = max(1, min(30, first_value or 1))
-    computed_second = min(30, first + 1)
-    if second_value and first < second_value <= 30 and second_value == first + 1:
-        computed_second = second_value
-    return first, computed_second
+    second = max(1, min(30, second_value or first + 1))
+    if second <= first:
+        second = min(30, first + 1)
+    return first, second
 
 
 @settings_routes.route("/settings/assistant", methods=["GET", "POST"])
