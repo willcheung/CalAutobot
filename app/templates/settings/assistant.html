@@ -36,18 +36,22 @@
 
                 <div class="mb-4">
                     <label class="form-label" for="follow_up_first_delay_days">First follow-up</label>
-                    <select
-                        class="form-select form-control-compact"
-                        id="follow_up_first_delay_days"
-                        name="follow_up_first_delay_days"
-                        {% if not follow_up_enabled %}disabled{% endif %}
-                    >
-                        {% for day in day_options %}
-                            <option value="{{ day }}" {% if day == first_delay %}selected{% endif %}>
-                                {{ day }} day{% if day != 1 %}s{% endif %} after Cal's last reply
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <div class="input-group input-group-compact">
+                        <select
+                            class="form-select form-control-compact"
+                            id="follow_up_first_delay_days"
+                            name="follow_up_first_delay_days"
+                            data-followup-control="true"
+                            {% if not follow_up_enabled %}disabled{% endif %}
+                        >
+                            {% for day in day_options %}
+                                <option value="{{ day }}" {% if day == first_delay %}selected{% endif %}>
+                                    {{ day }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="input-group-text">day{% if first_delay != 1 %}s{% endif %} after Cal's last reply</span>
+                    </div>
                     <div class="form-text">
                         Cal waits this many days after sending availability before nudging the thread.
                     </div>
@@ -55,18 +59,22 @@
 
                 <div class="mb-4">
                     <label class="form-label" for="follow_up_second_delay_days_display">Second follow-up</label>
-                    <select
-                        class="form-select form-control-compact"
-                        id="follow_up_second_delay_days"
-                        name="follow_up_second_delay_days"
-                        {% if not follow_up_enabled %}disabled{% endif %}
-                    >
-                        {% for day in day_options %}
-                            <option value="{{ day }}" {% if day == second_delay %}selected{% endif %}>
-                                {{ day }} day{% if day != 1 %}s{% endif %} after Cal's last follow-up
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <div class="input-group input-group-compact">
+                        <select
+                            class="form-select form-control-compact"
+                            id="follow_up_second_delay_days"
+                            name="follow_up_second_delay_days"
+                            data-followup-control="true"
+                            {% if not follow_up_enabled %}disabled{% endif %}
+                        >
+                            {% for day in day_options %}
+                                <option value="{{ day }}" {% if day == second_delay %}selected{% endif %}>
+                                    {{ day }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="input-group-text">day{% if second_delay != 1 %}s{% endif %} after Cal's last follow-up</span>
+                    </div>
                     <div class="form-text">
                         Choose when the second reminder goes out (must be later than the first follow-up).
                     </div>
@@ -74,18 +82,21 @@
 
                 <h5 class="text-uppercase text-muted fs-6 mt-4 mb-3">Meeting reminder</h5>
                 <div class="mb-4">
-                    <label class="form-label" for="meeting_reminder_lead_hours">Reminder timing</label>
-                    <select
-                        class="form-select form-control-compact"
-                        id="meeting_reminder_lead_hours"
-                        name="meeting_reminder_lead_hours"
-                    >
-                        {% for hours in reminder_options %}
-                            <option value="{{ hours }}" {% if hours == reminder_lead %}selected{% endif %}>
-                                {{ hours }} hour{% if hours != 1 %}s{% endif %} before the meeting
-                            </option>
-                        {% endfor %}
-                    </select>
+                    <label class="form-label" for="meeting_reminder_lead_hours_select">Reminder timing</label>
+                    <div class="input-group input-group-compact">
+                        <select
+                            class="form-select form-control-compact"
+                            id="meeting_reminder_lead_hours_select"
+                            name="meeting_reminder_lead_hours"
+                        >
+                            {% for hours in reminder_options %}
+                                <option value="{{ hours }}" {% if hours == reminder_lead %}selected{% endif %}>
+                                    {{ hours }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <span class="input-group-text">hour{% if reminder_lead != 1 %}s{% endif %} before the meeting</span>
+                    </div>
                     <div class="form-text">
                         Cal sends a friendly reminder to everyone on the invite this many hours before start.
                     </div>
@@ -103,16 +114,18 @@
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const firstSelect = document.getElementById("follow_up_first_delay_days");
-    const secondSelect = document.getElementById("follow_up_second_delay_days");
+    const followupControls = document.querySelectorAll("[data-followup-control='true']");
     const toggle = document.getElementById("follow_up_enabled");
 
     function syncDisabledState() {
         const enabled = toggle.checked;
-        firstSelect.disabled = !enabled;
-        secondSelect.disabled = !enabled;
-        firstSelect.closest(".mb-4").classList.toggle("opacity-50", !enabled);
-        secondSelect.closest(".mb-4").classList.toggle("opacity-50", !enabled);
+        followupControls.forEach((control) => {
+            control.disabled = !enabled;
+            const wrapper = control.closest(".mb-4");
+            if (wrapper) {
+                wrapper.classList.toggle("opacity-50", !enabled);
+            }
+        });
     }
 
     toggle.addEventListener("change", () => {
