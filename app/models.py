@@ -15,6 +15,10 @@ class User(UserMixin, db.Model):
     default_booking_calendar_id = db.Column(db.String(255), nullable=True)
     timezone = db.Column(db.String(50), default='UTC')  # User's timezone
     email_count = db.Column(db.Integer, default=0)  # Track emails sent for provisional users
+    follow_up_enabled = db.Column(db.Boolean, nullable=False, default=True, server_default="true")
+    follow_up_first_delay_days = db.Column(db.Integer, nullable=False, default=1, server_default="1")
+    follow_up_second_delay_days = db.Column(db.Integer, nullable=False, default=2, server_default="2")
+    meeting_reminder_lead_hours = db.Column(db.Integer, nullable=False, default=24, server_default="24")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Google Calendar webhook fields
@@ -53,6 +57,8 @@ class Event(db.Model):
     end_datetime = db.Column(db.String(100))  # RFC3339 datetime string
     location = db.Column(db.String(500))
     conference_url = db.Column(db.String(500), nullable=True)
+    invitee_email = db.Column(db.String(255), nullable=True)
+    invitee_name = db.Column(db.String(255), nullable=True)
     
     # Google Calendar integration
     google_event_id = db.Column(db.String(100))
@@ -71,6 +77,8 @@ class Event(db.Model):
     
     # Link to original text input
     text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'))
+    meeting_request_id = db.Column(db.Integer, db.ForeignKey('meeting_request.id'), nullable=True)
+    reminder_sent_at = db.Column(db.DateTime, nullable=True)
     
     # Composite index for bookings page performance
     __table_args__ = (
@@ -158,6 +166,9 @@ class MeetingRequest(db.Model):
     previous_slots_json = db.Column(db.Text, nullable=True)
     confirmed_slot_json = db.Column(db.Text, nullable=True)
     last_message_at = db.Column(db.DateTime, nullable=True)
+    last_agent_reply_at = db.Column(db.DateTime, nullable=True)
+    next_follow_up_at = db.Column(db.DateTime, nullable=True)
+    follow_up_count = db.Column(db.Integer, nullable=False, default=0, server_default="0")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -165,6 +176,7 @@ class MeetingRequest(db.Model):
     text_input = db.relationship('TextInput', backref=db.backref('meeting_request', uselist=False))
     participants = db.relationship('MeetingParticipant', backref='meeting_request', lazy=True, cascade='all, delete-orphan')
     messages = db.relationship('MeetingMessage', backref='meeting_request', lazy=True, cascade='all, delete-orphan')
+    events = db.relationship('Event', backref='meeting_request', lazy=True)
 
     @property
     def proposed_slots(self):

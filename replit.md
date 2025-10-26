@@ -41,6 +41,11 @@ Preferred communication style: Simple, everyday language.
 - **User Experience**: Real-time feedback via toast notifications, auto-sync with Google Calendar, and keyboard shortcuts.
 - **Agents Package**: `app/agents/` contains the event extractor, task classifier, and meeting scheduler modules with co-located prompts for easy tuning.
 
+### Background Execution & Concurrency
+- **Gmail Push Executor**: `/webhook/gmail/push` enqueues Pub/Sub envelopes on a shared `ThreadPoolExecutor` (`app/services/gmail_push_processor.py`). Workers pull Gmail history and run the full classifier/scheduler pipeline in parallel without blocking the webhook thread. Pool size is tunable via `GMAIL_PUSH_WORKERS`.
+- **Google Calendar Webhook Threads**: `/webhook/google-calendar` spawns a short-lived `threading.Thread` per notification to reconcile deletions (`process_calendar_deletions_async`). This keeps the webhook fast without introducing a full queue.
+- **Cron-driven Jobs**: Follow-ups and meeting reminders run via dedicated HTTP endpoints (`/webhook/follow-ups`, `/webhook/reminders`). They remain synchronous because the workloads are small and time-based; if they ever need higher throughput we can move them to their own queue without impacting Gmail/Calendar handlers.
+
 ### Error Handling & Monitoring
 - **Error Management**: Sentry integration for error tracking, rate limiting with exponential backoff for OpenAI API, specific Google Calendar error handling, global exception handlers, and structured logging.
 - **Error Recovery**: Automatic retry for OpenAI rate limits, graceful degradation for Google API failures, database rollbacks, and clear user feedback.

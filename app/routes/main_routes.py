@@ -36,6 +36,8 @@ from app.helpers.domain_utils import (
     is_production,
     is_development,
 )
+from app.services.follow_up_service import send_due_followups
+from app.services.reminder_service import send_due_reminders
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +151,80 @@ def webhook_check_emails():
         return {
             "status": "error",
             "message": f"Email check failed: {str(e)}",
+            "timestamp": datetime.utcnow().isoformat()
+        }, 500
+
+
+@main_routes.route("/webhook/follow-ups", methods=["GET", "POST"])
+def webhook_follow_ups():
+    """Webhook endpoint for automated follow-up emails."""
+    try:
+        api_key = request.args.get('key') or request.headers.get('X-API-Key')
+        expected_key = os.environ.get('WEBHOOK_API_KEY', 'calendar-ai-webhook-2024')
+
+        if api_key != expected_key:
+            logger.warning(f"❌ Unauthorized follow-up webhook access attempt from {request.remote_addr}")
+            return {
+                "status": "error",
+                "message": "Unauthorized access"
+            }, 401
+
+        logger.info("🔄 Follow-up webhook triggered")
+        result = send_due_followups()
+        logger.info(
+            "✅ Follow-up webhook completed (processed=%s, sent=%s)",
+            result.get("processed"),
+            result.get("sent"),
+        )
+        return {
+            "status": "success",
+            "processed": result.get("processed"),
+            "sent": result.get("sent"),
+            "timestamp": datetime.utcnow().isoformat()
+        }, 200
+    except Exception as exc:
+        logger.error(f"❌ Follow-up webhook failed: {str(exc)}")
+        sentry_sdk.capture_exception(exc)
+        return {
+            "status": "error",
+            "message": f"Follow-up processing failed: {str(exc)}",
+            "timestamp": datetime.utcnow().isoformat()
+        }, 500
+
+
+@main_routes.route("/webhook/reminders", methods=["GET", "POST"])
+def webhook_reminders():
+    """Webhook endpoint for upcoming meeting reminders."""
+    try:
+        api_key = request.args.get('key') or request.headers.get('X-API-Key')
+        expected_key = os.environ.get('WEBHOOK_API_KEY', 'calendar-ai-webhook-2024')
+
+        if api_key != expected_key:
+            logger.warning(f"❌ Unauthorized reminder webhook access attempt from {request.remote_addr}")
+            return {
+                "status": "error",
+                "message": "Unauthorized access"
+            }, 401
+
+        logger.info("🔄 Reminder webhook triggered")
+        result = send_due_reminders()
+        logger.info(
+            "✅ Reminder webhook completed (processed=%s, sent=%s)",
+            result.get("processed"),
+            result.get("sent"),
+        )
+        return {
+            "status": "success",
+            "processed": result.get("processed"),
+            "sent": result.get("sent"),
+            "timestamp": datetime.utcnow().isoformat()
+        }, 200
+    except Exception as exc:
+        logger.error(f"❌ Reminder webhook failed: {str(exc)}")
+        sentry_sdk.capture_exception(exc)
+        return {
+            "status": "error",
+            "message": f"Reminder processing failed: {str(exc)}",
             "timestamp": datetime.utcnow().isoformat()
         }, 500
 

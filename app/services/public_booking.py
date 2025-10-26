@@ -25,6 +25,7 @@ def create_booking_event(
     invitee_email: str,
     notes: Optional[str] = None,
     source: str = "public_booking",
+    meeting_request_id: Optional[int] = None,
 ) -> Event:
     """Create a calendar event and persist it in the Event table."""
     end_dt = start_dt + timedelta(minutes=event_type.duration_minutes)
@@ -69,6 +70,9 @@ def create_booking_event(
         duration_minutes=event_type.duration_minutes,
         status="scheduled",
         source=source or "public_booking",
+        invitee_email=invitee_email.strip().lower() if invitee_email else None,
+        invitee_name=invitee_name.strip() or None,
+        meeting_request_id=meeting_request_id,
     )
 
     db.session.add(event)

@@ -162,6 +162,9 @@ Latest message from {latest_message.get('sender')} at {latest_message.get('times
 available_slots:
 {json.dumps(availability, indent=2)}'''
 """
+    follow_up_context = meeting_context.get("follow_up_context")
+    if follow_up_context:
+        payload += f"\nFollow-up context:\n{follow_up_context}\n"
 
     response = openai.chat.completions.create(
         model="gpt-4.1-mini",

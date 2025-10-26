@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant Settings{% endblock %}
+{% block content %}
+<div class="container mt-4 settings-container">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">AI Assistant</h1>
+            <p class="text-muted mb-0">Control how Cal follows up on stalled scheduling threads.</p>
+        </div>
+    </div>
+
+    {% set active_tab = "assistant" %}
+    {% include "settings/_nav.html" %}
+
+    <div class="settings-section card shadow-sm">
+        <div class="card-body">
+            <form method="post" class="settings-form">
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="follow_up_enabled"
+                            name="follow_up_enabled"
+                            {% if follow_up_enabled %}checked{% endif %}
+                        >
+                        <label class="form-check-label" for="follow_up_enabled">
+                            Enable automatic follow-ups
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        Cal sends up to two nudges per thread. Turn this off to manage follow-ups yourself.
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="follow_up_first_delay_days">First follow-up</label>
+                    <select
+                        class="form-select form-control-compact"
+                        id="follow_up_first_delay_days"
+                        name="follow_up_first_delay_days"
+                        {% if not follow_up_enabled %}disabled{% endif %}
+                    >
+                        {% for day in day_options %}
+                            <option value="{{ day }}" {% if day == first_delay %}selected{% endif %}>
+                                {{ day }} day{% if day != 1 %}s{% endif %} after Cal's last reply
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Cal waits this many days after sending availability before nudging the thread.
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="follow_up_second_delay_days_display">Second follow-up</label>
+                    <select
+                        class="form-select form-control-compact"
+                        id="follow_up_second_delay_days_display"
+                        disabled
+                    >
+                        {% for day in day_options %}
+                            <option value="{{ day }}" {% if day == second_delay %}selected{% endif %}>
+                                {{ day }} day{% if day != 1 %}s{% endif %} after Cal's last reply
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Automatically scheduled exactly one day after the first follow-up (capped at 30 days).
+                    </div>
+                    <input type="hidden" name="follow_up_second_delay_days" id="follow_up_second_delay_days" value="{{ second_delay }}">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="meeting_reminder_lead_hours">Meeting reminder</label>
+                    <select
+                        class="form-select form-control-compact"
+                        id="meeting_reminder_lead_hours"
+                        name="meeting_reminder_lead_hours"
+                    >
+                        {% for hours in reminder_options %}
+                            <option value="{{ hours }}" {% if hours == reminder_lead %}selected{% endif %}>
+                                {{ hours }} hour{% if hours != 1 %}s{% endif %} before the meeting
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Cal sends a friendly reminder to everyone on the invite this many hours before start.
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-compact">Save settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const firstSelect = document.getElementById("follow_up_first_delay_days");
+    const secondSelect = document.getElementById("follow_up_second_delay_days_display");
+    const secondHidden = document.getElementById("follow_up_second_delay_days");
+    const toggle = document.getElementById("follow_up_enabled");
+
+    function syncSecond() {
+        const firstValue = parseInt(firstSelect.value, 10) || 1;
+        const computed = Math.min(30, firstValue + 1);
+        secondSelect.value = computed.toString();
+        secondHidden.value = computed.toString();
+    }
+
+    function syncDisabledState() {
+        const enabled = toggle.checked;
+        firstSelect.disabled = !enabled;
+        firstSelect.closest(".mb-4").classList.toggle("opacity-50", !enabled);
+        secondSelect.closest(".mb-4").classList.toggle("opacity-50", !enabled);
+    }
+
+    firstSelect.addEventListener("change", syncSecond);
+    toggle.addEventListener("change", () => {
+        syncSecond();
+        syncDisabledState();
+    });
+    syncSecond();
+    syncDisabledState();
+});
+</script>
+{% endblock %}

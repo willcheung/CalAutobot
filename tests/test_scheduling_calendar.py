@@ -44,7 +44,16 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     real_create_booking_event = public_booking_service.create_booking_event
 
-    def fake_create_booking_event(user, event_type, start_dt, invitee_name, invitee_email, notes, source="public_booking"):
+    def fake_create_booking_event(
+        user,
+        event_type,
+        start_dt,
+        invitee_name,
+        invitee_email,
+        notes,
+        source="public_booking",
+        meeting_request_id=None,
+    ):
         booking_call.update(
             {
                 "user_id": user.id,
@@ -62,6 +71,7 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
             invitee_email,
             notes,
             source=source,
+            meeting_request_id=meeting_request_id,
         )
 
     monkeypatch.setattr(public_booking_service, "create_booking_event", fake_create_booking_event)

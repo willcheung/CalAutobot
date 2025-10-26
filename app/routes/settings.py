@@ -3,7 +3,7 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
-from app.models import UserCalendar
+from app.models import UserCalendar, MeetingRequest
 from app.services.google_calendar import fetch_user_calendar_list
 from app.services.users import assign_unique_handle, is_handle_available, normalize_handle
 
@@ -259,4 +259,68 @@ def calendar_settings():
         booking_calendar_missing=booking_calendar_missing,
         extraction_calendar_missing=extraction_calendar_missing,
         primary_calendar_id=primary_calendar_id,
+    )
+
+
+def _sanitize_follow_up_values(first_value: int, second_value: int) -> tuple[int, int]:
+    first = max(1, min(30, first_value or 1))
+    computed_second = min(30, first + 1)
+    if second_value and first < second_value <= 30 and second_value == first + 1:
+        computed_second = second_value
+    return first, computed_second
+
+
+@settings_routes.route("/settings/assistant", methods=["GET", "POST"])
+@login_required
+def assistant_settings():
+    follow_up_enabled = True if current_user.follow_up_enabled is None else bool(current_user.follow_up_enabled)
+    first_default = current_user.follow_up_first_delay_days or 1
+    second_default = current_user.follow_up_second_delay_days or (first_default + 1)
+    first_delay, second_delay = _sanitize_follow_up_values(first_default, second_default)
+    reminder_lead = current_user.meeting_reminder_lead_hours or 24
+
+    if request.method == "POST":
+        follow_up_enabled = request.form.get("follow_up_enabled") == "on"
+        try:
+            form_first = int(request.form.get("follow_up_first_delay_days", first_delay))
+        except (TypeError, ValueError):
+            flash("Invalid first follow-up delay.", "danger")
+            return redirect(url_for("settings_routes.assistant_settings"))
+
+        try:
+            form_second = int(request.form.get("follow_up_second_delay_days", second_delay))
+        except (TypeError, ValueError):
+            form_second = second_delay
+
+        try:
+            form_reminder_lead = int(request.form.get("meeting_reminder_lead_hours", reminder_lead))
+        except (TypeError, ValueError):
+            flash("Invalid reminder lead time.", "danger")
+            return redirect(url_for("settings_routes.assistant_settings"))
+
+        first_delay, second_delay = _sanitize_follow_up_values(form_first, form_second)
+        reminder_lead = max(1, min(24, form_reminder_lead))
+        current_user.follow_up_enabled = follow_up_enabled
+        current_user.follow_up_first_delay_days = first_delay
+        current_user.follow_up_second_delay_days = second_delay
+        current_user.meeting_reminder_lead_hours = reminder_lead
+        if not follow_up_enabled:
+            MeetingRequest.query.filter_by(user_id=current_user.id).update(
+                {"next_follow_up_at": None, "follow_up_count": 0},
+                synchronize_session=False,
+            )
+        db.session.commit()
+        flash("AI assistant settings updated.", "success")
+        return redirect(url_for("settings_routes.assistant_settings"))
+
+    day_options = list(range(1, 31))
+    reminder_options = list(range(1, 25))
+    return render_template(
+        "settings/assistant.html",
+        first_delay=first_delay,
+        second_delay=second_delay,
+        day_options=day_options,
+        follow_up_enabled=follow_up_enabled,
+        reminder_lead=reminder_lead,
+        reminder_options=reminder_options,
     )

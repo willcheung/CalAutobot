@@ -120,6 +120,30 @@ def test_validate_confirmed_slot_returns_fallback_when_slot_taken(monkeypatch):
     assert "Here are a few other openings" in result["reply"]
 
 
+def test_get_follow_up_delays_enforces_minimums():
+    user = SimpleNamespace(
+        follow_up_first_delay_days=0,
+        follow_up_second_delay_days=0,
+    )
+
+    first, second = scheduling_agent.get_follow_up_delays(user)
+
+    assert first == 1
+    assert second == 2
+
+
+def test_get_follow_up_delays_caps_second_value():
+    user = SimpleNamespace(
+        follow_up_first_delay_days=29,
+        follow_up_second_delay_days=60,
+    )
+
+    first, second = scheduling_agent.get_follow_up_delays(user)
+
+    assert first == 29
+    assert second == 30
+
+
 def test_find_fallback_slots_respects_limit_and_skips_matching_slot(monkeypatch):
     slot_start = _tz_aware(datetime(2025, 1, 5, 14, 0))
 

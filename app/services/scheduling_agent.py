@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from app import db
 from app.models import (
@@ -28,6 +28,7 @@ from app.services.calendar_notifications import (
 logger = logging.getLogger(__name__)
 
 ASSISTANT_EMAILS = {"go@calautobot.com", "cal@calautobot.com"}
+MAX_FOLLOW_UPS = 2
 
 # Backward compatibility for existing imports/tests
 _notify_owner_calendar_issue = notify_owner_calendar_issue
@@ -332,39 +333,14 @@ def _export_messages_for_agent(
     return history
 
 
-def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict[str, object]]:
+def prepare_agent_context_for_request(
+    user: User,
+    meeting_request: MeetingRequest,
+) -> Dict[str, object]:
     """
-    Entry point for scheduling workflow from Gmail ingestion.
-
-    Returns agent output dict or None if processing failed.
+    Build agent inputs, conversation history, and availability data for a meeting request.
     """
-    user = owner_user
-
-    # Persist text input for traceability
-    raw_headers = email_data.get("raw_headers")
-    if isinstance(raw_headers, (dict, list)):
-        raw_headers = json.dumps(raw_headers)
-
-    text_input = TextInput(
-        user_id=user.id,
-        original_text=sanitize_text_for_db(email_data.get("body_text") or ""),
-        source_type="email",
-        from_email=(email_data.get("sender") or "").strip().lower(),
-        task_type="schedule_meeting",
-        raw_email_context=raw_headers,
-        processing_status="pending",
-    )
-    db.session.add(text_input)
-    db.session.flush()
-
-    meeting_request = _get_or_create_meeting_request(user, email_data, text_input)
-    _sync_participants(meeting_request, email_data)
-    meeting_message = _record_meeting_message(meeting_request, email_data)
-
-    meeting_request.last_message_at = meeting_message.received_at or datetime.utcnow()
-    meeting_request.updated_at = datetime.utcnow()
-
-    agent_input = {
+    agent_input: Dict[str, object] = {
         "subject": meeting_request.subject,
         "owner_email": user.email,
         "owner_name": user.username or user.email,
@@ -376,14 +352,13 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     agent_input["availability_note"] = None
     history = _export_messages_for_agent(meeting_request)
     latest_message = history[-1] if history else {
-        "sender": meeting_message.sender_email,
+        "sender": user.email,
         "timestamp": datetime.utcnow().isoformat(),
-        "body": meeting_message.body_text or "",
+        "body": "",
     }
 
     availability_blocks: List[Dict[str, str]] = []
     extended_availability_blocks: List[Dict[str, str]] = []
-    availability_batch = None
     availability_lookup_error = None
     default_event_type = (
         EventType.query.filter_by(user_id=user.id, is_active=True)
@@ -423,14 +398,8 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                         extended_batch, extended_start
                     )
 
+    availability = []
     if availability_lookup_error:
-        agent_result = {
-            "action": "request_clarification",
-            "reply": _compose_system_issue_reply(agent_input.get("owner_name") or user.email),
-            "proposed_slots": [],
-            "confirmed_slot": None,
-            "notes": "availability_fetch_error",
-        }
         availability = []
     else:
         availability = availability_blocks
@@ -443,7 +412,126 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             agent_input[
                 "availability_note"
             ] = "No availability found in the next two weeks."
-        agent_input["event_duration_minutes"] = event_duration_minutes
+
+    return {
+        "agent_input": agent_input,
+        "history": history,
+        "latest_message": latest_message,
+        "availability": availability,
+        "availability_error": availability_lookup_error,
+        "default_event_type": default_event_type,
+    }
+
+
+def send_agent_reply_email(
+    user: User,
+    meeting_request: MeetingRequest,
+    reply_text: str,
+    *,
+    thread_id: Optional[str],
+    reply_to_message_id: Optional[str],
+    subject: Optional[str],
+    extra_recipients: Optional[List[str]] = None,
+) -> bool:
+    """
+    Send the agent's reply email and return True on success.
+    """
+    if not reply_text:
+        return False
+
+    all_participants = {p.email.lower() for p in meeting_request.participants if p.email}
+    all_participants.add((user.email or "").strip().lower())
+
+    for address in extra_recipients or []:
+        if not address:
+            continue
+        all_participants.add(address.strip().lower())
+
+    for assistant in ASSISTANT_EMAILS:
+        all_participants.discard(assistant)
+
+    owner_email = (user.email or "").strip().lower()
+    other_participants = sorted(
+        addr for addr in all_participants if addr and addr != owner_email
+    )
+
+    to_header = owner_email or user.email
+    cc_recipients = other_participants if other_participants else None
+
+    final_subject = subject or meeting_request.subject or "Meeting coordination"
+    if final_subject and not final_subject.lower().startswith("re:"):
+        final_subject = f"Re: {final_subject}"
+
+    try:
+        gmail_service.send_email(
+            to_header,
+            final_subject,
+            text_body=reply_text,
+            thread_id=thread_id,
+            reply_to_message_id=reply_to_message_id,
+            cc_recipients=cc_recipients,
+        )
+        return True
+    except Exception as send_exc:
+        logger.error(
+            "Failed to send scheduling reply for meeting_request %s: %s",
+            meeting_request.id,
+            send_exc,
+        )
+        return False
+
+
+def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict[str, object]]:
+    """
+    Entry point for scheduling workflow from Gmail ingestion.
+
+    Returns agent output dict or None if processing failed.
+    """
+    user = owner_user
+
+    # Persist text input for traceability
+    raw_headers = email_data.get("raw_headers")
+    if isinstance(raw_headers, (dict, list)):
+        raw_headers = json.dumps(raw_headers)
+
+    text_input = TextInput(
+        user_id=user.id,
+        original_text=sanitize_text_for_db(email_data.get("body_text") or ""),
+        source_type="email",
+        from_email=(email_data.get("sender") or "").strip().lower(),
+        task_type="schedule_meeting",
+        raw_email_context=raw_headers,
+        processing_status="pending",
+    )
+    db.session.add(text_input)
+    db.session.flush()
+
+    meeting_request = _get_or_create_meeting_request(user, email_data, text_input)
+    _sync_participants(meeting_request, email_data)
+    meeting_message = _record_meeting_message(meeting_request, email_data)
+
+    meeting_request.last_message_at = meeting_message.received_at or datetime.utcnow()
+    meeting_request.updated_at = datetime.utcnow()
+    meeting_request.follow_up_count = 0
+    meeting_request.next_follow_up_at = None
+
+    context = prepare_agent_context_for_request(user, meeting_request)
+    agent_input = context["agent_input"]
+    history = context["history"]
+    latest_message = context["latest_message"]
+    availability = context["availability"]
+    availability_lookup_error = context["availability_error"]
+    default_event_type = context["default_event_type"]
+
+    if availability_lookup_error:
+        agent_result = {
+            "action": "request_clarification",
+            "reply": _compose_system_issue_reply(agent_input.get("owner_name") or user.email),
+            "proposed_slots": [],
+            "confirmed_slot": None,
+            "notes": "availability_fetch_error",
+        }
+    else:
         agent_result = run_meeting_scheduler_agent(
             agent_input,
             history,
@@ -491,6 +579,13 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                     updated_confirmed["conference_url"] = conference_url
                     meeting_request.confirmed_slot = updated_confirmed
                     confirmed_info = updated_confirmed
+            if existing_event:
+                if existing_event.meeting_request_id != meeting_request.id:
+                    existing_event.meeting_request_id = meeting_request.id
+                if invitee_email and not existing_event.invitee_email:
+                    existing_event.invitee_email = invitee_email.strip().lower()
+                if invitee_name and not existing_event.invitee_name:
+                    existing_event.invitee_name = invitee_name
 
         if not existing_event_id:
             start_iso = confirmed_info.get("start")
@@ -597,6 +692,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                     history, user.username or user.email, user.email
                                 ),
                                 source="ai_booking",
+                                meeting_request_id=meeting_request.id,
                             )
                             calendar_event_id = created_event.google_event_id
                             conference_url = getattr(created_event, "conference_url", None)
@@ -616,9 +712,8 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     notify_owner_calendar_issue(user, agent_result.get("notes"))
 
-    db.session.commit()
-
     reply_text = agent_result.get("reply")
+    sent_reply = False
     if reply_text:
         if action == "confirm_slot":
             confirmed_info = meeting_request.confirmed_slot or {}
@@ -628,47 +723,40 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             if conference_url and conference_url not in reply_text:
                 reply_text = reply_text.rstrip() + f"\n\nVideo conference: {conference_url}\n"
 
-        all_participants = {p.email for p in meeting_request.participants}
-        all_participants.add(user.email)
-
+        extra_recipients: List[str] = []
         sender_addr = (email_data.get("sender") or "").strip().lower()
         if sender_addr:
-            all_participants.add(sender_addr)
+            extra_recipients.append(sender_addr)
 
         for field in ("to", "cc"):
             for addr in email_data.get(field) or []:
-                clean = addr.strip()
+                clean = (addr or "").strip().lower()
                 if clean:
-                    all_participants.add(clean.lower())
+                    extra_recipients.append(clean)
 
-        for assistant in ASSISTANT_EMAILS:
-            all_participants.discard(assistant)
+        sent_reply = send_agent_reply_email(
+            user,
+            meeting_request,
+            reply_text,
+            thread_id=email_data.get("thread_id"),
+            reply_to_message_id=email_data.get("message_id"),
+            subject=email_data.get("subject"),
+            extra_recipients=extra_recipients,
+        )
 
-        owner_email = user.email
-        other_participants = sorted(addr for addr in all_participants if addr != owner_email)
+        if sent_reply:
+            now = datetime.utcnow()
+            meeting_request.last_agent_reply_at = now
+            tracking_action = action in {"propose_slots", "request_clarification"}
+            if tracking_action and (user.follow_up_enabled is None or user.follow_up_enabled):
+                first_delay, _ = get_follow_up_delays(user)
+                meeting_request.follow_up_count = 0
+                meeting_request.next_follow_up_at = now + timedelta(days=first_delay)
+            else:
+                meeting_request.next_follow_up_at = None
+                meeting_request.follow_up_count = 0
 
-        to_header = owner_email
-        cc_recipients = other_participants if other_participants else None
-
-        subject = email_data.get("subject") or "Meeting coordination"
-        if not subject.lower().startswith("re:"):
-            subject = f"Re: {subject}"
-
-        try:
-            gmail_service.send_email(
-                to_header,
-                subject,
-                text_body=reply_text,
-                thread_id=email_data.get("thread_id"),
-                reply_to_message_id=email_data.get("message_id"),
-                cc_recipients=cc_recipients,
-            )
-        except Exception as send_exc:
-            logger.error(
-                "Failed to send scheduling reply for meeting_request %s: %s",
-                meeting_request.id,
-                send_exc,
-            )
+    db.session.commit()
 
     return {
         "meeting_request_id": meeting_request.id,
@@ -678,6 +766,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         "confirmed_slot": meeting_request.confirmed_slot,
         "notes": agent_result.get("notes"),
     }
+
 def _build_calendar_description(history: List[Dict[str, str]], owner_name: str, owner_email: str) -> str:
     if not history:
         return f"Coordinated by Cal on behalf of {owner_name} ({owner_email})."
@@ -707,3 +796,16 @@ def _build_calendar_description(history: List[Dict[str, str]], owner_name: str, 
     )
 
     return "\n".join(lines).strip()
+def get_follow_up_delays(user: User) -> Tuple[int, int]:
+    """
+    Return sanitized follow-up delays (in days) for the user.
+    The second follow-up is always at least one day after the first and capped at 30 days.
+    """
+    first = user.follow_up_first_delay_days or 1
+    second = user.follow_up_second_delay_days or (first + 1)
+
+    first = max(1, min(30, first))
+    second = max(first + 1, min(30, second))
+    if second <= first:
+        second = min(30, first + 1)
+    return first, second
