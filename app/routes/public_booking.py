@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, time
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 
 from app import db
 from app.models import Event, EventType, User
@@ -45,9 +46,37 @@ def _render_profile_page(user: User):
 
 @public_booking.route("/u/<handle>")
 def profile_page(handle: str):
-    user = User.query.filter(func.lower(User.handle) == handle.lower()).first()
+    user = (
+        User.query.options(
+            selectinload(User.event_types).load_only(
+                EventType.id,
+                EventType.slug,
+                EventType.title,
+                EventType.duration_minutes,
+                EventType.is_active,
+                EventType.is_public,
+            )
+        )
+        .filter(func.lower(User.handle) == handle.lower())
+        .first()
+    )
     if not user and handle.isdigit():
-        user = _get_user_or_404(int(handle))
+        user = (
+            User.query.options(
+                selectinload(User.event_types).load_only(
+                    EventType.id,
+                    EventType.slug,
+                    EventType.title,
+                    EventType.duration_minutes,
+                    EventType.is_active,
+                    EventType.is_public,
+                )
+            )
+            .filter_by(id=int(handle))
+            .first()
+        )
+        if not user:
+            abort(404)
         if not user.handle:
             assign_unique_handle(user)
             db.session.commit()
