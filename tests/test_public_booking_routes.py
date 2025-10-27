@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from app import db
 from app.models import Event, EventType, User
 from app.services import event_types as event_types_service
 from app.services import availability as availability_service
+from app.services.availability import AvailabilityBatch
 from app.services.users import assign_unique_handle
 
 
@@ -147,6 +148,82 @@ def test_public_booking_flow(client, app_context, monkeypatch):
     assert new_event.event_description is not None
     assert "Powered by CalAutobot.com" in new_event.event_description
     assert new_event.conference_url == "https://meet.google.com/test-meeting"
+
+
+def test_event_type_redirects_to_next_available_day(client, app_context, monkeypatch):
+    unique_suffix = datetime.utcnow().strftime("%f")
+    user = User(username=f"Host-{unique_suffix}", email=f"host-{unique_suffix}@example.com", timezone="UTC")
+    db.session.add(user)
+    db.session.commit()
+    assign_unique_handle(user)
+    db.session.commit()
+
+    event_type = EventType(
+        user_id=user.id,
+        title="Consult",
+        slug="consult",
+        duration_minutes=30,
+        is_active=True,
+        is_public=True,
+    )
+    db.session.add(event_type)
+    db.session.commit()
+
+    target_date = date(2025, 11, 1)
+    next_available = date(2025, 11, 3)
+
+    batch = AvailabilityBatch(slots_by_date={}, availability_map={next_available: True})
+
+    monkeypatch.setattr(
+        availability_service,
+        "get_cached_availability_for_range",
+        lambda *_: batch,
+    )
+
+    resp = client.get(
+        f"/u/{user.handle}/{event_type.slug}",
+        query_string={"date": target_date.isoformat()},
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith(next_available.isoformat())
+
+
+def test_event_type_allows_month_with_no_availability(client, app_context, monkeypatch):
+    unique_suffix = datetime.utcnow().strftime("%f")
+    user = User(username=f"Host-{unique_suffix}", email=f"host-{unique_suffix}@example.com", timezone="UTC")
+    db.session.add(user)
+    db.session.commit()
+    assign_unique_handle(user)
+    db.session.commit()
+
+    event_type = EventType(
+        user_id=user.id,
+        title="Consult",
+        slug="consult",
+        duration_minutes=30,
+        is_active=True,
+        is_public=True,
+    )
+    db.session.add(event_type)
+    db.session.commit()
+
+    empty_batch = AvailabilityBatch(slots_by_date={}, availability_map={})
+
+    monkeypatch.setattr(
+        availability_service,
+        "get_cached_availability_for_range",
+        lambda *_: empty_batch,
+    )
+
+    resp = client.get(
+        f"/u/{user.handle}/{event_type.slug}",
+        query_string={"date": "2025-12-01"},
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 200
 
 
 def test_public_booking_flow_handles_calendar_failure(client, app_context, monkeypatch):
