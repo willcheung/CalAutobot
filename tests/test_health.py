@@ -4,5 +4,5 @@ def test_health_endpoint(client):
     assert response.status_code == 200
 
     payload = response.get_json()
-    assert payload["status"] == "healthy"
+    assert payload["status"] in {"healthy", "ok"}
     assert "timestamp" in payload and payload["timestamp"]

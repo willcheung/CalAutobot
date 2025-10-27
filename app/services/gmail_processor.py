@@ -10,7 +10,7 @@ from app.helpers.event_deduplication import deduplicate_events, should_skip_atta
 from app import db
 from app.services.gmail_service import gmail_service, GmailOAuthError
 from app.services.users import assign_unique_handle
-from app.agents.task_classifier import classify_email_task
+from app.agents.task_classifier import classify_email_task, ASSISTANT_EMAILS
 from app.services.scheduling_agent import handle_scheduling_email
 import sentry_sdk
 
@@ -115,6 +115,17 @@ def process_single_email(email_data: Dict) -> bool:
         if not sender_email:
             logger.warning(f"Missing sender email")
             return False
+
+        message_id = email_data.get("message_id")
+        if sender_email in ASSISTANT_EMAILS:
+            logger.info("Skipping assistant-sent message %s", message_id)
+            return True
+
+        if message_id:
+            existing_message = MeetingMessage.query.filter_by(message_id=message_id).first()
+            if existing_message:
+                logger.info("Skipping already processed message %s", message_id)
+                return True
         
         # Allow processing even without body text if there are attachments or subject
         if not body_text.strip() and not attachments_info and not subject.strip():
