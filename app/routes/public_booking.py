@@ -152,7 +152,7 @@ def _render_event_type_page(user: User, slug: str):
     slots_for_template = []
 
     try:
-        availability_batch = availability_service.get_availability_for_range(
+        availability_batch = availability_service.get_cached_availability_for_range(
             user, event_type, calendar_range_start, calendar_range_end
         )
         availability_map = availability_batch.availability_map

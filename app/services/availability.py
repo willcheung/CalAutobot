@@ -3,7 +3,9 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
+import os
+import time as time_module
 
 import logging
 
@@ -16,6 +18,30 @@ from app.models import AvailabilityWindow, Event, EventType, User
 from app.services import google_calendar
 
 logger = logging.getLogger(__name__)
+
+_AVAILABILITY_CACHE: Dict[Tuple[int, int, int, int], Tuple["AvailabilityBatch", float]] = {}
+_AVAILABILITY_CACHE_MAXSIZE = int(os.environ.get("AVAILABILITY_CACHE_MAXSIZE", "256"))
+_AVAILABILITY_CACHE_TTL_SECONDS = int(os.environ.get("AVAILABILITY_CACHE_TTL", "60"))
+
+
+def _cache_enabled() -> bool:
+    return _AVAILABILITY_CACHE_TTL_SECONDS > 0 and _AVAILABILITY_CACHE_MAXSIZE > 0
+
+
+def _build_cache_key(user_id: int, event_type_id: int, start_date: date, end_date: date) -> Tuple[int, int, int, int]:
+    return (user_id, event_type_id, start_date.toordinal(), end_date.toordinal())
+
+
+def _prune_cache(now_ts: float) -> None:
+    expired = [key for key, (_, expires) in _AVAILABILITY_CACHE.items() if expires <= now_ts]
+    for key in expired:
+        _AVAILABILITY_CACHE.pop(key, None)
+
+    while _AVAILABILITY_CACHE_MAXSIZE > 0 and len(_AVAILABILITY_CACHE) >= _AVAILABILITY_CACHE_MAXSIZE:
+        try:
+            _AVAILABILITY_CACHE.pop(next(iter(_AVAILABILITY_CACHE)))
+        except StopIteration:
+            break
 
 
 @dataclass
@@ -309,8 +335,33 @@ def get_availability_for_range(
     )
 
 
+def clear_availability_cache() -> None:
+    _AVAILABILITY_CACHE.clear()
+
+
+def get_cached_availability_for_range(
+    user: User,
+    event_type: EventType,
+    start_date: date,
+    end_date: date,
+) -> AvailabilityBatch:
+    if not _cache_enabled():
+        return get_availability_for_range(user, event_type, start_date, end_date)
+
+    key = _build_cache_key(user.id, event_type.id, start_date, end_date)
+    now_ts = time_module.time()
+    cached = _AVAILABILITY_CACHE.get(key)
+    if cached and cached[1] > now_ts:
+        return cached[0]
+
+    batch = get_availability_for_range(user, event_type, start_date, end_date)
+    _prune_cache(now_ts)
+    _AVAILABILITY_CACHE[key] = (batch, now_ts + _AVAILABILITY_CACHE_TTL_SECONDS)
+    return batch
+
+
 def get_slots_for_date(user: User, event_type: EventType, target_date: date) -> List[Slot]:
-    batch = get_availability_for_range(user, event_type, target_date, target_date)
+    batch = get_cached_availability_for_range(user, event_type, target_date, target_date)
     return batch.slots_by_date.get(target_date, [])
 
 
