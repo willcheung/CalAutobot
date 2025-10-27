@@ -237,9 +237,37 @@ def _render_event_type_page(user: User, slug: str):
 
 @public_booking.route("/u/<handle>/<slug>", methods=["GET", "POST"])
 def event_type_page(handle: str, slug: str):
-    user = User.query.filter(func.lower(User.handle) == handle.lower()).first()
+    user = (
+        User.query.options(
+            selectinload(User.event_types).load_only(
+                EventType.id,
+                EventType.slug,
+                EventType.title,
+                EventType.duration_minutes,
+                EventType.is_active,
+                EventType.is_public,
+            )
+        )
+        .filter(func.lower(User.handle) == handle.lower())
+        .first()
+    )
     if not user and handle.isdigit():
-        user = _get_user_or_404(int(handle))
+        user = (
+            User.query.options(
+                selectinload(User.event_types).load_only(
+                    EventType.id,
+                    EventType.slug,
+                    EventType.title,
+                    EventType.duration_minutes,
+                    EventType.is_active,
+                    EventType.is_public,
+                )
+            )
+            .filter_by(id=int(handle))
+            .first()
+        )
+        if not user:
+            abort(404)
         if not user.handle:
             assign_unique_handle(user)
             db.session.commit()
@@ -250,9 +278,37 @@ def event_type_page(handle: str, slug: str):
 
 @public_booking.route("/u/<handle>/<slug>/confirm", methods=["GET", "POST"])
 def confirm_booking_page(handle: str, slug: str):
-    user = User.query.filter(func.lower(User.handle) == handle.lower()).first()
+    user = (
+        User.query.options(
+            selectinload(User.event_types).load_only(
+                EventType.id,
+                EventType.slug,
+                EventType.title,
+                EventType.duration_minutes,
+                EventType.is_active,
+                EventType.is_public,
+            )
+        )
+        .filter(func.lower(User.handle) == handle.lower())
+        .first()
+    )
     if not user and handle.isdigit():
-        user = _get_user_or_404(int(handle))
+        user = (
+            User.query.options(
+                selectinload(User.event_types).load_only(
+                    EventType.id,
+                    EventType.slug,
+                    EventType.title,
+                    EventType.duration_minutes,
+                    EventType.is_active,
+                    EventType.is_public,
+                )
+            )
+            .filter_by(id=int(handle))
+            .first()
+        )
+        if not user:
+            abort(404)
         if not user.handle:
             assign_unique_handle(user)
             db.session.commit()
