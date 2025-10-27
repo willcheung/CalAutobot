@@ -18,7 +18,7 @@ from app.agents.meeting_scheduler import run_meeting_scheduler_agent
 from app.helpers.text_processing import sanitize_text_for_db
 from app.services import availability as availability_service
 from app.services.availability import AvailabilityBatch, AvailabilityError
-from app.services.public_booking import create_booking_event
+from app.services.public_booking import create_booking_event, cancel_booking_event
 from app.services.gmail_service import gmail_service
 from app.services.calendar_notifications import (
     OWNER_ALERT_MESSAGES,
@@ -164,6 +164,43 @@ def _validate_confirmed_slot(
         }
 
     return None
+
+
+def _find_event_for_cancellation(user: User, confirmed_info: Optional[Dict[str, object]]) -> Optional[Event]:
+    if not confirmed_info:
+        return None
+
+    event: Optional[Event] = None
+    google_event_id = None
+    if isinstance(confirmed_info, dict):
+        google_event_id = confirmed_info.get("google_event_id")
+
+    if google_event_id:
+        event = Event.query.filter_by(user_id=user.id, google_event_id=google_event_id).first()
+        if event:
+            return event
+
+    start_iso = None
+    if isinstance(confirmed_info, dict):
+        start_iso = confirmed_info.get("start")
+    if start_iso:
+        event = (
+            Event.query.filter_by(user_id=user.id, start_datetime=start_iso)
+            .order_by(Event.id.desc())
+            .first()
+        )
+
+    return event
+
+
+def _apply_cancellation_state(meeting_request: MeetingRequest) -> None:
+    meeting_request.confirmed_slot = None
+    meeting_request.proposed_slots = []
+    meeting_request.status = "cancelled"
+    meeting_request.current_step = "cancelled"
+    meeting_request.next_follow_up_at = None
+    meeting_request.follow_up_count = 0
+    meeting_request.updated_at = datetime.utcnow()
 
 
 def _coalesce_availability_windows(
@@ -548,12 +585,41 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     )
 
     action = agent_result.get("action")
-    meeting_request.proposed_slots = agent_result.get("proposed_slots")
-    meeting_request.confirmed_slot = agent_result.get("confirmed_slot")
+    proposed_slots = agent_result.get("proposed_slots")
+    new_confirmed_slot = agent_result.get("confirmed_slot")
+    previous_confirmed_slot = meeting_request.confirmed_slot
+
+    meeting_request.proposed_slots = proposed_slots
+    meeting_request.confirmed_slot = new_confirmed_slot or previous_confirmed_slot
     text_input.processing_status = "completed"
     meeting_request.current_step = action
 
-    if action == "confirm_slot" and meeting_request.confirmed_slot:
+    if action == "cancel_meeting":
+        slot_reference = previous_confirmed_slot or new_confirmed_slot
+        event_to_cancel = _find_event_for_cancellation(user, slot_reference)
+        if event_to_cancel:
+            try:
+                cancel_booking_event(user, event_to_cancel)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Failed to cancel event %s for meeting_request %s: %s",
+                    event_to_cancel.id,
+                    meeting_request.id,
+                    exc,
+                )
+            else:
+                logger.info(
+                    "Cancelled event %s for meeting_request %s",
+                    event_to_cancel.id,
+                    meeting_request.id,
+                )
+        else:
+            logger.warning(
+                "Unable to locate event to cancel for meeting_request %s",
+                meeting_request.id,
+            )
+        _apply_cancellation_state(meeting_request)
+    elif action == "confirm_slot" and meeting_request.confirmed_slot:
         meeting_request.status = "confirmed"
     elif action == "request_clarification":
         meeting_request.status = "collecting"
