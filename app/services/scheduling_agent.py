@@ -473,24 +473,25 @@ def send_agent_reply_email(
     if not reply_text:
         return False
 
-    all_participants = {p.email.lower() for p in meeting_request.participants if p.email}
-    all_participants.add((user.email or "").strip().lower())
+    recipient_set = {p.email.lower() for p in meeting_request.participants if p.email}
+    owner_email = (user.email or "").strip().lower()
+    if owner_email:
+        recipient_set.add(owner_email)
 
     for address in extra_recipients or []:
         if not address:
             continue
-        all_participants.add(address.strip().lower())
+        recipient_set.add(address.strip().lower())
 
     for assistant in ASSISTANT_EMAILS:
-        all_participants.discard(assistant)
+        recipient_set.discard(assistant)
 
-    owner_email = (user.email or "").strip().lower()
-    other_participants = sorted(
-        addr for addr in all_participants if addr and addr != owner_email
-    )
+    recipients_sorted = sorted(addr for addr in recipient_set if addr)
+    if not recipients_sorted:
+        return False
 
-    to_header = owner_email or user.email
-    cc_recipients = other_participants if other_participants else None
+    to_header = ", ".join(recipients_sorted)
+    cc_recipients = None
 
     final_subject = subject or meeting_request.subject or "Meeting coordination"
     if final_subject and not final_subject.lower().startswith("re:"):

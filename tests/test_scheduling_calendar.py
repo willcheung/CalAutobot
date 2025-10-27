@@ -134,9 +134,10 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
 
     assert captured_emails, "Expected scheduler to send a reply email"
     to_header, subject, extra = captured_emails[-1]
-    assert to_header == owner.email
+    assert owner.email in to_header
+    assert "participant@example.com" in to_header
     cc_list = sorted(extra.get("cc_recipients") or [])
-    assert cc_list == ["participant@example.com"]
+    assert cc_list == []
     body = extra.get("text_body") or ""
     assert "https://meet.google.com/test-link" in body
 
@@ -264,5 +265,8 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
         "google_event_id": "evt-123",
     }
     assert captured_emails, "Expected cancellation email to be sent"
+    to_header = captured_emails[-1][0]
+    assert owner.email in to_header
+    assert "participant@example.com" in to_header
     body = captured_emails[-1][2].get("text_body") or ""
     assert "manually" not in body

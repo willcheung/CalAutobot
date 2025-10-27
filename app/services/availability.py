@@ -307,8 +307,13 @@ def get_availability_for_range(
         if day_windows:
             day_busy = busy_by_date.get(current_date, [])
             for window in day_windows:
-                window_start = tz.localize(datetime.combine(current_date, window.start_time))
-                window_end = tz.localize(datetime.combine(current_date, window.end_time))
+                raw_start = datetime.combine(current_date, window.start_time)
+                raw_end = datetime.combine(current_date, window.end_time)
+                window_start = tz.localize(raw_start)
+                window_end = tz.localize(raw_end)
+
+                if window_end - window_start < duration:
+                    continue
 
                 cursor = window_start
                 # align to top of hour or half hour
