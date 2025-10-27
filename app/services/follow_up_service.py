@@ -42,7 +42,7 @@ def _update_follow_up_schedule_after_send(
 
 
 def _should_track_follow_up(action: Optional[str]) -> bool:
-    return action in {"propose_slots", "request_clarification"}
+    return action in {"propose_slots", "request_clarification", "reschedule"}
 
 
 def _send_follow_up_for_request(meeting_request: MeetingRequest) -> bool:

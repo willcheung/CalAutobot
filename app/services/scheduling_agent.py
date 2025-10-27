@@ -586,16 +586,20 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     proposed_slots = agent_result.get("proposed_slots")
     new_confirmed_slot = agent_result.get("confirmed_slot")
     previous_confirmed_slot = meeting_request.confirmed_slot
+    rescheduled_from = agent_result.get("rescheduled_from")
+    reply_text = agent_result.get("reply")
+    effective_action = action
 
     meeting_request.proposed_slots = proposed_slots
-    meeting_request.confirmed_slot = new_confirmed_slot or previous_confirmed_slot
+    if new_confirmed_slot:
+        meeting_request.confirmed_slot = new_confirmed_slot
     text_input.processing_status = "completed"
-    meeting_request.current_step = action
 
-    if action == "cancel_meeting":
-        slot_reference = previous_confirmed_slot or new_confirmed_slot
+    cancellation_failed = False
+
+    if action in {"cancel_meeting", "reschedule"}:
+        slot_reference = rescheduled_from or previous_confirmed_slot
         event_to_cancel = _find_event_for_cancellation(user, slot_reference)
-        cancellation_failed = False
         if event_to_cancel:
             try:
                 cancel_booking_event(user, event_to_cancel)
@@ -614,11 +618,12 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                     meeting_request.id,
                 )
         else:
-            logger.warning(
-                "Unable to locate event to cancel for meeting_request %s",
-                meeting_request.id,
-            )
-            cancellation_failed = True
+            cancellation_failed = bool(slot_reference)
+            if slot_reference:
+                logger.warning(
+                    "Unable to locate event to cancel for meeting_request %s",
+                    meeting_request.id,
+                )
 
         if cancellation_failed:
             if reply_text:
@@ -628,17 +633,31 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                     + "I couldn't find that meeting on the calendar. Please remove it manually if it still appears."
                 )
             meeting_request.notes = "cancel_unverified"
+            if action == "reschedule":
+                effective_action = "request_clarification"
         else:
-            _apply_cancellation_state(meeting_request)
-    elif action == "confirm_slot" and meeting_request.confirmed_slot:
+            meeting_request.notes = None
+            if action == "cancel_meeting":
+                _apply_cancellation_state(meeting_request)
+            elif action == "reschedule":
+                if new_confirmed_slot:
+                    effective_action = "confirm_slot"
+                else:
+                    effective_action = "request_clarification"
+
+    meeting_request.current_step = action
+
+    if effective_action == "confirm_slot" and meeting_request.confirmed_slot:
         meeting_request.status = "confirmed"
-    elif action == "request_clarification":
+    elif effective_action == "request_clarification":
         meeting_request.status = "collecting"
-    else:
+    elif action != "cancel_meeting":
         meeting_request.status = "proposed"
 
+    invitee_email = None
+    invitee_name = None
     calendar_event_id = None
-    if action == "confirm_slot" and meeting_request.confirmed_slot:
+    if effective_action == "confirm_slot" and meeting_request.confirmed_slot:
         confirmed_info = meeting_request.confirmed_slot or {}
         existing_event_id = None
         if isinstance(confirmed_info, dict):
@@ -789,10 +808,9 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     notify_owner_calendar_issue(user, agent_result.get("notes"))
 
-    reply_text = agent_result.get("reply")
     sent_reply = False
     if reply_text:
-        if action == "confirm_slot":
+        if effective_action == "confirm_slot":
             confirmed_info = meeting_request.confirmed_slot or {}
             conference_url = None
             if isinstance(confirmed_info, dict):
@@ -824,7 +842,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
         if sent_reply:
             now = datetime.utcnow()
             meeting_request.last_agent_reply_at = now
-            tracking_action = action in {"propose_slots", "request_clarification"}
+            tracking_action = action in {"propose_slots", "request_clarification", "reschedule"}
             if tracking_action and (user.follow_up_enabled is None or user.follow_up_enabled):
                 first_delay, _ = get_follow_up_delays(user)
                 meeting_request.follow_up_count = 0

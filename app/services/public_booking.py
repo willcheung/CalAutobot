@@ -9,6 +9,7 @@ from app import db
 from app.helpers.text_processing import sanitize_text_for_db
 from app.models import Event, EventType, User
 from app.services.google_calendar import create_calendar_event, delete_calendar_event
+from app.services.availability import clear_availability_cache
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +208,7 @@ def create_booking_event(
 
     try:
         db.session.commit()
+        clear_availability_cache()
     except Exception as exc:  # noqa: BLE001
         logger.error("Database error while saving booking for user %s: %s", user.id, exc, exc_info=True)
         db.session.rollback()
@@ -251,3 +253,4 @@ def cancel_booking_event(user: User, event: Event) -> None:
     event.updated_at = datetime.utcnow()
 
     db.session.commit()
+    clear_availability_cache()

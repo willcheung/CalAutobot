@@ -17,7 +17,7 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
         username=f"Owner-{unique_suffix}",
         email=f"owner-{unique_suffix}@example.com",
         timezone="UTC",
-        google_id="123",
+        google_id=f"gid-{unique_suffix}",
         google_token='{"access_token": "abc", "refresh_token": "def"}'
     )
     db.session.add(owner)
@@ -82,6 +82,7 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
         return "calendar-event-xyz", "https://meet.google.com/test-link"
 
     monkeypatch.setattr("app.services.public_booking.create_calendar_event", fake_create_calendar_event)
+    monkeypatch.setattr("app.services.public_booking.delete_calendar_event", lambda *_, **__: None)
     captured_emails = []
 
     def fake_send_email(to, subject, **kwargs):
@@ -148,6 +149,175 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     current_app.config["SERVER_NAME"] = original_server_name
 
 
+def test_reschedule_meeting_creates_new_event(monkeypatch, app_context):
+    unique_suffix = datetime.utcnow().strftime("%f")
+    owner = User(
+        username=f"Owner-{unique_suffix}",
+        email=f"owner-{unique_suffix}@example.com",
+        timezone="UTC",
+        google_id=f"gid-confirm-{unique_suffix}",
+        google_token='{"access_token": "abc", "refresh_token": "def"}'
+    )
+    db.session.add(owner)
+    db.session.commit()
+
+    owner.default_booking_calendar_id = "booking-calendar"
+    assign_unique_handle(owner)
+    db.session.commit()
+
+    event_type = EventType(
+        user_id=owner.id,
+        title="Project Sync",
+        slug=f"project-sync-{unique_suffix}",
+        duration_minutes=30,
+        is_active=True,
+        is_public=True,
+    )
+    db.session.add(event_type)
+    db.session.commit()
+
+    original_server_name = current_app.config.get("SERVER_NAME")
+    current_app.config["SERVER_NAME"] = "calautobot.test"
+
+    old_start = "2025-02-01T10:00:00+00:00"
+    old_end = "2025-02-01T10:30:00+00:00"
+
+    existing_event = Event(
+        user_id=owner.id,
+        event_name="Project Sync",
+        start_datetime=old_start,
+        end_datetime=old_end,
+        start_date=datetime.fromisoformat(old_start).date(),
+        start_time=datetime.fromisoformat(old_start).time(),
+        end_date=datetime.fromisoformat(old_end).date(),
+        end_time=datetime.fromisoformat(old_end).time(),
+        duration_minutes=30,
+        status="scheduled",
+        source="ai_booking",
+        google_event_id="evt-123",
+    )
+    db.session.add(existing_event)
+    db.session.commit()
+
+    meeting_request = MeetingRequest(
+        user_id=owner.id,
+        subject="Project Sync",
+        status="confirmed",
+        current_step="confirm_slot",
+    )
+    meeting_request.confirmed_slot = {
+        "start": old_start,
+        "end": old_end,
+        "google_event_id": "evt-123",
+    }
+    db.session.add(meeting_request)
+    db.session.flush()
+
+    db.session.add(
+        MeetingMessage(
+            meeting_request_id=meeting_request.id,
+            sender_email="participant@example.com",
+            thread_id="thread-reschedule",
+            message_id="prior-msg",
+            body_text="Previous",
+            received_at=datetime.utcnow(),
+        )
+    )
+    db.session.commit()
+
+    booking_call = {}
+
+    real_create_booking_event = public_booking_service.create_booking_event
+
+    def fake_create_booking_event(user, event_type, start_dt, invitee_name, invitee_email, notes, source="public_booking", meeting_request_id=None):
+        booking_call.update(
+            {
+                "user_id": user.id,
+                "title": event_type.title,
+                "start": start_dt,
+                "invitee": invitee_email,
+                "source": source,
+            }
+        )
+        return real_create_booking_event(
+            user,
+            event_type,
+            start_dt,
+            invitee_name,
+            invitee_email,
+            notes,
+            source=source,
+            meeting_request_id=meeting_request_id,
+        )
+
+    monkeypatch.setattr(public_booking_service, "create_booking_event", fake_create_booking_event)
+    monkeypatch.setattr("app.services.scheduling_agent.create_booking_event", fake_create_booking_event)
+
+    def fake_create_calendar_event(user, payload, **_kwargs):
+        return "calendar-event-new", "https://meet.google.com/new-link"
+
+    monkeypatch.setattr("app.services.public_booking.create_calendar_event", fake_create_calendar_event)
+    monkeypatch.setattr("app.services.public_booking.delete_calendar_event", lambda *_, **__: None)
+    monkeypatch.setattr(
+        "app.services.scheduling_agent.gmail_service.send_email",
+        lambda *_, **__: True,
+    )
+
+    new_start = "2025-02-01T11:00:00+00:00"
+    new_end = "2025-02-01T11:30:00+00:00"
+
+    response = {
+        "meeting_request_id": meeting_request.id,
+        "reply": "Rescheduled",
+        "action": "reschedule",
+        "proposed_slots": [],
+        "confirmed_slot": {
+            "start": new_start,
+            "end": new_end,
+        },
+        "rescheduled_from": {
+            "start": old_start,
+            "end": old_end,
+            "google_event_id": "evt-123",
+        },
+        "notes": "reschedule",
+    }
+
+    monkeypatch.setattr(
+        "app.services.scheduling_agent.run_meeting_scheduler_agent",
+        lambda *args, **kwargs: response,
+    )
+
+    email_data = {
+        "sender": "participant@example.com",
+        "sender_name": "Participant",
+        "subject": "Reschedule",
+        "body_text": "Let's move to 11am.",
+        "body_html": "",
+        "to": [owner.email],
+        "cc": ["participant@example.com"],
+        "thread_id": "thread-reschedule",
+        "message_id": "reschedule-msg",
+        "received_at": datetime.utcnow(),
+        "raw_headers": {},
+        "attachments": [],
+    }
+
+    handle_scheduling_email(email_data, owner)
+
+    db.session.refresh(existing_event)
+    assert existing_event.status == "cancelled"
+
+    assert booking_call["start"].isoformat() == new_start
+
+    db.session.refresh(meeting_request)
+    assert meeting_request.status == "confirmed"
+    assert meeting_request.confirmed_slot["start"] == new_start
+    assert meeting_request.confirmed_slot.get("google_event_id") == "calendar-event-new"
+
+    assert booking_call["source"] == "ai_booking"
+
+    current_app.config["SERVER_NAME"] = original_server_name
 def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
     unique_suffix = datetime.utcnow().strftime("%f")
     owner = User(
