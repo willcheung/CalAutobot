@@ -66,9 +66,13 @@
         </aside>
             <div class="booking-calendar" data-owner-timezone="{{ owner_timezone }}">
                 <div class="calendar-header">
-                    <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ prev_month_date }}" aria-label="Previous month">
-                        ‹
-                    </a>
+                    {% if prev_month_enabled %}
+                        <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ prev_month_date }}" aria-label="Previous month">
+                            ‹
+                        </a>
+                    {% else %}
+                        <span class="calendar-nav calendar-nav--disabled" aria-disabled="true">‹</span>
+                    {% endif %}
                     <div class="calendar-title">{{ month_label }}</div>
                     <a class="calendar-nav" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}?date={{ next_month_date }}" aria-label="Next month">
                         ›

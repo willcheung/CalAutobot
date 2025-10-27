@@ -108,6 +108,7 @@ def _render_event_type_page(user: User, slug: str):
         target_date = datetime.now(tz).date()
 
     month_start = target_date.replace(day=1)
+    next_month_start = (month_start + timedelta(days=32)).replace(day=1)
     today = datetime.now(tz).date()
     month_calendar = calendar.Calendar(firstweekday=6).monthdatescalendar(
         month_start.year, month_start.month
@@ -157,7 +158,7 @@ def _render_event_type_page(user: User, slug: str):
         )
         availability_map = availability_batch.availability_map
 
-        if target_date < today or not availability_map.get(target_date, False):
+        if target_date < today:
             next_available = next(
                 (
                     day
@@ -173,6 +174,25 @@ def _render_event_type_page(user: User, slug: str):
                         handle=user.handle,
                         slug=event_type.slug,
                         date=next_available.isoformat(),
+                    )
+                )
+
+        if not availability_map.get(target_date, False):
+            next_in_month = next(
+                (
+                    day
+                    for day in sorted(availability_map.keys())
+                    if month_start <= day < next_month_start and availability_map.get(day, False)
+                ),
+                None,
+            )
+            if next_in_month and next_in_month != target_date:
+                return redirect(
+                    url_for(
+                        "public_booking.event_type_page",
+                        handle=user.handle,
+                        slug=event_type.slug,
+                        date=next_in_month.isoformat(),
                     )
                 )
 
@@ -210,7 +230,9 @@ def _render_event_type_page(user: User, slug: str):
         calendar_weeks.append(week_cells)
 
     prev_month = (month_start - timedelta(days=1)).replace(day=1)
-    next_month = (month_start + timedelta(days=32)).replace(day=1)
+    next_month = next_month_start
+    current_month_start = today.replace(day=1)
+    prev_month_enabled = prev_month >= current_month_start
 
     return render_template(
         "public/event_type.html",
@@ -223,6 +245,7 @@ def _render_event_type_page(user: User, slug: str):
         weekday_labels=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         prev_month_date=prev_month.isoformat(),
         next_month_date=next_month.isoformat(),
+        prev_month_enabled=prev_month_enabled,
         timezone_label=owner_timezone_label,
         owner_timezone=owner_timezone,
         timezone_options=timezone_options,
