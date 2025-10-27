@@ -258,6 +258,11 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
 
     db.session.refresh(meeting_request)
     assert meeting_request.status == "cancelled"
-    assert meeting_request.confirmed_slot is None
-
+    assert meeting_request.confirmed_slot == {
+        "start": start_iso,
+        "end": end_iso,
+        "google_event_id": "evt-123",
+    }
     assert captured_emails, "Expected cancellation email to be sent"
+    body = captured_emails[-1][2].get("text_body") or ""
+    assert "manually" not in body

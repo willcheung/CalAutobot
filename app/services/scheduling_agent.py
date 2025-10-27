@@ -170,31 +170,28 @@ def _find_event_for_cancellation(user: User, confirmed_info: Optional[Dict[str, 
     if not confirmed_info:
         return None
 
-    event: Optional[Event] = None
     google_event_id = None
+    start_iso = None
     if isinstance(confirmed_info, dict):
         google_event_id = confirmed_info.get("google_event_id")
+        start_iso = confirmed_info.get("start")
 
     if google_event_id:
         event = Event.query.filter_by(user_id=user.id, google_event_id=google_event_id).first()
         if event:
             return event
 
-    start_iso = None
-    if isinstance(confirmed_info, dict):
-        start_iso = confirmed_info.get("start")
     if start_iso:
-        event = (
+        return (
             Event.query.filter_by(user_id=user.id, start_datetime=start_iso)
             .order_by(Event.id.desc())
             .first()
         )
 
-    return event
+    return None
 
 
 def _apply_cancellation_state(meeting_request: MeetingRequest) -> None:
-    meeting_request.confirmed_slot = None
     meeting_request.proposed_slots = []
     meeting_request.status = "cancelled"
     meeting_request.current_step = "cancelled"
@@ -597,6 +594,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     if action == "cancel_meeting":
         slot_reference = previous_confirmed_slot or new_confirmed_slot
         event_to_cancel = _find_event_for_cancellation(user, slot_reference)
+        cancellation_failed = False
         if event_to_cancel:
             try:
                 cancel_booking_event(user, event_to_cancel)
@@ -607,6 +605,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                     meeting_request.id,
                     exc,
                 )
+                cancellation_failed = True
             else:
                 logger.info(
                     "Cancelled event %s for meeting_request %s",
@@ -618,7 +617,18 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                 "Unable to locate event to cancel for meeting_request %s",
                 meeting_request.id,
             )
-        _apply_cancellation_state(meeting_request)
+            cancellation_failed = True
+
+        if cancellation_failed:
+            if reply_text:
+                reply_text = (
+                    reply_text.rstrip()
+                    + "\n\n"
+                    + "I couldn't find that meeting on the calendar. Please remove it manually if it still appears."
+                )
+            meeting_request.notes = "cancel_unverified"
+        else:
+            _apply_cancellation_state(meeting_request)
     elif action == "confirm_slot" and meeting_request.confirmed_slot:
         meeting_request.status = "confirmed"
     elif action == "request_clarification":
