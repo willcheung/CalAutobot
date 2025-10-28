@@ -105,11 +105,19 @@ def record_interaction(
         return
 
     event_time = occurred_at or datetime.utcnow()
+    
+    # Ensure timezone-naive datetime for database compatibility
+    if event_time and hasattr(event_time, 'tzinfo') and event_time.tzinfo:
+        event_time = event_time.replace(tzinfo=None)
 
     def _update_latest(current: Optional[datetime], candidate: datetime) -> datetime:
-        if current is None or candidate > current:
-            return candidate
-        return current
+        # Ensure both datetimes are naive for comparison
+        current_naive = current.replace(tzinfo=None) if current and hasattr(current, 'tzinfo') and current.tzinfo else current
+        candidate_naive = candidate.replace(tzinfo=None) if candidate and hasattr(candidate, 'tzinfo') and candidate.tzinfo else candidate
+        
+        if current_naive is None or candidate_naive > current_naive:
+            return candidate_naive
+        return current_naive
 
     if incoming:
         contact.last_incoming_email_at = _update_latest(contact.last_incoming_email_at, event_time)

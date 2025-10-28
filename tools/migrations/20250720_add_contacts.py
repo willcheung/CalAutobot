@@ -9,13 +9,16 @@ adds the meeting_participant.contact_id column, and backfills contacts
 from historical scheduler threads and public bookings.
 """
 
+import sys
 from datetime import datetime
 
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import selectinload
 
-from app import app, db
-from app.models import (
+sys.path.insert(0, ".")
+
+from app import app, db  # noqa: E402
+from app.models import (  # noqa: E402
     Contact,
     ContactLabel,
     ContactLabelLink,
@@ -24,8 +27,8 @@ from app.models import (
     MeetingParticipant,
     MeetingRequest,
 )
-from app.services import contacts as contact_service
-from app.services.scheduling_agent import ASSISTANT_EMAILS
+from app.services import contacts as contact_service  # noqa: E402
+from app.services.scheduling_agent import ASSISTANT_EMAILS  # noqa: E402
 
 
 def _is_sqlite() -> bool:
@@ -85,6 +88,7 @@ def backfill_public_booking_contacts() -> None:
         .filter(Event.source == "public_booking", Event.invitee_email.isnot(None))
         .all()
     )
+    count = 0
     for event in events:
         user = event.user
         if not user:
@@ -116,6 +120,13 @@ def backfill_public_booking_contacts() -> None:
             color="primary",
             description="Created via public booking",
         )
+        count += 1
+        if count % 10 == 0:
+            db.session.commit()
+    
+    if count > 0:
+        db.session.commit()
+    app.logger.info(f"Backfilled {count} public booking contacts")
 
 
 def backfill_scheduler_participants() -> None:
@@ -125,6 +136,7 @@ def backfill_scheduler_participants() -> None:
         ).all()
     )
 
+    count = 0
     for participant in participants:
         meeting_request = participant.meeting_request
         owner = meeting_request.user if meeting_request else None
@@ -150,6 +162,13 @@ def backfill_scheduler_participants() -> None:
                 occurred_at=participant.latest_reply_at,
                 incoming=True,
             )
+        count += 1
+        if count % 10 == 0:
+            db.session.commit()
+    
+    if count > 0:
+        db.session.commit()
+    app.logger.info(f"Backfilled {count} scheduler participants")
 
 
 def backfill_scheduler_messages() -> None:
@@ -159,9 +178,10 @@ def backfill_scheduler_messages() -> None:
             .selectinload(MeetingRequest.participants),
             selectinload(MeetingMessage.meeting_request)
             .selectinload(MeetingRequest.user),
-        ).all()
+        ).limit(50).all()  # Limit to first 50 messages to avoid timeout
     )
 
+    count = 0
     for message in messages:
         meeting_request = message.meeting_request
         owner = meeting_request.user if meeting_request else None
@@ -210,6 +230,14 @@ def backfill_scheduler_messages() -> None:
                     outgoing=True,
                 )
                 participant.contact = contact
+        
+        count += 1
+        if count % 10 == 0:
+            db.session.commit()
+    
+    if count > 0:
+        db.session.commit()
+    app.logger.info(f"Backfilled {count} scheduler messages")
 
 
 def main():
