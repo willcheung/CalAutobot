@@ -202,7 +202,7 @@ def refresh_google_token(user):
         if not access_token:
             raise Exception("Invalid Google authentication. Please sign in again")
 
-        # Test the current token and check its expiration time
+        # Test the current token by checking if we can access the calendar service
         # Using the tokeninfo endpoint to validate the token without requiring calendar permissions
         test_response = requests.get(
             f'https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={access_token}',
@@ -210,21 +210,10 @@ def refresh_google_token(user):
         )
 
         if test_response.status_code == 200:
-            # Token is still valid, check if it has the right scope and enough time left
+            # Token is still valid, check if it has the right scope
             token_info = test_response.json()
-            has_calendar_scope = 'scope' in token_info and 'calendar' in token_info['scope']
-            
-            # Check if token will expire soon (within 5 minutes)
-            # Google's tokeninfo returns 'expires_in' in seconds
-            expires_in = token_info.get('expires_in', 0)
-            token_expiring_soon = expires_in < 300  # Less than 5 minutes
-            
-            if has_calendar_scope and not token_expiring_soon:
-                logger.info(f"Access token still valid with {expires_in}s remaining")
+            if 'scope' in token_info and 'calendar' in token_info['scope']:
                 return access_token
-            elif has_calendar_scope and token_expiring_soon:
-                logger.info(f"Access token expiring soon ({expires_in}s left), refreshing proactively")
-                # Fall through to refresh logic below
             else:
                 logger.warning("Token doesn't have required calendar scope, attempting refresh")
 
