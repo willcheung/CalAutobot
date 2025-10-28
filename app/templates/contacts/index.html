@@ -55,7 +55,7 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr class="text-muted small">
-                            <th scope="col" class="text-uppercase fw-semibold ps-3">Person</th>
+                            <th scope="col" class="text-uppercase fw-semibold ps-3">Name</th>
                             <th scope="col" class="text-uppercase fw-semibold">Company</th>
                             <th scope="col" class="text-uppercase fw-semibold">Role</th>
                             <th scope="col" class="text-uppercase fw-semibold">Labels</th>
@@ -97,11 +97,7 @@
                                 <tr>
                                     <td class="py-3 ps-3">
                                         <div class="d-flex align-items-center gap-2">
-                                            {% set avatar_text = (contact.display_name or contact.email or '?') %}
-                                            {% set avatar_trim = avatar_text.strip() %}
-                                            <div class="rounded-circle bg-light border text-muted d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
-                                                <span class="fw-semibold">{{ avatar_trim[0]|upper if avatar_trim else '?' }}</span>
-                                            </div>
+                                            {% set avatar_text = (contact.display_name or '?') %}
                                             <div>
                                                 <div class="fw-semibold">{{ contact.display_name or '—' }}</div>
                                                 {% if contact.timezone %}
