@@ -16,7 +16,8 @@ from app.services.google_calendar import (
 )
 from datetime import datetime
 import sentry_sdk
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, and_
+import pytz
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
@@ -38,6 +39,7 @@ from app.helpers.domain_utils import (
     is_development,
 )
 from app.services.follow_up_service import send_due_followups
+from app.services import availability as availability_service
 from app.services.reminder_service import send_due_reminders
 
 logger = logging.getLogger(__name__)
@@ -447,8 +449,32 @@ def bookings():
     page = max(page, 1)
     per_page = 25
 
-    now = datetime.utcnow()
+    now_utc = datetime.utcnow().replace(microsecond=0)
+    user_tz = availability_service.get_timezone(current_user)
+    now_local = now_utc.replace(tzinfo=pytz.UTC).astimezone(user_tz)
+    now_date = now_local.date()
+    now_time = now_local.time().replace(microsecond=0)
     base_query = Event.query.filter_by(user_id=current_user.id)
+
+    upcoming_filter = or_(
+        Event.start_date > now_date,
+        and_(
+            Event.start_date == now_date,
+            or_(
+                Event.start_time.is_(None),
+                and_(Event.start_time.isnot(None), Event.start_time >= now_time),
+            ),
+        ),
+    )
+
+    past_filter = or_(
+        Event.start_date < now_date,
+        and_(
+            Event.start_date == now_date,
+            Event.start_time.isnot(None),
+            Event.start_time < now_time,
+        ),
+    )
 
     # Build status-specific query with SQL filtering and sorting
     if status == "cancelled":
@@ -458,14 +484,14 @@ def bookings():
     elif status == "past":
         query = base_query.filter(
             Event.status != "cancelled",
-            Event.start_date < now.date()
+            past_filter,
         ).order_by(
             Event.start_date.desc(), Event.start_time.desc(), Event.created_at.desc()
         )
     else:  # upcoming
         query = base_query.filter(
             Event.status != "cancelled",
-            Event.start_date >= now.date()
+            upcoming_filter,
         ).order_by(
             Event.start_date.asc(), Event.start_time.asc(), Event.created_at.asc()
         )
@@ -507,11 +533,11 @@ def bookings():
     counts = {
         "upcoming": base_query.filter(
             Event.status != "cancelled",
-            Event.start_date >= now.date()
+            upcoming_filter,
         ).count(),
         "past": base_query.filter(
             Event.status != "cancelled",
-            Event.start_date < now.date()
+            past_filter,
         ).count(),
         "cancelled": base_query.filter(Event.status == "cancelled").count(),
     }
