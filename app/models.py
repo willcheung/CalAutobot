@@ -34,6 +34,8 @@ class User(UserMixin, db.Model):
     event_types = db.relationship('EventType', backref='user', lazy=True, cascade='all, delete-orphan')
     availability_windows = db.relationship('AvailabilityWindow', backref='user', lazy=True, cascade='all, delete-orphan')
     calendars = db.relationship('UserCalendar', backref='user', lazy=True, cascade='all, delete-orphan')
+    contacts = db.relationship('Contact', backref='user', lazy=True, cascade='all, delete-orphan')
+    contact_labels = db.relationship('ContactLabel', backref='user', lazy=True, cascade='all, delete-orphan')
 
     @property
     def display_name(self) -> str:
@@ -228,6 +230,9 @@ class MeetingParticipant(db.Model):
     status = db.Column(db.String(50), default='invited')  # invited, responded, confirmed
     latest_reply_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), nullable=True)
+
+    contact = db.relationship('Contact', back_populates='participants')
 
 
 class MeetingMessage(db.Model):
@@ -255,6 +260,70 @@ class MeetingMessage(db.Model):
     @parsed_slots.setter
     def parsed_slots(self, value):
         self.parsed_slots_json = json.dumps(value or [])
+
+
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    email = db.Column(db.String(255), nullable=False)
+    display_name = db.Column(db.String(255), nullable=True)
+    phone_number = db.Column(db.String(32), nullable=True)
+    timezone = db.Column(db.String(64), nullable=True)
+    company = db.Column(db.String(255), nullable=True)
+    job_title = db.Column(db.String(255), nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    linkedin_url = db.Column(db.String(512), nullable=True)
+    first_seen_source = db.Column(db.String(50), nullable=True)
+    first_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_interaction_at = db.Column(db.DateTime, nullable=True)
+    last_incoming_email_at = db.Column(db.DateTime, nullable=True)
+    last_outgoing_email_at = db.Column(db.DateTime, nullable=True)
+    follow_up_count = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    participants = db.relationship('MeetingParticipant', back_populates='contact', lazy=True)
+    label_links = db.relationship('ContactLabelLink', back_populates='contact', cascade='all, delete-orphan', lazy=True)
+    labels = db.relationship('ContactLabel', secondary='contact_label_link', back_populates='contacts', lazy='selectin')
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'email', name='uq_contact_user_email'),
+        db.Index('ix_contact_user_last_interaction', 'user_id', 'last_interaction_at'),
+    )
+
+
+class ContactLabel(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    name = db.Column(db.String(100), nullable=False)
+    color = db.Column(db.String(16), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    label_links = db.relationship('ContactLabelLink', back_populates='label', cascade='all, delete-orphan', lazy=True)
+    contacts = db.relationship('Contact', secondary='contact_label_link', back_populates='labels', lazy='selectin')
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'name', name='uq_contact_label_user_name'),
+    )
+
+
+class ContactLabelLink(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), nullable=False, index=True)
+    label_id = db.Column(db.Integer, db.ForeignKey('contact_label.id'), nullable=False, index=True)
+    applied_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    contact = db.relationship('Contact', back_populates='label_links')
+    label = db.relationship('ContactLabel', back_populates='label_links')
+    applied_by = db.relationship('User', foreign_keys=[applied_by_user_id])
+
+    __table_args__ = (
+        db.UniqueConstraint('contact_id', 'label_id', name='uq_contact_label_link'),
+    )
 
 
 class EmailAttachment(db.Model):

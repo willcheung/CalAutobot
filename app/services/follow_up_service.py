@@ -145,6 +145,7 @@ def _send_follow_up_for_request(meeting_request: MeetingRequest) -> bool:
         thread_id=thread_id,
         reply_to_message_id=reply_to_message_id,
         subject=meeting_request.subject,
+        is_follow_up=True,
     )
 
     if not send_success:

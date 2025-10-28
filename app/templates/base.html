@@ -105,6 +105,7 @@
                 <nav class="sidebar-nav">
                     {% set current_endpoint = request.endpoint or '' %}
                     {% set is_bookings_active = current_endpoint == 'main_routes.bookings' %}
+                    {% set is_contacts_active = current_endpoint == 'main_routes.contacts_page' %}
                     {% set is_event_types_active = current_endpoint.startswith('event_types_routes.') %}
                     {% set is_availability_active = current_endpoint.startswith('availability_routes.') %}
                     {% set is_settings_active = current_endpoint.startswith('settings_routes.') %}
@@ -112,6 +113,10 @@
                         <a class="sidebar-link{% if is_bookings_active %} sidebar-link-active{% endif %}" href="{{ url_for('main_routes.bookings') }}">
                             <i data-feather="grid"></i>
                             <span>Bookings</span>
+                        </a>
+                        <a class="sidebar-link{% if is_contacts_active %} sidebar-link-active{% endif %}" href="{{ url_for('main_routes.contacts_page') }}">
+                            <i data-feather="users"></i>
+                            <span>Contacts</span>
                         </a>
                         <a class="sidebar-link{% if is_event_types_active %} sidebar-link-active{% endif %}" href="{{ url_for('event_types_routes.list_event_types') }}">
                             <i data-feather="calendar"></i>

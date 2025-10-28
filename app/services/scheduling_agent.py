@@ -17,6 +17,7 @@ from app.models import (
 from app.agents.meeting_scheduler import run_meeting_scheduler_agent
 from app.helpers.text_processing import sanitize_text_for_db
 from app.services import availability as availability_service
+from app.services import contacts as contact_service
 from app.services.availability import AvailabilityBatch, AvailabilityError
 from app.services.public_booking import create_booking_event, cancel_booking_event
 from app.services.gmail_service import gmail_service
@@ -294,7 +295,25 @@ def _get_or_create_meeting_request(
 
 
 def _sync_participants(meeting_request: MeetingRequest, email_data: Dict):
-    seen = {participant.email.lower() for participant in meeting_request.participants}
+    existing_map = {}
+    for participant in meeting_request.participants:
+        if not participant.email:
+            continue
+        existing_map[participant.email.lower()] = participant
+        # Make sure we link existing participants to contacts if possible.
+        if participant.email and participant.contact_id is None:
+            owner = meeting_request.user
+            if owner and participant.email.lower() != (owner.email or "").strip().lower():
+                contact = contact_service.ensure_contact(
+                    owner,
+                    participant.email,
+                    display_name=participant.name,
+                    first_seen_source="scheduler",
+                    first_seen_at=participant.created_at or datetime.utcnow(),
+                )
+                if contact:
+                    participant.contact = contact
+
     potential = set()
 
     sender = (email_data.get("sender") or "").strip().lower()
@@ -308,17 +327,36 @@ def _sync_participants(meeting_request: MeetingRequest, email_data: Dict):
                 continue
             potential.add((addr, None))
 
+    owner_email = (meeting_request.user.email or "").strip().lower() if meeting_request.user else None
+
     for email, name in potential:
-        if email in seen:
+        if email in existing_map:
+            participant = existing_map[email]
+            if name and not participant.name:
+                participant.name = name
             continue
         participant = MeetingParticipant(
             meeting_request_id=meeting_request.id,
             email=email,
             name=name,
-            role="participant" if email != meeting_request.user.email else "organizer",
+            role="organizer" if owner_email and email == owner_email else "participant",
         )
         db.session.add(participant)
-        seen.add(email)
+        existing_map[email] = participant
+
+    for participant in meeting_request.participants:
+        normalized = (participant.email or "").strip().lower()
+        if not normalized or normalized == owner_email or normalized in ASSISTANT_EMAILS:
+            continue
+        contact = contact_service.ensure_contact(
+            meeting_request.user,
+            normalized,
+            display_name=participant.name,
+            first_seen_source="scheduler",
+            first_seen_at=participant.created_at or datetime.utcnow(),
+        )
+        if contact:
+            participant.contact = contact
 
 
 def _record_meeting_message(
@@ -345,6 +383,52 @@ def _record_meeting_message(
     )
     db.session.add(message)
     db.session.flush()
+
+    owner = meeting_request.user
+    owner_email = (owner.email or "").strip().lower() if owner and owner.email else None
+    sender_email = (message.sender_email or "").strip().lower()
+    occurred_at = message.received_at or message.created_at or datetime.utcnow()
+
+    if sender_email and sender_email != owner_email and sender_email not in ASSISTANT_EMAILS:
+        contact = contact_service.ensure_contact(
+            owner,
+            sender_email,
+            display_name=email_data.get("sender_name"),
+            first_seen_source="scheduler",
+            first_seen_at=message.created_at or datetime.utcnow(),
+        )
+        contact_service.record_interaction(
+            contact,
+            occurred_at=occurred_at,
+            incoming=True,
+        )
+        # Link back to any participant row missing a contact relationship.
+        for participant in meeting_request.participants:
+            if participant.email and participant.email.strip().lower() == sender_email:
+                participant.contact = contact
+                if message.received_at:
+                    participant.latest_reply_at = message.received_at
+                break
+    else:
+        # Treat owner/assistant messages as outgoing touchpoints to every external participant.
+        for participant in meeting_request.participants:
+            normalized = (participant.email or "").strip().lower()
+            if not normalized or normalized == owner_email or normalized in ASSISTANT_EMAILS:
+                continue
+            contact = contact_service.ensure_contact(
+                owner,
+                normalized,
+                display_name=participant.name,
+                first_seen_source="scheduler",
+                first_seen_at=participant.created_at or datetime.utcnow(),
+            )
+            contact_service.record_interaction(
+                contact,
+                occurred_at=occurred_at,
+                outgoing=True,
+            )
+            participant.contact = contact
+
     return message
 
 
@@ -466,6 +550,7 @@ def send_agent_reply_email(
     reply_to_message_id: Optional[str],
     subject: Optional[str],
     extra_recipients: Optional[List[str]] = None,
+    is_follow_up: bool = False,
 ) -> bool:
     """
     Send the agent's reply email and return True on success.
@@ -506,6 +591,30 @@ def send_agent_reply_email(
             reply_to_message_id=reply_to_message_id,
             cc_recipients=cc_recipients,
         )
+        interaction_time = datetime.utcnow()
+        for addr in recipient_set:
+            normalized = (addr or "").strip().lower()
+            if not normalized or normalized == owner_email or normalized in ASSISTANT_EMAILS:
+                continue
+            # Try to reuse participant display names when available.
+            participant_name = None
+            for participant in meeting_request.participants:
+                if participant.email and participant.email.strip().lower() == normalized:
+                    participant_name = participant.name
+                    break
+            contact = contact_service.ensure_contact(
+                user,
+                normalized,
+                display_name=participant_name,
+                first_seen_source="scheduler",
+                first_seen_at=interaction_time,
+            )
+            contact_service.record_interaction(
+                contact,
+                occurred_at=interaction_time,
+                outgoing=True,
+                follow_up_increment=is_follow_up,
+            )
         return True
     except Exception as send_exc:
         logger.error(

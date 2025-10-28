@@ -5,7 +5,7 @@ import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Event, UserEmail, CalWaitlist
+from app.models import User, Event, UserEmail, CalWaitlist, Contact, ContactLabel
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 from app.services.google_calendar import (
@@ -16,8 +16,9 @@ from app.services.google_calendar import (
 )
 from datetime import datetime
 import sentry_sdk
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 
 # Import helper modules
 from app.services.event_processing import process_text_to_events
@@ -525,6 +526,56 @@ def bookings():
         counts=counts,
         has_calendar_scope=has_calendar_scope,
     )
+
+
+@main_routes.route("/contacts")
+@login_required
+def contacts_page():
+    search_query = (request.args.get("q") or "").strip()
+    label_filter = request.args.get("label", type=int)
+
+    contacts_query = (
+        Contact.query.options(selectinload(Contact.labels))
+        .filter_by(user_id=current_user.id)
+    )
+
+    if search_query:
+        term = f"%{search_query.lower()}%"
+        contacts_query = contacts_query.filter(
+            or_(
+                func.lower(Contact.display_name).like(term),
+                func.lower(Contact.email).like(term),
+                func.lower(Contact.company).like(term),
+                func.lower(Contact.job_title).like(term),
+            )
+        )
+
+    if label_filter:
+        contacts_query = contacts_query.join(Contact.labels).filter(ContactLabel.id == label_filter)
+
+    contacts = (
+        contacts_query.order_by(
+            Contact.last_interaction_at.desc(),
+            Contact.created_at.desc(),
+        )
+        .limit(200)
+        .all()
+    )
+
+    labels = (
+        ContactLabel.query.filter_by(user_id=current_user.id)
+        .order_by(ContactLabel.name.asc())
+        .all()
+    )
+
+    return render_template(
+        "contacts/index.html",
+        contacts=contacts,
+        labels=labels,
+        search_query=search_query,
+        active_label_id=label_filter,
+    )
+
 
 @main_routes.route("/dashboard")
 @login_required

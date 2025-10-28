@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Contacts - CalAutobot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3">
+        <div>
+            <h1 class="h4 mb-1">Contacts</h1>
+            <p class="text-muted small mb-0">Recent people from scheduling threads and public bookings.</p>
+        </div>
+        <form class="mt-2 mt-md-0" method="get">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0">
+                    <i data-feather="search" class="text-muted"></i>
+                </span>
+                <input
+                    type="search"
+                    class="form-control border-start-0"
+                    name="q"
+                    placeholder="Search contacts"
+                    value="{{ search_query }}"
+                    aria-label="Search contacts"
+                >
+                {% if active_label_id %}
+                    <input type="hidden" name="label" value="{{ active_label_id }}">
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if labels %}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a
+            class="badge {{ 'bg-primary text-white' if not active_label_id else 'bg-light text-dark' }} text-decoration-none py-2 px-3"
+            href="{{ url_for('main_routes.contacts_page', q=search_query or None) }}"
+        >
+            All labels
+        </a>
+        {% for label in labels %}
+            <a
+                class="badge {% if active_label_id == label.id %}bg-primary text-white{% else %}bg-light text-dark{% endif %} text-decoration-none py-2 px-3"
+                href="{{ url_for('main_routes.contacts_page', q=search_query or None, label=label.id) }}"
+            >
+                {{ label.name }}
+            </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="table-responsive shadow-sm rounded bg-white">
+        <table class="table table-sm align-middle table-hover mb-0">
+            <thead class="table-light">
+                <tr class="text-muted small">
+                    <th scope="col" class="text-uppercase fw-semibold">Person</th>
+                    <th scope="col" class="text-uppercase fw-semibold">Company</th>
+                    <th scope="col" class="text-uppercase fw-semibold">Role</th>
+                    <th scope="col" class="text-uppercase fw-semibold">Labels</th>
+                    <th scope="col" class="text-uppercase fw-semibold">Email</th>
+                    <th scope="col" class="text-uppercase fw-semibold">Phone</th>
+                    <th scope="col" class="text-uppercase fw-semibold text-center">Followups</th>
+                    <th scope="col" class="text-uppercase fw-semibold">Last interaction</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if contacts %}
+                    {% for contact in contacts %}
+                        <tr>
+                            <td class="py-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    {% set avatar_text = (contact.display_name or contact.email or '?') %}
+                                    {% set avatar_trim = avatar_text.strip() %}
+                                    <div class="rounded-circle bg-light border text-muted d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                                        <span class="fw-semibold">{{ avatar_trim[0]|upper if avatar_trim else '?' }}</span>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">{{ contact.display_name or '—' }}</div>
+                                        <div class="text-muted small">{{ contact.timezone or '' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-2">
+                                <div class="fw-semibold">{{ contact.company or '—' }}</div>
+                            </td>
+                            <td class="py-2">
+                                {{ contact.job_title or '—' }}
+                            </td>
+                            <td class="py-2">
+                                {% if contact.labels %}
+                                    {% for label in contact.labels %}
+                                        <span class="badge rounded-pill {% if label.color %}bg-{{ label.color }}{% else %}bg-light text-dark{% endif %} me-1">{{ label.name }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2">
+                                {% if contact.email %}
+                                    <a href="mailto:{{ contact.email }}" class="text-decoration-none">{{ contact.email }}</a>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2">
+                                {{ contact.phone_number or '—' }}
+                            </td>
+                            <td class="py-2 text-center">
+                                <span class="badge bg-secondary">{{ contact.follow_up_count or 0 }}</span>
+                            </td>
+                            <td class="py-2">
+                                {% set last_touch = contact.last_interaction_at or contact.last_incoming_email_at or contact.last_outgoing_email_at %}
+                                {% if last_touch %}
+                                    {{ last_touch.strftime('%b %d, %Y') }}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            No contacts yet. They will appear once your assistant engages with invitees or public bookings are created.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

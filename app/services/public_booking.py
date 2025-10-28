@@ -10,6 +10,7 @@ from app.helpers.text_processing import sanitize_text_for_db
 from app.models import Event, EventType, User
 from app.services.google_calendar import create_calendar_event, delete_calendar_event
 from app.services.availability import clear_availability_cache
+from app.services import contacts as contact_service
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +201,26 @@ def create_booking_event(
         )
         db.session.rollback()
         raise BookingCreationError("We couldn't schedule that meeting. Please try again.") from exc
+
+    contact = contact_service.ensure_contact(
+        user,
+        invitee_email,
+        display_name=invitee_name,
+        first_seen_source=source or "public_booking",
+        first_seen_at=start_dt,
+    )
+    contact_service.record_interaction(
+        contact,
+        occurred_at=start_dt,
+        incoming=True,
+    )
+    contact_service.assign_label(
+        contact,
+        "Booked",
+        applied_by=user,
+        color="primary",
+        description="Created via public booking",
+    )
 
     event.is_synced = bool(google_event_id)
     event.google_event_id = google_event_id
