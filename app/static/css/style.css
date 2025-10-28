@@ -1911,6 +1911,17 @@ code, pre {
     color: var(--text-muted);
 }
 
+.empty-state-alert-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.empty-state-alert {
+    max-width: 660px;
+    width: 100%;
+}
+
 .empty-icon {
     width: 64px;
     height: 64px;

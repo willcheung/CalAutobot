@@ -166,6 +166,8 @@ def callback():
     if profile_picture:
         user.profile_picture_url = profile_picture
 
+    has_existing_event_types = bool(user.event_types)
+
     if not user.handle:
         assign_unique_handle(user, users_name)
 
@@ -185,7 +187,9 @@ def callback():
     db.session.commit()
 
     # Create a default event type for new users
-    if is_new_user:
+    should_create_default_event_type = is_new_user or (is_provisional_user_signup and not has_existing_event_types)
+
+    if should_create_default_event_type:
         try:
             create_event_type(
                 user_id=user.id,
@@ -195,7 +199,11 @@ def callback():
                 slug=None,
                 is_public=True,
             )
-            logger.info("Created default event type for new user %s", users_email)
+            logger.info(
+                "Created default event type for user %s (reason: %s)",
+                users_email,
+                "new_signup" if is_new_user else "provisional_upgrade",
+            )
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "Failed to create default event type for user %s: %s",

@@ -21,6 +21,13 @@
             <h1 class="mb-1">AI Assistant</h1>
             <p class="text-muted mb-0">Control how Cal follows up on stalled scheduling threads.</p>
         </div>
+        <a class="bookings-cta" href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" rel="noopener noreferrer">
+            <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome logo" class="bookings-cta__icon">
+            <div class="bookings-cta__copy">
+                <span class="bookings-cta__title">Capture events from emails or websites</span>
+                <span class="bookings-cta__subtitle">Forward emails to <strong>Cal@CalAutobot.com</strong> or use our free Chrome Extension</span>
+            </div>
+        </a>
     </div>
 
     {% set active_tab = "assistant" %}
