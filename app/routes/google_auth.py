@@ -121,6 +121,7 @@ def callback():
         users_email = userinfo["email"]
         users_name = userinfo["email"]  # Use email as username instead of given_name
         google_id = userinfo["sub"]
+        profile_picture = userinfo.get("picture")
     else:
         return "User email not available or not verified by Google.", 400
 
@@ -143,6 +144,8 @@ def callback():
         user.email = users_email
         user.google_id = google_id
         user.timezone = user_timezone
+        if profile_picture:
+            user.profile_picture_url = profile_picture
         user.email_count = 0  # Real users have no email limit
         db.session.add(user)
         logger.info(f"Created new user {users_email} with timezone {user_timezone}")
@@ -160,6 +163,8 @@ def callback():
             user.username = users_name
             user.email_count = 0  # Reset email count - real users have no limit
             logger.info(f"✅ Upgraded provisional user {users_email} to authenticated user")
+    if profile_picture:
+        user.profile_picture_url = profile_picture
 
     if not user.handle:
         assign_unique_handle(user, users_name)

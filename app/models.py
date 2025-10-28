@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     extraction_calendar_id = db.Column(db.String(100), nullable=True)  # Store Cal Pilot calendar ID
     default_booking_calendar_id = db.Column(db.String(255), nullable=True)
     timezone = db.Column(db.String(50), default='UTC')  # User's timezone
+    profile_picture_url = db.Column(db.String(512), nullable=True)
     email_count = db.Column(db.Integer, default=0)  # Track emails sent for provisional users
     follow_up_enabled = db.Column(db.Boolean, nullable=False, default=True, server_default="true")
     follow_up_first_delay_days = db.Column(db.Integer, nullable=False, default=1, server_default="1")
