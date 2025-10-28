@@ -120,6 +120,19 @@
     color: #ffffff;
 }
 
+.info-tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+}
+
+.info-tooltip-icon svg.icon-info-small {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.2;
+}
+
 @media (max-width: 767.98px) {
     .landing-header-container {
         flex-wrap: wrap;

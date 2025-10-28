@@ -45,48 +45,41 @@ def ensure_contact(
         .first()
     )
 
-    created_now = False
     timestamp = first_seen_at or datetime.utcnow()
-    if not contact:
-        contact = Contact(
-            user_id=user.id,
-            email=normalised,
-            first_seen_source=first_seen_source,
-            first_seen_at=timestamp,
-        )
-        db.session.add(contact)
-        created_now = True
+    display_name = display_name.strip() if isinstance(display_name, str) else display_name
+    phone_number = phone_number.strip() if isinstance(phone_number, str) else phone_number
+    if timezone is not None and not isinstance(timezone, str):
+        timezone = str(timezone)
+    timezone = timezone.strip() if isinstance(timezone, str) else timezone
+    company = company.strip() if isinstance(company, str) else company
+    job_title = job_title.strip() if isinstance(job_title, str) else job_title
+    address = address.strip() if isinstance(address, str) else address
+    notes = notes.strip() if isinstance(notes, str) else notes
+    linkedin_url = linkedin_url.strip() if isinstance(linkedin_url, str) else linkedin_url
 
-    # Only fill missing profile fields so we don't overwrite user edits.
-    field_updates = {
-        "display_name": display_name,
-        "phone_number": phone_number,
-        "timezone": timezone,
-        "company": company,
-        "job_title": job_title,
-        "address": address,
-        "linkedin_url": linkedin_url,
-    }
-    for field, value in field_updates.items():
-        if value and not getattr(contact, field, None):
-            setattr(contact, field, value.strip())
+    if contact:
+        if not contact.first_seen_at:
+            contact.first_seen_at = timestamp
+        if not contact.first_seen_source and first_seen_source:
+            contact.first_seen_source = first_seen_source
+        return contact
 
-    if notes:
-        # Append notes if the contact already has human-written content.
-        if contact.notes:
-            if notes.strip() not in contact.notes:
-                contact.notes = f"{contact.notes}\n\n{notes.strip()}"
-        else:
-            contact.notes = notes.strip()
-
-    if not contact.first_seen_at:
-        contact.first_seen_at = timestamp
-    if not contact.first_seen_source:
-        contact.first_seen_source = first_seen_source
-
-    if created_now:
-        db.session.flush()
-
+    contact = Contact(
+        user_id=user.id,
+        email=normalised,
+        display_name=display_name,
+        phone_number=phone_number,
+        timezone=timezone,
+        company=company,
+        job_title=job_title,
+        address=address,
+        notes=notes,
+        linkedin_url=linkedin_url,
+        first_seen_source=first_seen_source,
+        first_seen_at=timestamp,
+    )
+    db.session.add(contact)
+    db.session.flush()
     return contact
 
 
