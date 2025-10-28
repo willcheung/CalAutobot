@@ -46,9 +46,13 @@
     <script>
         // Detect user's timezone
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-        
-        // Auto-redirect to Google OAuth with timezone
-        window.location.href = '/google_login?timezone=' + encodeURIComponent(timezone);
+
+        // Preserve existing query parameters such as full=1 or email=...
+        const params = new URLSearchParams(window.location.search);
+        params.set('timezone', timezone);
+
+        // Auto-redirect to Google OAuth with timezone and original params
+        window.location.href = '/google_login?' + params.toString();
     </script>
 </body>
 </html>

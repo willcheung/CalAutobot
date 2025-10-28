@@ -6,6 +6,9 @@ import pytest
 # Disable Sentry during tests to prevent test errors from being logged to production
 os.environ.pop("SENTRY_DSN", None)
 
+# Allow OAuth over HTTP during tests (oauthlib requires HTTPS by default)
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+
 # Ensure the application boots against a local SQLite database during import-time setup.
 DEFAULT_TEST_DB = pathlib.Path("pytest_bootstrap.db")
 os.environ["DATABASE_URL"] = f"sqlite:///{DEFAULT_TEST_DB}"
