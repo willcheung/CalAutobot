@@ -191,10 +191,13 @@ def refresh_google_token(user):
         from app import db
         token_data = json.loads(user.google_token)
         access_token = token_data.get('access_token')
-        refresh_token = token_data.get('refresh_token')
+        # Check both the JSON and the separate column for refresh token
+        refresh_token = token_data.get('refresh_token') or user.google_refresh_token
 
         logger.info(f"Token data keys: {list(token_data.keys())}")
-        logger.info(f"Has refresh token: {bool(refresh_token)}")
+        logger.info(f"Has refresh token in JSON: {bool(token_data.get('refresh_token'))}")
+        logger.info(f"Has refresh token in column: {bool(user.google_refresh_token)}")
+        logger.info(f"Using refresh token: {bool(refresh_token)}")
 
         if not access_token:
             raise Exception("Invalid Google authentication. Please sign in again")
