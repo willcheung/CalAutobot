@@ -91,7 +91,13 @@
             <aside class="sidebar" id="sidebar">
                 <div class="sidebar-header">
                     <a class="sidebar-brand" href="{{ url_for('main_routes.index') }}">
-                        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="calAutobot.com" width="38" height="38">
+                        {% if current_user.is_authenticated and current_user.profile_picture_url %}
+                            <span class="sidebar-brand-avatar">
+                                <img src="{{ current_user.profile_picture_url }}" alt="{{ current_user.display_name }} profile photo" loading="lazy">
+                            </span>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="calAutobot.com" width="38" height="38">
+                        {% endif %}
                         <span>Calendar Autobot</span>
                     </a>
                 </div>
