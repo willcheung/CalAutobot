@@ -464,6 +464,9 @@ def prepare_agent_context_for_request(
     """
     Build agent inputs, conversation history, and availability data for a meeting request.
     """
+    tz = availability_service.get_timezone(user)
+    now_local = datetime.now(tz)
+
     agent_input: Dict[str, object] = {
         "subject": meeting_request.subject,
         "owner_email": user.email,
@@ -471,7 +474,8 @@ def prepare_agent_context_for_request(
         "participants": [p.email for p in meeting_request.participants],
         "status": meeting_request.status,
         "timezone": user.timezone or "UTC",
-        "current_date": datetime.utcnow().date().isoformat(),
+        "current_date": now_local.date().isoformat(),
+        "current_time_display": now_local.strftime("%I:%M%p %Z on %b %d, %Y").lstrip("0"),
     }
     agent_input["availability_note"] = None
     history = _export_messages_for_agent(meeting_request)

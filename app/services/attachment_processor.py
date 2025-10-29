@@ -226,13 +226,17 @@ class AttachmentProcessor:
         """
         from app.services.event_processing import process_text_to_events
         from app.agents.event_extractor import validate_and_clean_event
-        from datetime import datetime
+from datetime import datetime
         from app import db
         from app.models import Event
-        from app.helpers.text_processing import sanitize_text_for_db
-        from app.services.google_calendar import create_calendar_event
+from app.helpers.text_processing import sanitize_text_for_db
+from app.services.google_calendar import create_calendar_event
+from app.helpers.datetime_utils import ensure_timezone
         
         user = User.query.get(text_input.user_id)
+        user_timezone = user.timezone if user and user.timezone else "UTC"
+        tz_obj = ensure_timezone(user_timezone)
+        now_local = datetime.now(tz_obj)
         created_events = []
         synced_count = 0
         
@@ -261,8 +265,8 @@ class AttachmentProcessor:
                     if cleaned_event['start_date']:
                         event.start_date = datetime.strptime(cleaned_event['start_date'], '%Y-%m-%d').date()
                     else:
-                        # If no start date provided, use today as default (required by DB schema)
-                        event.start_date = datetime.now().date()
+                        # If no start date provided, use owner-local today as default (required by DB schema)
+                        event.start_date = now_local.date()
 
                     if cleaned_event['start_time']:
                         event.start_time = datetime.strptime(cleaned_event['start_time'], '%H:%M').time()

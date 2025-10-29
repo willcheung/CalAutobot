@@ -2,13 +2,13 @@
 import logging
 import time
 from datetime import datetime
-import pytz
 from app import db
 from app.models import User, Event, TextInput
 from app.agents.event_extractor import extract_events_from_text, validate_and_clean_event
 from app.services.google_calendar import create_calendar_event
 from app.helpers.text_processing import sanitize_text_for_db
 from app.helpers.event_utils import calculate_event_duration_minutes
+from app.helpers.datetime_utils import ensure_timezone
 import sentry_sdk
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,9 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
     user_timezone = user.timezone if user.timezone else "UTC"
 
     # Call the extraction function synchronously
-    user_tz_obj = pytz.timezone(user_timezone) if user_timezone else pytz.UTC
-    current_date_local = datetime.now(user_tz_obj).strftime('%Y-%m-%d')
+    tz_obj = ensure_timezone(user_timezone)
+    now_local = datetime.now(tz_obj)
+    current_date_local = now_local.strftime('%Y-%m-%d')
 
     extracted_events, from_email, is_offline, openai_status, openai_error = extract_events_from_text(
         text,
@@ -89,7 +90,7 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
                 event.start_date = datetime.strptime(cleaned_event['start_date'], '%Y-%m-%d').date()
             else:
                 # If no start date provided, use today as default (required by DB schema)
-                event.start_date = datetime.now().date()
+                event.start_date = now_local.date()
 
             if cleaned_event['start_time']:
                 event.start_time = datetime.strptime(cleaned_event['start_time'], '%H:%M').time()

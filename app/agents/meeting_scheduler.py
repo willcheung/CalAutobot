@@ -6,6 +6,8 @@ from typing import Dict, List, Optional
 
 from openai import OpenAI
 
+from app.helpers.datetime_utils import ensure_timezone
+
 logger = logging.getLogger(__name__)
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
@@ -14,6 +16,12 @@ openai = OpenAI(api_key=OPENAI_API_KEY)
 SCHEDULER_SYSTEM_PROMPT_TEMPLATE = """You are **Cal**, a professional AI scheduling assistant managing meetings on behalf of **{owner_name} ({owner_email})**.
 
 Your objective is to review the provided conversation and determine the appropriate scheduling action, then draft a concise, professional email reply representing Cal.
+
+---
+
+### Current Context
+- The owner's timezone is **{timezone}**.
+- The owner's current local time is **{current_time_display}**. Always treat this as “now” when referencing the current time or resolving relative phrases.
 
 ---
 
@@ -152,7 +160,12 @@ def run_meeting_scheduler_agent(
     latest_body = latest_message.get("body") or ""
 
     timezone = meeting_context.get("timezone") or "UTC"
-    current_date = meeting_context.get("current_date") or datetime.utcnow().date().isoformat()
+    tz_obj = ensure_timezone(timezone)
+    now_local = datetime.now(tz_obj)
+    current_date = meeting_context.get("current_date") or now_local.date().isoformat()
+    current_time_display = meeting_context.get("current_time_display") or now_local.strftime(
+        "%I:%M%p %Z on %b %d, %Y"
+    ).lstrip("0")
     owner_email = meeting_context.get("owner_email") or "[unknown]"
     owner_name = meeting_context.get("owner_name") or owner_email
     event_duration_minutes = meeting_context.get("event_duration_minutes") or 30
@@ -163,6 +176,7 @@ def run_meeting_scheduler_agent(
         .replace("{owner_email}", owner_email)
         .replace("{timezone}", timezone)
         .replace("{current_date}", current_date)
+        .replace("{current_time_display}", current_time_display)
         .replace("{event_duration_minutes}", str(event_duration_minutes))
     )
 
@@ -174,6 +188,7 @@ owner_name: {owner_name}
 Participants: {', '.join(meeting_context.get('participants') or [])}
 timezone: {timezone}
 current_date: {current_date}
+current_time_local: {current_time_display}
 default_meeting_duration: {event_duration_minutes} minutes
 availability_note: {availability_note or 'None'}
 
