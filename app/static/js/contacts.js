@@ -1,6 +1,16 @@
 (() => {
     const PLACEHOLDER = '—';
-    const CONTACT_FIELDS = ['display_name', 'timezone', 'company', 'job_title', 'email', 'phone_number'];
+    const CONTACT_FIELDS = ['display_name', 'company', 'job_title', 'email', 'phone_number'];
+    const COLUMN_COUNT = 9;
+    const EMPTY_STATE_HTML = `
+        <div class="empty-state">
+            <i data-feather="users" class="empty-icon"></i>
+            <h3 class="mt-3">No contacts yet</h3>
+            <p class="text-muted mb-0">
+                Contacts will appear once your assistant engages with invitees or public bookings are created.
+            </p>
+        </div>
+    `;
 
     function placeholderFor(element) {
         const hint = element.dataset.placeholder;
@@ -42,21 +52,6 @@
         setDisplayedValue(element, original);
     }
 
-    function updateAvatar(row) {
-        const avatar = row.querySelector('.contact-avatar');
-        if (!avatar) {
-            return;
-        }
-        const nameCell = row.querySelector('[data-field="display_name"]');
-        const emailCell = row.querySelector('[data-field="email"]');
-        const source =
-            (nameCell && (nameCell.dataset.value || nameCell.textContent || '')) ||
-            (emailCell && (emailCell.dataset.value || emailCell.textContent || '')) ||
-            '';
-        const initial = source.trim().charAt(0).toUpperCase() || '?';
-        avatar.textContent = initial;
-    }
-
     function collectRowValues(row) {
         const values = {};
         CONTACT_FIELDS.forEach((field) => {
@@ -89,28 +84,17 @@
         const lastInteractionCell = row.querySelector('[data-role="last-interaction"]');
         if (lastInteractionCell) {
             const target = lastInteractionCell.querySelector('[data-role="last-interaction-text"]') || lastInteractionCell;
-            const hasValue = Boolean(contact.last_interaction_at);
-            target.textContent = hasValue ? contact.last_interaction_at : '—';
+            const displayValue =
+                (contact.last_interaction_display && contact.last_interaction_display.trim()) ||
+                (typeof contact.last_interaction_at === 'string' ? contact.last_interaction_at.trim() : '');
+            const hasValue = Boolean(displayValue);
+            target.textContent = hasValue ? displayValue : '—';
             target.classList.toggle('text-muted', !hasValue);
         }
-        updateAvatar(row);
     }
 
-    async function ensureContact(element, pendingValue) {
-        const row = element.closest('tr');
+    async function createContact(row, payload, triggerElement) {
         if (!row) {
-            return null;
-        }
-        const payload = collectRowValues(row);
-        payload[element.dataset.field] = pendingValue;
-
-        if (!payload.display_name && !payload.email) {
-            revertValue(element);
-            element.classList.add('contact-editable--error');
-            setTimeout(() => element.classList.remove('contact-editable--error'), 1200);
-            if (typeof showToast === 'function') {
-                showToast('Add a name or email before saving.', 'warning');
-            }
             return null;
         }
 
@@ -130,9 +114,10 @@
             const data = await response.json().catch(() => ({}));
             if (!response.ok) {
                 const message = data.error || 'Unable to create contact.';
-                revertValue(element);
-                element.classList.add('contact-editable--error');
-                setTimeout(() => element.classList.remove('contact-editable--error'), 1200);
+                if (triggerElement) {
+                    triggerElement.classList.add('contact-editable--error');
+                    setTimeout(() => triggerElement.classList.remove('contact-editable--error'), 1200);
+                }
                 if (typeof showToast === 'function') {
                     showToast(message, 'error');
                 }
@@ -141,17 +126,46 @@
 
             if (data.contact) {
                 applyContactData(row, data.contact);
+                row.classList.remove('contacts-row-missing-required');
                 return data.contact.id;
             }
             return null;
         } catch (error) {
-            revertValue(element);
-            element.classList.add('contact-editable--error');
-            setTimeout(() => element.classList.remove('contact-editable--error'), 1200);
+            if (triggerElement) {
+                triggerElement.classList.add('contact-editable--error');
+                setTimeout(() => triggerElement.classList.remove('contact-editable--error'), 1200);
+            }
             if (typeof showToast === 'function') {
                 showToast('Network error while creating contact.', 'error');
             }
             return null;
+        }
+    }
+
+    function markRowMissingEmail(row) {
+        if (!row) {
+            return;
+        }
+        row.classList.add('contacts-row-missing-required');
+        const emailCell = row.querySelector('[data-field="email"]');
+        if (emailCell) {
+            emailCell.classList.add('contact-editable--warning');
+        }
+        if (typeof showToast === 'function' && row.dataset.emailWarningShown !== 'true') {
+            showToast('Add an email to save this contact.', 'warning');
+            row.dataset.emailWarningShown = 'true';
+        }
+    }
+
+    function clearMissingEmailState(row) {
+        if (!row) {
+            return;
+        }
+        row.classList.remove('contacts-row-missing-required');
+        delete row.dataset.emailWarningShown;
+        const emailCell = row.querySelector('[data-field="email"]');
+        if (emailCell) {
+            emailCell.classList.remove('contact-editable--warning');
         }
     }
 
@@ -167,14 +181,34 @@
         element.classList.add('contact-editable--saving');
         element.contentEditable = 'false';
 
+        const row = element.closest('tr');
         if (!contactId) {
-            const newId = await ensureContact(element, value);
-            element.classList.remove('contact-editable--saving');
-            element.contentEditable = 'true';
-            if (newId) {
-                element.dataset.contactId = newId;
-                element.classList.add('contact-editable--saved');
-                setTimeout(() => element.classList.remove('contact-editable--saved'), 900);
+            if (row) {
+                const payload = collectRowValues(row);
+                payload[field] = value;
+                element.dataset.value = value;
+                element.dataset.originalValue = value;
+                setDisplayedValue(element, value);
+
+                if (!payload.email) {
+                    markRowMissingEmail(row);
+                    element.classList.remove('contact-editable--saving');
+                    element.contentEditable = 'true';
+                    return;
+                }
+
+                clearMissingEmailState(row);
+                const newId = await createContact(row, payload, element);
+                element.classList.remove('contact-editable--saving');
+                element.contentEditable = 'true';
+                if (newId) {
+                    element.dataset.contactId = newId;
+                    element.classList.add('contact-editable--saved');
+                    setTimeout(() => element.classList.remove('contact-editable--saved'), 900);
+                }
+            } else {
+                element.classList.remove('contact-editable--saving');
+                element.contentEditable = 'true';
             }
             return;
         }
@@ -206,9 +240,6 @@
             element.classList.add('contact-editable--saved');
             setTimeout(() => element.classList.remove('contact-editable--saved'), 900);
 
-            if (field === 'display_name' || field === 'email') {
-                updateAvatar(element.closest('tr'));
-            }
         } catch (error) {
             if (error.name !== 'AbortError') {
                 revertValue(element);
@@ -267,6 +298,97 @@
         saveValue(element, normalized);
     }
 
+    function attachDeleteButton(button) {
+        if (!button || button.dataset.deleteBound === 'true') {
+            return;
+        }
+        button.dataset.deleteBound = 'true';
+        button.addEventListener('click', handleDeleteClick);
+    }
+
+    function handleDeleteClick(event) {
+        event.preventDefault();
+        const button = event.currentTarget;
+        const row = button.closest('tr');
+        if (!row) {
+            return;
+        }
+        const contactId = row.dataset.contactId;
+        if (contactId && typeof window.confirm === 'function') {
+            const confirmed = window.confirm('Delete this contact?');
+            if (!confirmed) {
+                return;
+            }
+        }
+        deleteContact(row, button);
+    }
+
+    async function deleteContact(row, button) {
+        const contactId = row.dataset.contactId;
+
+        const removeRow = () => {
+            row.remove();
+            ensureEmptyState();
+            if (typeof showToast === 'function') {
+                showToast('Contact deleted.', 'success');
+            }
+        };
+
+        if (!contactId) {
+            removeRow();
+            return;
+        }
+
+        if (button.disabled) {
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add('opacity-50');
+
+        try {
+            const response = await fetch(`/contacts/${contactId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const message = payload.error || 'Unable to delete contact.';
+                throw new Error(message);
+            }
+            removeRow();
+        } catch (error) {
+            button.disabled = false;
+            button.classList.remove('opacity-50');
+            if (typeof showToast === 'function') {
+                showToast(error.message || 'Unable to delete contact.', 'error');
+            }
+        }
+    }
+
+    function ensureEmptyState() {
+        const tableBody = document.querySelector('#contactsTable tbody');
+        if (!tableBody) {
+            return;
+        }
+        const hasContactRows = tableBody.querySelector('tr[data-contact-id]');
+        const existingEmpty = tableBody.querySelector('.empty-state');
+        if (!hasContactRows && !existingEmpty) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = COLUMN_COUNT;
+            cell.className = 'text-center py-5';
+            cell.innerHTML = EMPTY_STATE_HTML.trim();
+            row.appendChild(cell);
+            tableBody.appendChild(row);
+            if (window.feather && typeof window.feather.replace === 'function') {
+                window.feather.replace();
+            }
+        }
+    }
+
     function attachEditable(element) {
         if (element.dataset.editableBound === 'true') {
             return;
@@ -304,7 +426,12 @@
 
         const editables = clone.querySelectorAll('.contact-editable[contenteditable="true"]');
         editables.forEach(attachEditable);
-        updateAvatar(clone);
+        const deleteBtn = clone.querySelector('.contact-delete-btn');
+        attachDeleteButton(deleteBtn);
+
+        if (window.feather && typeof window.feather.replace === 'function') {
+            window.feather.replace();
+        }
 
         const firstEditable = editables[0];
         if (firstEditable) {
@@ -316,7 +443,31 @@
         const editableCells = document.querySelectorAll('.contact-editable[contenteditable="true"]');
         editableCells.forEach(attachEditable);
 
-        document.querySelectorAll('#contactsTable tbody tr').forEach(updateAvatar);
+        const deleteButtons = document.querySelectorAll('.contact-delete-btn');
+        deleteButtons.forEach(attachDeleteButton);
+
+        ensureEmptyState();
+
+        const searchInput = document.querySelector('input[name="q"][type="search"]');
+        if (searchInput) {
+            const clearUrl = searchInput.dataset.clearUrl;
+            const redirectToClear = () => {
+                if (clearUrl) {
+                    window.location.href = clearUrl;
+                } else {
+                    const form = searchInput.closest('form');
+                    if (form) {
+                        form.submit();
+                    }
+                }
+            };
+            const handlePotentialClear = () => {
+                if (searchInput.value === '') {
+                    redirectToClear();
+                }
+            };
+            searchInput.addEventListener('search', handlePotentialClear);
+        }
 
         const addBtn = document.getElementById('addContactBtn');
         if (addBtn) {

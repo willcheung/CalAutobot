@@ -155,6 +155,10 @@
     background-color: #fdecea;
 }
 
+.contact-editable--warning {
+    background-color: #fff3cd;
+}
+
 .contact-editable--saved {
     background-color: #e7f5ff;
 }
@@ -165,7 +169,6 @@
 }
 
 .contact-editable-link {
-    color: #0d6efd;
     text-decoration: underline dotted transparent;
 }
 

@@ -4,6 +4,8 @@ from typing import Dict, List, Optional, Sequence, Set
 
 import pytz
 
+from app.helpers.datetime_utils import convert_to_timezone, ensure_timezone
+
 from app import db
 from app.models import Event, MeetingRequest, User
 from app.services.gmail_service import gmail_service
@@ -30,12 +32,11 @@ def _parse_event_start(event: Event) -> Optional[datetime]:
 
 
 def _format_start_label(start_dt: datetime, timezone_name: Optional[str]) -> str:
-    tz_name = timezone_name or "UTC"
-    try:
-        tz = pytz.timezone(tz_name)
-    except Exception:
+    tz = ensure_timezone(timezone_name)
+    local_dt = convert_to_timezone(start_dt, tz)
+    if not local_dt:
         tz = pytz.UTC
-    local_dt = start_dt.astimezone(tz)
+        local_dt = convert_to_timezone(start_dt, tz) or start_dt
     return local_dt.strftime("%b %d (%a) at %I:%M %p %Z")
 
 

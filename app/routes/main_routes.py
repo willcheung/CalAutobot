@@ -5,7 +5,7 @@ import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Event, UserEmail, CalWaitlist, Contact, ContactLabel
+from app.models import User, Event, UserEmail, CalWaitlist, Contact, ContactLabel, MeetingParticipant
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_auth_requests
 from app.services.google_calendar import (
@@ -41,6 +41,7 @@ from app.helpers.domain_utils import (
 from app.services.follow_up_service import send_due_followups
 from app.services import availability as availability_service
 from app.services.reminder_service import send_due_reminders
+from app.helpers.datetime_utils import format_datetime
 
 logger = logging.getLogger(__name__)
 
@@ -579,14 +580,32 @@ def contacts_page():
     if label_filter:
         contacts_query = contacts_query.join(Contact.labels).filter(ContactLabel.id == label_filter)
 
-    contacts = (
+    page = request.args.get("page", type=int, default=1)
+    page = max(page or 1, 1)
+    per_page = 50
+
+    pagination_obj = (
         contacts_query.order_by(
             Contact.last_interaction_at.desc(),
             Contact.created_at.desc(),
         )
-        .limit(200)
-        .all()
+        .paginate(page=page, per_page=per_page, error_out=False)
     )
+    if pagination_obj.pages and page > pagination_obj.pages:
+        page = pagination_obj.pages
+        pagination_obj = (
+            contacts_query.order_by(
+                Contact.last_interaction_at.desc(),
+                Contact.created_at.desc(),
+            )
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
+    contacts = pagination_obj.items
+
+    user_timezone = availability_service.get_timezone(current_user)
+    for contact in contacts:
+        candidate = contact.last_interaction_at or contact.last_incoming_email_at or contact.last_outgoing_email_at
+        contact.last_interaction_display = format_datetime(candidate, user_timezone, "%b %d, %Y")
 
     labels = (
         ContactLabel.query.filter_by(user_id=current_user.id)
@@ -594,13 +613,24 @@ def contacts_page():
         .all()
     )
 
+    current_page = pagination_obj.page if pagination_obj.pages else 1
+    total_pages = pagination_obj.pages or 1
+
+    pagination = {
+        "page": current_page,
+        "pages": total_pages,
+        "has_prev": pagination_obj.has_prev,
+        "has_next": pagination_obj.has_next,
+    }
+
     return render_template(
         "contacts/index.html",
         contacts=contacts,
         labels=labels,
         search_query=search_query,
         active_label_id=label_filter,
-    )
+        pagination=pagination,
+)
 
 
 @main_routes.route("/contacts/<int:contact_id>", methods=["PATCH"])
@@ -659,6 +689,20 @@ def update_contact_inline(contact_id: int):
     return jsonify({"status": "ok", "field": field, "value": stored_value})
 
 
+@main_routes.route("/contacts/<int:contact_id>", methods=["DELETE"])
+@login_required
+def delete_contact(contact_id: int):
+    contact = Contact.query.filter_by(id=contact_id, user_id=current_user.id).first_or_404()
+
+    participants = MeetingParticipant.query.filter_by(contact_id=contact.id).all()
+    for participant in participants:
+        participant.contact_id = None
+
+    db.session.delete(contact)
+    db.session.commit()
+    return jsonify({"status": "ok"})
+
+
 @main_routes.route("/contacts", methods=["POST"])
 @login_required
 def create_contact_inline():
@@ -692,6 +736,10 @@ def create_contact_inline():
     db.session.add(contact)
     db.session.commit()
 
+    user_timezone = availability_service.get_timezone(current_user)
+    candidate = contact.last_interaction_at or contact.last_incoming_email_at or contact.last_outgoing_email_at
+    last_touch_display = format_datetime(candidate, user_timezone, "%b %d, %Y")
+
     return jsonify(
         {
             "status": "ok",
@@ -705,6 +753,7 @@ def create_contact_inline():
                 "phone_number": contact.phone_number or "",
                 "follow_up_count": contact.follow_up_count or 0,
                 "last_interaction_at": None,
+                "last_interaction_display": last_touch_display,
                 "labels": [],
             },
         }

@@ -7,6 +7,7 @@ from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models import Contact, ContactLabel, ContactLabelLink, User
+import pytz
 
 
 def _normalise_email(email: Optional[str]) -> Optional[str]:
@@ -101,7 +102,12 @@ def record_interaction(
     
     # Ensure timezone-naive datetime for database compatibility
     if event_time and hasattr(event_time, 'tzinfo') and event_time.tzinfo:
-        event_time = event_time.replace(tzinfo=None)
+        try:
+            event_time = event_time.astimezone(pytz.UTC)
+        except Exception:
+            event_time = event_time.replace(tzinfo=None)
+        else:
+            event_time = event_time.replace(tzinfo=None)
 
     def _update_latest(current: Optional[datetime], candidate: datetime) -> datetime:
         # Ensure both datetimes are naive for comparison

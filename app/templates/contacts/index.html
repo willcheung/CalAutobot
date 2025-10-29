@@ -5,14 +5,9 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
-            <div>
-                <h1 class="mb-1">Contacts</h1>
-                <p class="text-muted mb-0">Recent people from scheduling threads and public bookings.</p>
-            </div>
-            <button type="button" class="btn btn-sm btn-primary mt-2 mt-sm-0" id="addContactBtn">
-                <i data-feather="plus" class="me-1"></i>New contact
-            </button>
+        <div>
+            <h1 class="mb-1">Contacts</h1>
+            <p class="text-muted mb-0">Recent people from scheduling threads and public bookings.</p>
         </div>
         <form method="get" class="d-flex align-items-center">
             <div class="input-group">
@@ -27,6 +22,7 @@
                     value="{{ search_query }}"
                     aria-label="Search contacts"
                     style="min-width: 250px;"
+                    data-clear-url="{{ url_for('main_routes.contacts_page', label=active_label_id if active_label_id else None) }}"
                 >
                 {% if active_label_id %}
                     <input type="hidden" name="label" value="{{ active_label_id }}">
@@ -35,24 +31,27 @@
         </form>
     </div>
 
-    {% if labels %}
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a
-            class="badge {{ 'bg-primary text-white' if not active_label_id else 'bg-light text-dark' }} text-decoration-none py-2 px-3"
-            href="{{ url_for('main_routes.contacts_page', q=search_query or None) }}"
-        >
-            All labels
-        </a>
-        {% for label in labels %}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div class="d-flex flex-wrap gap-2">
             <a
-                class="badge {% if active_label_id == label.id %}bg-primary text-white{% else %}bg-light text-dark{% endif %} text-decoration-none py-2 px-3"
-                href="{{ url_for('main_routes.contacts_page', q=search_query or None, label=label.id) }}"
+                class="badge {{ 'bg-primary text-white' if not active_label_id else 'bg-light text-dark' }} text-decoration-none py-2 px-3"
+                href="{{ url_for('main_routes.contacts_page', q=search_query or None, page=1) }}"
             >
-                {{ label.name }}
+                All labels
             </a>
-        {% endfor %}
+            {% for label in labels %}
+                <a
+                    class="badge {% if active_label_id == label.id %}bg-primary text-white{% else %}bg-light text-dark{% endif %} text-decoration-none py-2 px-3"
+                    href="{{ url_for('main_routes.contacts_page', q=search_query or None, label=label.id, page=1) }}"
+                >
+                    {{ label.name }}
+                </a>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn btn-primary btn-compact align-self-start" id="addContactBtn">
+            <i data-feather="plus" class="me-1"></i>New contact
+        </button>
     </div>
-    {% endif %}
 
     <div class="card">
         <div class="card-body p-0">
@@ -60,9 +59,9 @@
                 <table class="table table-hover align-middle mb-0" id="contactsTable">
                     <thead class="table-light">
                         <tr class="text-muted small">
-                            <th scope="col" class="text-uppercase fw-semibold ps-3">Person</th>
+                            <th scope="col" class="text-uppercase fw-semibold ps-3">Name</th>
                             <th scope="col" class="text-uppercase fw-semibold">Company</th>
-                            <th scope="col" class="text-uppercase fw-semibold">Role</th>
+                            <th scope="col" class="text-uppercase fw-semibold">Title</th>
                             <th scope="col" class="text-uppercase fw-semibold">Labels</th>
                             <th scope="col" class="text-uppercase fw-semibold">Email</th>
                             <th scope="col" class="text-uppercase fw-semibold">Phone</th>
@@ -94,6 +93,9 @@
                                     </span>
                                 </span>
                             </th>
+                            <th scope="col" class="text-uppercase fw-semibold text-end pe-3">
+                                <span class="visually-hidden">Delete</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -101,34 +103,15 @@
                             {% for contact in contacts %}
                                 <tr data-contact-id="{{ contact.id }}">
                                     <td class="py-3 ps-3">
-                                        <div class="d-flex align-items-center gap-2">
-                                            {% set avatar_seed = (contact.display_name or contact.email or '?') %}
-                                            {% set avatar_trim = avatar_seed.strip() %}
-                                            <div class="contact-avatar text-muted fw-semibold">
-                                                {{ avatar_trim[0]|upper if avatar_trim else '?' }}
-                                            </div>
-                                            <div>
-                                                <div class="fw-semibold">
-                                                    <span
-                                                        class="contact-editable"
-                                                        contenteditable="true"
-                                                        data-contact-id="{{ contact.id }}"
-                                                        data-field="display_name"
-                                                        data-placeholder="Add name"
-                                                        data-value="{{ contact.display_name or '' }}"
-                                                    >{{ contact.display_name or '—' }}</span>
-                                                </div>
-                                                <div class="text-muted small">
-                                                    <span
-                                                        class="contact-editable contact-editable-muted"
-                                                        contenteditable="true"
-                                                        data-contact-id="{{ contact.id }}"
-                                                        data-field="timezone"
-                                                        data-placeholder="Timezone"
-                                                        data-value="{{ contact.timezone or '' }}"
-                                                    >{{ contact.timezone or '—' }}</span>
-                                                </div>
-                                            </div>
+                                        <div class="fw-semibold">
+                                            <span
+                                                class="contact-editable"
+                                                contenteditable="true"
+                                                data-contact-id="{{ contact.id }}"
+                                                data-field="display_name"
+                                                data-placeholder="Add name"
+                                                data-value="{{ contact.display_name or '' }}"
+                                            >{{ contact.display_name or '—' }}</span>
                                         </div>
                                     </td>
                                     <td class="py-3">
@@ -184,18 +167,28 @@
                                         <span class="badge bg-secondary" data-role="followup-count">{{ contact.follow_up_count or 0 }}</span>
                                     </td>
                                     <td class="py-3 pe-3" data-role="last-interaction">
-                                        {% set last_touch = contact.last_interaction_at or contact.last_incoming_email_at or contact.last_outgoing_email_at %}
-                                        {% if last_touch %}
-                                            <span data-role="last-interaction-text">{{ last_touch.strftime('%b %d, %Y') }}</span>
+                                        {% set last_touch_display = contact.last_interaction_display %}
+                                        {% if last_touch_display %}
+                                            <span data-role="last-interaction-text">{{ last_touch_display }}</span>
                                         {% else %}
                                             <span class="text-muted" data-role="last-interaction-text">—</span>
                                         {% endif %}
+                                    </td>
+                                    <td class="py-3 pe-3 text-end">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger contact-delete-btn"
+                                            title="Delete contact"
+                                            aria-label="Delete contact"
+                                        >
+                                            <i data-feather="trash-2"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="8" class="text-center py-5">
+                                <td colspan="9" class="text-center py-5">
                                     <div class="empty-state">
                                         <i data-feather="users" class="empty-icon"></i>
                                         <h3 class="mt-3">No contacts yet</h3>
@@ -215,28 +208,14 @@
     <template id="contactRowTemplate">
         <tr class="contacts-row-pending" data-contact-id="">
             <td class="py-3 ps-3">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="contact-avatar text-muted fw-semibold">?</div>
-                    <div>
-                        <div class="fw-semibold">
-                            <span
-                                class="contact-editable"
-                                contenteditable="true"
-                                data-field="display_name"
-                                data-placeholder="Add name"
-                                data-value=""
-                            >—</span>
-                        </div>
-                        <div class="text-muted small">
-                            <span
-                                class="contact-editable contact-editable-muted"
-                                contenteditable="true"
-                                data-field="timezone"
-                                data-placeholder="Timezone"
-                                data-value=""
-                            >—</span>
-                        </div>
-                    </div>
+                <div class="fw-semibold">
+                    <span
+                        class="contact-editable"
+                        contenteditable="true"
+                        data-field="display_name"
+                        data-placeholder="Add name"
+                        data-value=""
+                    >—</span>
                 </div>
             </td>
             <td class="py-3">
@@ -284,8 +263,36 @@
             <td class="py-3 pe-3" data-role="last-interaction">
                 <span class="text-muted" data-role="last-interaction-text">—</span>
             </td>
+            <td class="py-3 pe-3 text-end">
+                <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger contact-delete-btn"
+                    title="Delete contact"
+                    aria-label="Delete contact"
+                >
+                    <i data-feather="trash-2"></i>
+                </button>
+            </td>
         </tr>
     </template>
+
+    {% if pagination.pages > 1 %}
+    <nav class="bookings-pagination contacts-pagination mt-4 d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+            Page {{ pagination.page }} of {{ pagination.pages }}
+        </div>
+        <div>
+            <a class="btn btn-outline-secondary btn-sm{% if not pagination.has_prev %} disabled{% endif %}"
+               href="{{ url_for('main_routes.contacts_page', q=search_query or None, label=active_label_id or None, page=pagination.page - 1) if pagination.has_prev else '#' }}">
+                Previous
+            </a>
+            <a class="btn btn-outline-secondary btn-sm ms-2{% if not pagination.has_next %} disabled{% endif %}"
+               href="{{ url_for('main_routes.contacts_page', q=search_query or None, label=active_label_id or None, page=pagination.page + 1) if pagination.has_next else '#' }}">
+                Next
+            </a>
+        </div>
+    </nav>
+    {% endif %}
 
 </div>
 {% endblock %}

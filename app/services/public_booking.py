@@ -214,14 +214,6 @@ def create_booking_event(
         occurred_at=start_dt,
         incoming=True,
     )
-    contact_service.assign_label(
-        contact,
-        "Booked",
-        applied_by=user,
-        color="primary",
-        description="Created via public booking",
-    )
-
     event.is_synced = bool(google_event_id)
     event.google_event_id = google_event_id
     sanitized_conference = sanitize_text_for_db(conference_url) if conference_url else None

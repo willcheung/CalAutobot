@@ -4,7 +4,7 @@ from uuid import uuid4
 from app import db
 from datetime import datetime, timedelta
 
-from app.models import Event, User
+from app.models import Event, User, Contact, MeetingRequest, MeetingParticipant
 
 
 def login(client, user_id):
@@ -152,3 +152,66 @@ def test_bookings_view_filters_by_status(client, app_context):
     html = resp_cancelled.data.decode()
     assert "Cancelled Session" in html
     assert "Upcoming Session" not in html
+
+
+def test_delete_contact_clears_participants(client, app_context):
+    user = User(username="contacts-user", email=f"contacts-{uuid4().hex}@example.com", timezone="UTC")
+    db.session.add(user)
+    db.session.commit()
+
+    login(client, user.id)
+
+    contact = Contact(
+        user_id=user.id,
+        display_name="Prospect",
+        email="prospect@example.com",
+    )
+    db.session.add(contact)
+    db.session.commit()
+
+    meeting_request = MeetingRequest(user_id=user.id, subject="Intro")
+    db.session.add(meeting_request)
+    db.session.commit()
+
+    participant = MeetingParticipant(
+        meeting_request_id=meeting_request.id,
+        email="prospect@example.com",
+        contact_id=contact.id,
+    )
+    db.session.add(participant)
+    db.session.commit()
+
+    response = client.delete(f"/contacts/{contact.id}")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["status"] == "ok"
+
+    assert Contact.query.filter_by(id=contact.id).first() is None
+
+    refreshed_participant = MeetingParticipant.query.filter_by(id=participant.id).first()
+    assert refreshed_participant is not None
+    assert refreshed_participant.contact_id is None
+
+
+def test_contacts_page_localizes_last_interaction(client, app_context):
+    user = User(username="timezone-user", email=f"tz-{uuid4().hex}@example.com", timezone="America/New_York")
+    db.session.add(user)
+    db.session.commit()
+
+    contact = Contact(
+        user_id=user.id,
+        display_name="Late Night Guest",
+        email="guest@example.com",
+        last_interaction_at=datetime(2024, 5, 1, 3, 0, 0),  # Naive UTC
+    )
+    db.session.add(contact)
+    db.session.commit()
+
+    login(client, user.id)
+
+    response = client.get("/contacts")
+    assert response.status_code == 200
+    html = response.data.decode()
+
+    assert "Apr 30, 2024" in html
+    assert "May 01, 2024" not in html
