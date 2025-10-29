@@ -207,7 +207,7 @@ Input and meeting context: '''
 subject: {meeting_context.get('subject') or '[no subject]'}
 owner_email: {meeting_context.get('owner_email') or '[unknown]'}
 owner_name: {owner_name}
-Participants: {participants_text}
+participants: {participants_text}
 timezone: {timezone}
 current_date: {current_date}
 current_time_local: {current_time_display}
