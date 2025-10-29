@@ -199,6 +199,8 @@
     
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
     
     <!-- Initialize Feather Icons -->
     <script>

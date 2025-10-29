@@ -120,6 +120,67 @@
     color: #ffffff;
 }
 
+.contact-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    border: 1px solid #dde1eb;
+    background: #f8f9fd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.contact-editable {
+    display: inline-block;
+    min-width: 1.5rem;
+    cursor: text;
+    border-radius: 4px;
+    padding: 0 4px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.contact-editable:focus {
+    outline: none;
+    background-color: #f1f3f5;
+}
+
+.contact-editable--saving {
+    background-color: #fff3cd;
+}
+
+.contact-editable--error {
+    background-color: #fdecea;
+}
+
+.contact-editable--saved {
+    background-color: #e7f5ff;
+}
+
+.contact-editable-placeholder {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.contact-editable-link {
+    color: #0d6efd;
+    text-decoration: underline dotted transparent;
+}
+
+.contact-editable-link:hover {
+    text-decoration-color: rgba(13, 110, 253, 0.6);
+}
+
+.contact-editable-muted {
+    font-size: 0.85rem;
+}
+
+.contacts-row-pending {
+    background-color: #fff8e1;
+}
+
 .info-tooltip-icon {
     display: inline-flex;
     align-items: center;

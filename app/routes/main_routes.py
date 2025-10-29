@@ -603,6 +603,114 @@ def contacts_page():
     )
 
 
+@main_routes.route("/contacts/<int:contact_id>", methods=["PATCH"])
+@login_required
+def update_contact_inline(contact_id: int):
+    contact = Contact.query.filter_by(id=contact_id, user_id=current_user.id).first_or_404()
+    payload = request.get_json(silent=True) or {}
+    field = (payload.get("field") or "").strip()
+    raw_value = payload.get("value")
+
+    editable_fields = {
+        "display_name": ("Name", 255, False),
+        "timezone": ("Timezone", 64, False),
+        "company": ("Company", 255, False),
+        "job_title": ("Role", 255, False),
+        "phone_number": ("Phone number", 32, False),
+        "email": ("Email", 255, True),
+    }
+
+    if field not in editable_fields:
+        return jsonify({"error": "Field is not editable."}), 400
+
+    label, max_length, is_required = editable_fields[field]
+    value = raw_value.strip() if isinstance(raw_value, str) else ""
+
+    if is_required and not value:
+        return jsonify({"error": f"{label} cannot be empty."}), 400
+
+    if len(value) > max_length:
+        return jsonify({"error": f"{label} must be {max_length} characters or fewer."}), 400
+
+    if field == "email":
+        if not value:
+            contact.email = None
+        else:
+            normalized = value.lower()
+            duplicate = (
+                Contact.query.filter(
+                    Contact.user_id == current_user.id,
+                    Contact.email == normalized,
+                    Contact.id != contact.id,
+                )
+                .limit(1)
+                .first()
+            )
+            if duplicate:
+                return jsonify({"error": "Another contact already uses that email address."}), 400
+            contact.email = normalized
+    else:
+        setattr(contact, field, value or None)
+
+    contact.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    stored_value = getattr(contact, field) or ""
+    return jsonify({"status": "ok", "field": field, "value": stored_value})
+
+
+@main_routes.route("/contacts", methods=["POST"])
+@login_required
+def create_contact_inline():
+    payload = request.get_json(silent=True) or {}
+    display_name = (payload.get("display_name") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+
+    if not display_name and not email:
+        return jsonify({"error": "Name or email is required to create a contact."}), 400
+
+    if email:
+        existing = (
+            Contact.query.filter_by(user_id=current_user.id, email=email)
+            .limit(1)
+            .first()
+        )
+        if existing:
+            return jsonify({"error": "A contact with that email already exists."}), 400
+
+    contact = Contact(
+        user_id=current_user.id,
+        email=email or None,
+        display_name=display_name or None,
+        company=(payload.get("company") or "").strip() or None,
+        job_title=(payload.get("job_title") or "").strip() or None,
+        phone_number=(payload.get("phone_number") or "").strip() or None,
+        timezone=(payload.get("timezone") or "").strip() or None,
+        first_seen_source="manual",
+        first_seen_at=datetime.utcnow(),
+    )
+    db.session.add(contact)
+    db.session.commit()
+
+    return jsonify(
+        {
+            "status": "ok",
+            "contact": {
+                "id": contact.id,
+                "display_name": contact.display_name or "",
+                "timezone": contact.timezone or "",
+                "company": contact.company or "",
+                "job_title": contact.job_title or "",
+                "email": contact.email or "",
+                "phone_number": contact.phone_number or "",
+                "follow_up_count": contact.follow_up_count or 0,
+                "last_interaction_at": None,
+                "labels": [],
+            },
+        }
+    )
+
+
 @main_routes.route("/dashboard")
 @login_required
 def dashboard_redirect():

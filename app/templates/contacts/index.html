@@ -4,10 +4,15 @@
 
 {% block content %}
 <div class="container mt-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
-        <div>
-            <h1 class="mb-2">Contacts</h1>
-            <p class="text-muted mb-0">Recent people from scheduling threads and public bookings.</p>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+            <div>
+                <h1 class="mb-1">Contacts</h1>
+                <p class="text-muted mb-0">Recent people from scheduling threads and public bookings.</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary mt-2 mt-sm-0" id="addContactBtn">
+                <i data-feather="plus" class="me-1"></i>New contact
+            </button>
         </div>
         <form method="get" class="d-flex align-items-center">
             <div class="input-group">
@@ -52,10 +57,10 @@
     <div class="card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0" id="contactsTable">
                     <thead class="table-light">
                         <tr class="text-muted small">
-                            <th scope="col" class="text-uppercase fw-semibold ps-3">Name</th>
+                            <th scope="col" class="text-uppercase fw-semibold ps-3">Person</th>
                             <th scope="col" class="text-uppercase fw-semibold">Company</th>
                             <th scope="col" class="text-uppercase fw-semibold">Role</th>
                             <th scope="col" class="text-uppercase fw-semibold">Labels</th>
@@ -94,23 +99,57 @@
                     <tbody>
                         {% if contacts %}
                             {% for contact in contacts %}
-                                <tr>
+                                <tr data-contact-id="{{ contact.id }}">
                                     <td class="py-3 ps-3">
                                         <div class="d-flex align-items-center gap-2">
-                                            {% set avatar_text = (contact.display_name or '?') %}
+                                            {% set avatar_seed = (contact.display_name or contact.email or '?') %}
+                                            {% set avatar_trim = avatar_seed.strip() %}
+                                            <div class="contact-avatar text-muted fw-semibold">
+                                                {{ avatar_trim[0]|upper if avatar_trim else '?' }}
+                                            </div>
                                             <div>
-                                                <div class="fw-semibold">{{ contact.display_name or '—' }}</div>
-                                                {% if contact.timezone %}
-                                                    <div class="text-muted small">{{ contact.timezone }}</div>
-                                                {% endif %}
+                                                <div class="fw-semibold">
+                                                    <span
+                                                        class="contact-editable"
+                                                        contenteditable="true"
+                                                        data-contact-id="{{ contact.id }}"
+                                                        data-field="display_name"
+                                                        data-placeholder="Add name"
+                                                        data-value="{{ contact.display_name or '' }}"
+                                                    >{{ contact.display_name or '—' }}</span>
+                                                </div>
+                                                <div class="text-muted small">
+                                                    <span
+                                                        class="contact-editable contact-editable-muted"
+                                                        contenteditable="true"
+                                                        data-contact-id="{{ contact.id }}"
+                                                        data-field="timezone"
+                                                        data-placeholder="Timezone"
+                                                        data-value="{{ contact.timezone or '' }}"
+                                                    >{{ contact.timezone or '—' }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="py-3">
-                                        {{ contact.company or '—' }}
+                                        <span
+                                            class="contact-editable"
+                                            contenteditable="true"
+                                            data-contact-id="{{ contact.id }}"
+                                            data-field="company"
+                                            data-placeholder="Add company"
+                                            data-value="{{ contact.company or '' }}"
+                                        >{{ contact.company or '—' }}</span>
                                     </td>
                                     <td class="py-3">
-                                        {{ contact.job_title or '—' }}
+                                        <span
+                                            class="contact-editable"
+                                            contenteditable="true"
+                                            data-contact-id="{{ contact.id }}"
+                                            data-field="job_title"
+                                            data-placeholder="Add role"
+                                            data-value="{{ contact.job_title or '' }}"
+                                        >{{ contact.job_title or '—' }}</span>
                                     </td>
                                     <td class="py-3">
                                         {% if contact.labels %}
@@ -122,24 +161,34 @@
                                         {% endif %}
                                     </td>
                                     <td class="py-3">
-                                        {% if contact.email %}
-                                            <a href="mailto:{{ contact.email }}" class="text-decoration-none">{{ contact.email }}</a>
-                                        {% else %}
-                                            <span class="text-muted">—</span>
-                                        {% endif %}
+                                        <span
+                                            class="contact-editable contact-editable-link"
+                                            contenteditable="true"
+                                            data-contact-id="{{ contact.id }}"
+                                            data-field="email"
+                                            data-placeholder="name@example.com"
+                                            data-value="{{ contact.email or '' }}"
+                                        >{{ contact.email or '—' }}</span>
                                     </td>
                                     <td class="py-3">
-                                        {{ contact.phone_number or '—' }}
+                                        <span
+                                            class="contact-editable"
+                                            contenteditable="true"
+                                            data-contact-id="{{ contact.id }}"
+                                            data-field="phone_number"
+                                            data-placeholder="Add phone"
+                                            data-value="{{ contact.phone_number or '' }}"
+                                        >{{ contact.phone_number or '—' }}</span>
                                     </td>
                                     <td class="py-3 text-center">
-                                        <span class="badge bg-secondary">{{ contact.follow_up_count or 0 }}</span>
+                                        <span class="badge bg-secondary" data-role="followup-count">{{ contact.follow_up_count or 0 }}</span>
                                     </td>
-                                    <td class="py-3 pe-3">
+                                    <td class="py-3 pe-3" data-role="last-interaction">
                                         {% set last_touch = contact.last_interaction_at or contact.last_incoming_email_at or contact.last_outgoing_email_at %}
                                         {% if last_touch %}
-                                            {{ last_touch.strftime('%b %d, %Y') }}
+                                            <span data-role="last-interaction-text">{{ last_touch.strftime('%b %d, %Y') }}</span>
                                         {% else %}
-                                            <span class="text-muted">—</span>
+                                            <span class="text-muted" data-role="last-interaction-text">—</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -162,5 +211,86 @@
             </div>
         </div>
     </div>
+
+    <template id="contactRowTemplate">
+        <tr class="contacts-row-pending" data-contact-id="">
+            <td class="py-3 ps-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="contact-avatar text-muted fw-semibold">?</div>
+                    <div>
+                        <div class="fw-semibold">
+                            <span
+                                class="contact-editable"
+                                contenteditable="true"
+                                data-field="display_name"
+                                data-placeholder="Add name"
+                                data-value=""
+                            >—</span>
+                        </div>
+                        <div class="text-muted small">
+                            <span
+                                class="contact-editable contact-editable-muted"
+                                contenteditable="true"
+                                data-field="timezone"
+                                data-placeholder="Timezone"
+                                data-value=""
+                            >—</span>
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td class="py-3">
+                <span
+                    class="contact-editable"
+                    contenteditable="true"
+                    data-field="company"
+                    data-placeholder="Add company"
+                    data-value=""
+                >—</span>
+            </td>
+            <td class="py-3">
+                <span
+                    class="contact-editable"
+                    contenteditable="true"
+                    data-field="job_title"
+                    data-placeholder="Add role"
+                    data-value=""
+                >—</span>
+            </td>
+            <td class="py-3">
+                <span class="text-muted">—</span>
+            </td>
+            <td class="py-3">
+                <span
+                    class="contact-editable contact-editable-link"
+                    contenteditable="true"
+                    data-field="email"
+                    data-placeholder="name@example.com"
+                    data-value=""
+                >—</span>
+            </td>
+            <td class="py-3">
+                <span
+                    class="contact-editable"
+                    contenteditable="true"
+                    data-field="phone_number"
+                    data-placeholder="Add phone"
+                    data-value=""
+                >—</span>
+            </td>
+            <td class="py-3 text-center">
+                <span class="badge bg-secondary" data-role="followup-count">0</span>
+            </td>
+            <td class="py-3 pe-3" data-role="last-interaction">
+                <span class="text-muted" data-role="last-interaction-text">—</span>
+            </td>
+        </tr>
+    </template>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/contacts.js') }}"></script>
 {% endblock %}
