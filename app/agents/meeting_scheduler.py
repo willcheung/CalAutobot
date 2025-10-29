@@ -187,6 +187,9 @@ available_slots:
 {json.dumps(availability, indent=2)}'''
 """
 
+    logger.info("👉 SYSTEM PROMPT: %s", system_prompt)
+    logger.info("👉 PAYLOAD %s", payload)
+
     response = openai.chat.completions.create(
         model="gpt-4.1-mini",
         messages=[
