@@ -185,12 +185,29 @@ def run_meeting_scheduler_agent(
         .replace("{event_duration_minutes}", str(event_duration_minutes))
     )
 
+    # Format participants with names and emails
+    participants = meeting_context.get('participants') or []
+    if participants and isinstance(participants[0], dict):
+        # New format: list of {name, email} dicts
+        participant_strs = []
+        for p in participants:
+            name = p.get('name')
+            email = p.get('email', '')
+            if name:
+                participant_strs.append(f"{name} ({email})")
+            else:
+                participant_strs.append(email)
+        participants_text = ', '.join(participant_strs)
+    else:
+        # Old format fallback: list of email strings
+        participants_text = ', '.join(str(p) for p in participants)
+
     payload = f"""
 Input and meeting context: '''
 subject: {meeting_context.get('subject') or '[no subject]'}
 owner_email: {meeting_context.get('owner_email') or '[unknown]'}
 owner_name: {owner_name}
-Participants: {', '.join(meeting_context.get('participants') or [])}
+Participants: {participants_text}
 timezone: {timezone}
 current_date: {current_date}
 current_time_local: {current_time_display}

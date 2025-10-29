@@ -326,12 +326,26 @@ def _sync_participants(meeting_request: MeetingRequest, email_data: Dict):
     if sender and sender not in ASSISTANT_EMAILS:
         potential.add((sender, email_data.get("sender_name")))
 
-    for field in ("to", "cc"):
-        for entry in email_data.get(field) or []:
-            addr = entry.strip().lower()
-            if not addr or addr in ASSISTANT_EMAILS:
-                continue
-            potential.add((addr, None))
+    # Use new participant data with names if available
+    if email_data.get("to_participants") or email_data.get("cc_participants"):
+        # New format with names
+        for field in ("to_participants", "cc_participants"):
+            participants = email_data.get(field) or []
+            for participant in participants:
+                if isinstance(participant, dict):
+                    # New format: {name: str, email: str}
+                    addr = participant.get("email", "").strip().lower()
+                    name = participant.get("name")
+                    if addr and addr not in ASSISTANT_EMAILS:
+                        potential.add((addr, name))
+    else:
+        # Fallback to old format (backward compatibility)
+        for field in ("to", "cc"):
+            addresses = email_data.get(field) or []
+            for addr in addresses:
+                addr = addr.strip().lower()
+                if addr and addr not in ASSISTANT_EMAILS:
+                    potential.add((addr, None))
 
     owner_email = (meeting_request.user.email or "").strip().lower() if meeting_request.user else None
 
@@ -471,7 +485,10 @@ def prepare_agent_context_for_request(
         "subject": meeting_request.subject,
         "owner_email": user.email,
         "owner_name": user.username or user.email,
-        "participants": [p.email for p in meeting_request.participants],
+        "participants": [
+            {"name": p.name, "email": p.email} 
+            for p in meeting_request.participants
+        ],
         "status": meeting_request.status,
         "timezone": user.timezone or "UTC",
         "current_date": now_local.date().isoformat(),

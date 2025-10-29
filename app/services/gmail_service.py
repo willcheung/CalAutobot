@@ -194,8 +194,10 @@ class GmailService:
 
             # Parse addresses
             from_name, from_email = self._parse_single_address(from_header)
-            to_addresses = self._parse_address_list(to_header)
-            cc_addresses = self._parse_address_list(cc_header)
+            to_addresses = self._parse_address_list(to_header)  # For backward compatibility
+            cc_addresses = self._parse_address_list(cc_header)  # For backward compatibility
+            to_participants = self._parse_address_list_with_names(to_header)  # With names
+            cc_participants = self._parse_address_list_with_names(cc_header)  # With names
             
             # Extract email body
             body_text = self._extract_body_text(payload)
@@ -227,8 +229,10 @@ class GmailService:
                 'sender': from_email.lower().strip() if from_email else '',
                 'sender_name': from_name,
                 'recipient': to_header,
-                'to': to_addresses,
-                'cc': cc_addresses,
+                'to': to_addresses,  # Backward compatibility: list of emails
+                'cc': cc_addresses,  # Backward compatibility: list of emails
+                'to_participants': to_participants,  # New: list of {name, email} dicts
+                'cc_participants': cc_participants,  # New: list of {name, email} dicts
                 'subject': subject or '',
                 'stripped-text': body_text,
                 'body_text': body_text,
@@ -256,6 +260,7 @@ class GmailService:
         return ''
 
     def _parse_address_list(self, header_value: str) -> List[str]:
+        """Parse address list and return just emails (for backward compatibility)"""
         if not header_value:
             return []
         return [
@@ -263,6 +268,20 @@ class GmailService:
             for _, addr in getaddresses([header_value])
             if addr
         ]
+
+    def _parse_address_list_with_names(self, header_value: str) -> List[Dict[str, Optional[str]]]:
+        """Parse address list and return both names and emails"""
+        if not header_value:
+            return []
+        
+        result = []
+        for name, email in getaddresses([header_value]):
+            if email:  # Only include if email is present
+                result.append({
+                    'name': name.strip() if name else None,
+                    'email': email.lower().strip()
+                })
+        return result
 
     def _parse_single_address(self, header_value: str) -> Tuple[Optional[str], Optional[str]]:
         if not header_value:
