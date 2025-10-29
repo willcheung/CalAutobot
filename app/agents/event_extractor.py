@@ -1,13 +1,15 @@
 import json
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, date
 import re
 
 # the well-rounded OpenAI model is "gpt-4.1-mini".
 # do not change this unless explicitly requested by the user
 from openai import OpenAI
 import sentry_sdk
+
+from app.helpers.datetime_utils import ensure_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,7 @@ Input: '''{text}'''"""
 
 
 def extract_events_from_text(text,
-                             current_date=datetime.today(),
+                             current_date=None,
                              user_timezone="UTC",
                              image_data=None):
     """
@@ -87,7 +89,12 @@ def extract_events_from_text(text,
         tuple: (list of extracted events, from_email, is_offline, openai_status, openai_error)
     """
     if current_date is None:
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        tz = ensure_timezone(user_timezone)
+        current_date_str = datetime.now(tz).strftime("%Y-%m-%d")
+    elif isinstance(current_date, (datetime, date)):
+        current_date_str = current_date.strftime("%Y-%m-%d")
+    else:
+        current_date_str = str(current_date)
 
     # Check if text appears to be an email and extract from address
     from_email = None
@@ -99,7 +106,7 @@ def extract_events_from_text(text,
     # Build the prompt using the centralized template
     sys_prompt = EVENT_EXTRACTION_SYS_PROMPT
     prompt = EVENT_EXTRACTION_PROMPT.format(user_timezone=user_timezone,
-                                            current_date=current_date,
+                                            current_date=current_date_str,
                                             text=text)
 
     try:

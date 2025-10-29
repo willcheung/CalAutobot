@@ -2,6 +2,7 @@
 import logging
 import time
 from datetime import datetime
+import pytz
 from app import db
 from app.models import User, Event, TextInput
 from app.agents.event_extractor import extract_events_from_text, validate_and_clean_event
@@ -36,7 +37,14 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
     user_timezone = user.timezone if user.timezone else "UTC"
 
     # Call the extraction function synchronously
-    extracted_events, from_email, is_offline, openai_status, openai_error = extract_events_from_text(text, user_timezone=user_timezone)
+    user_tz_obj = pytz.timezone(user_timezone) if user_timezone else pytz.UTC
+    current_date_local = datetime.now(user_tz_obj).strftime('%Y-%m-%d')
+
+    extracted_events, from_email, is_offline, openai_status, openai_error = extract_events_from_text(
+        text,
+        current_date=current_date_local,
+        user_timezone=user_timezone,
+    )
 
     # Prepare all database objects
     extraction_time = datetime.utcnow()

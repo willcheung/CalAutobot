@@ -142,7 +142,12 @@ def test_confirm_slot_creates_calendar_event(monkeypatch, app_context):
     body = extra.get("text_body") or ""
     assert "https://meet.google.com/test-link" in body
 
-    meeting_request = MeetingRequest.query.one()
+    meeting_request = (
+        MeetingRequest.query.filter_by(user_id=owner.id)
+        .order_by(MeetingRequest.id.desc())
+        .first()
+    )
+    assert meeting_request is not None
     confirmed_slot = meeting_request.confirmed_slot or {}
     assert confirmed_slot.get("conference_url") == "https://meet.google.com/test-link"
 

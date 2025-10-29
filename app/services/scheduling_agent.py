@@ -258,7 +258,10 @@ def _get_or_create_meeting_request(
     if thread_id:
         meeting_request = (
             MeetingRequest.query.join(MeetingMessage)
-            .filter(MeetingMessage.thread_id == thread_id)
+            .filter(
+                MeetingRequest.user_id == user.id,
+                MeetingMessage.thread_id == thread_id,
+            )
             .order_by(MeetingRequest.created_at.desc())
             .first()
         )
@@ -266,7 +269,10 @@ def _get_or_create_meeting_request(
     if not meeting_request and message_id:
         meeting_request = (
             MeetingRequest.query.join(MeetingMessage)
-            .filter(MeetingMessage.message_id == message_id)
+            .filter(
+                MeetingRequest.user_id == user.id,
+                MeetingMessage.message_id == message_id,
+            )
             .first()
         )
 
