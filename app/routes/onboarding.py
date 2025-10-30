@@ -13,6 +13,11 @@ def onboarding():
     Onboarding page for first-time users.
     Shows 3 steps: connect calendar, select timezone, getting started.
     """
+    from flask import session
+    
+    # Set session flag to track onboarding state
+    session['in_onboarding'] = True
+    
     # If calendar is already connected and they're hitting this page via POST,
     # they've completed onboarding
     if request.method == "POST":
@@ -21,6 +26,9 @@ def onboarding():
         if timezone and timezone in pytz.common_timezones:
             current_user.timezone = timezone
             db.session.commit()
+        
+        # Clear onboarding flag
+        session.pop('in_onboarding', None)
         
         # Redirect to bookings page
         flash("Welcome to Cal! You're all set.", "success")

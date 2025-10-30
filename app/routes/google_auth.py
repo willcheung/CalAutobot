@@ -300,9 +300,14 @@ def callback():
             logger.error(f"Error auto-syncing events for provisional user {users_email}: {str(e)}")
             # Don't fail the signup process if sync fails
 
-    # Redirect to onboarding for new users or provisional upgrades
-    if is_new_user or is_provisional_user_signup:
-        logger.info(f"Redirecting {users_email} to onboarding (is_new_user={is_new_user}, is_provisional={is_provisional_user_signup})")
+    # Check if user is in onboarding flow (via session flag)
+    in_onboarding = session.get('in_onboarding', False)
+    
+    # Redirect to onboarding for:
+    # 1. New users or provisional upgrades
+    # 2. Users who are currently in the onboarding flow (e.g., connecting calendar from onboarding page)
+    if is_new_user or is_provisional_user_signup or in_onboarding:
+        logger.info(f"Redirecting {users_email} to onboarding (is_new_user={is_new_user}, is_provisional={is_provisional_user_signup}, in_onboarding={in_onboarding})")
         return redirect(url_for("onboarding_routes.onboarding"))
     
     return redirect(url_for("main_routes.bookings"))
