@@ -766,6 +766,10 @@ body {
     min-height: 100vh;
 }
 
+.strikethrough-text {
+  text-decoration: line-through;
+}
+
 .sidebar {
     width: 240px;
     background: linear-gradient(180deg, #1f2432 0%, #2c3142 100%);
