@@ -869,72 +869,6 @@
     </div>
 </div>
 
-<div class="comparison-section">
-    <div class="container">
-        <div class="row justify-content-center mb-5">
-            <div class="col-lg-8 text-center">
-                <h2 class="mb-3">Cal Autobot vs Traditional Scheduling Tools</h2>
-                <p class="text-muted">How Cal compares to Calendly, Doodle, and manual scheduling</p>
-            </div>
-        </div>
-        
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="comparison-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Feature</th>
-                                <th>Cal Autobot</th>
-                                <th>Calendly/Cal.com</th>
-                                <th>Manual Scheduling</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Learning curve</strong></td>
-                                <td><span class="check-icon">✓</span> Just CC Cal</td>
-                                <td><span class="cross-icon">✗</span> Account + profile setup</td>
-                                <td><span class="check-icon">✓</span> None</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Personal touch</strong></td>
-                                <td><span class="check-icon">✓</span> Natural email conversation</td>
-                                <td><span class="cross-icon">✗</span> "Click my link" = impersonal</td>
-                                <td><span class="check-icon">✓</span> Personal but time-consuming</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Google Calendar sync</strong></td>
-                                <td><span class="check-icon">✓</span> Automatic</td>
-                                <td><span class="check-icon">✓</span> Automatic</td>
-                                <td><span class="cross-icon">✗</span> Manual entry</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Timezones</strong></td>
-                                <td><span class="check-icon">✓</span> Yes</td>
-                                <td><span class="check-icon">✓</span> Yes</td>
-                                <td><span class="cross-icon">✗</span> Manual conversion</td>
-                            </tr>
-                            <tr>
-                                <td><strong>App required</strong></td>
-                                <td><span class="check-icon">✓</span> Email and schedule link.</td>
-                                <td><span class="cross-icon">✗</span> Recipient visits schedule link</td>
-                                <td><span class="check-icon">✓</span> No</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Public booking page</strong></td>
-                                <td><span class="check-icon">✓</span> Standard scheduling link</td>
-                                <td><span class="check-icon">✓</span> Standard scheduling link</td>
-                                <td><span class="cross-icon">✗</span> None</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="section-cta text-center">
     {% if not current_user.is_authenticated %}
         <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
@@ -1046,9 +980,9 @@
                 </p>
                 <p class="fw-semibold mb-2">Includes:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Email AI assistant 🤖</li>
-                    <li><i data-feather="check"></i><span><span class="strikethrough-text">100/mo</span> Unlimited email scheduling 🤖 <span class="lock-in-text"><br/>(sign up now to lock in)</span></span></li>
-                    <li><i data-feather="check"></i><span><span class="strikethrough-text">50/mo</span> Unlimited bookings <span class="lock-in-text"><br/>(sign up now to lock in)</span></span></li>
+                    <li><i data-feather="check"></i>Cal - your email AI assistant 🤖</li>
+                    <li><i data-feather="check"></i><span><span class="strikethrough-text">30/mo</span> Unlimited email scheduling 🤖 <span class="lock-in-text"><br/>(sign up now to lock in)</span></span></li>
+                    <li><i data-feather="check"></i>Unlimited bookings</li>
                     <li><i data-feather="check"></i>Unlimited calendars</li>
                     <li><i data-feather="check"></i>Unlimited event types</li>
                     <li><i data-feather="check"></i>Unlimited event extraction (images & emails) 🤖</li>
@@ -1056,10 +990,11 @@
                     <li><i data-feather="check"></i>Email reminders 🤖</li>
                     <li><i data-feather="check"></i>Public booking page</li>
                     <li><i data-feather="check"></i>Availability settings</li>
+                    <li><i data-feather="check"></i>Timezone support</li>
                 </ul>
                 <p class="fw-semibold mb-2">Integrations:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Continue using Calendly or Cal.com for complex workflow</li>
+                    <li><i data-feather="check"></i>Add Cal to your Calendly or Cal.com workflows</li>
                     <li><i data-feather="check"></i>Calendly integration <span class="coming-soon-text">(coming soon)</span></li>
                     <li><i data-feather="check"></i>Cal.com integration <span class="coming-soon-text">(coming soon)</span></li>
                     <li><i data-feather="check"></i>Zoom integration <span class="coming-soon-text">(coming soon)</span></li>
@@ -1068,9 +1003,9 @@
 
             <div class="pricing-card">
                 <h3>Power Users</h3>
-                <p class="plan-subtitle">For advanced Calendly & Cal.com users who want a smart assistant</p>
+                <p class="plan-subtitle">For more advanced and customizable AI assistant</p>
                 <div class="plan-price">
-                    <span class="plan-price-current">$15</span>
+                    <span class="plan-price-current">$20</span>
                     <span class="plan-price-unit">/ user / mo</span>
                 </div>
                 <div class="pricing-cta pricing-cta-primary" style="background: #6b7280; cursor: default;">
@@ -1078,22 +1013,24 @@
                 </div>
                 <p class="fw-semibold mb-2">Everything in Free, plus:</p>
                 <ul class="pricing-features">
-                    
+                    <li><i data-feather="check"></i>Unlimited email scheduling 🤖 </li>
+                    <li><i data-feather="check"></i>Customize AI assistant 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Add custom instructions 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Personalize tone & style 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Make AI smarter with your business context 🤖</li>
                     <li><i data-feather="check"></i>CRM integration</li>
-                    <li><i data-feather="check"></i>CRM features for smarter AI actions</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Intelligent timeline of all your touchpoints</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Auto-updates last touch point</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Summarizes past email conversations</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>See your team's interaction with contacts</li>
-                </ul>
+                    <li><i data-feather="check"></i>Smarter AI actions 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Intelligent timeline for each contact 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Auto-updates last touch point 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Summarizes past email conversations 🤖</li>                </ul>
             </div>
 
             <div class="pricing-card">
                 <h3>Small Business</h3>
                 <p class="plan-subtitle">For businesses that want custom AI assistant and branding</p>
                 <div class="plan-price">
-                    <span class="plan-price-original">$40</span>
-                    <span class="plan-price-current">$20</span>
+                    <span class="plan-price-original">$50</span>
+                    <span class="plan-price-current">$25</span>
                     <span class="plan-price-unit">/ user / mo</span>
                 </div>
                 <p class="pricing-waitlist-helper pricing-price-note">50% off for waitlist customers</p>
@@ -1113,11 +1050,9 @@
                 <p class="fw-semibold mb-2">Everything in Power, plus:</p>
                 <ul class="pricing-features">
                     <li><i data-feather="check"></i>Remove CalAutobot branding</li>
-                    <li><i data-feather="check"></i>Customize AI assistant 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Add custom instructions 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Personalize tone & style 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Make AI smarter with your business context 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Custom email (AI@company.com) 🤖</li>
+                    <li><i data-feather="check"></i>Custom email (AI@company.com) 🤖</li>
+                    <li><i data-feather="check"></i>See your team's interaction with contacts via shared smart inbox</li>
+                    <li><i data-feather="check"></i>Premium onboarding</li>
                     <li><i data-feather="check"></i>Custom booking page with your branding</li>
                 </ul>
             </div>
