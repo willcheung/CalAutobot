@@ -37,11 +37,6 @@ def onboarding():
     # Check if calendar is connected
     has_calendar = bool(current_user.google_token)
     
-    # Debug logging
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Onboarding page loaded for user {current_user.email}, has_calendar={has_calendar}, google_token={'present' if current_user.google_token else 'missing'}")
-    
     # Get list of timezones
     timezones = pytz.common_timezones
     
