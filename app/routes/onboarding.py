@@ -34,8 +34,9 @@ def onboarding():
         flash("Welcome to Cal! You're all set.", "success")
         return redirect(url_for("main_routes.bookings"))
     
-    # Check if calendar is connected
-    has_calendar = bool(current_user.google_token)
+    # Check if calendar is connected (use same logic as bookings/settings)
+    from app.routes.main_routes import calendar_needs_connection
+    has_calendar = not calendar_needs_connection()
     
     # Get list of timezones
     timezones = pytz.common_timezones
