@@ -41,19 +41,19 @@
                                 <h5 class="mb-2" style="font-weight: 600; color: #0f172a;">Connect your calendar</h5>
                                 <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect your calendar, and Cal automatically checks for new meetings as they are added so that you are never double booked.</p>
                                 
-                                <div class="calendar-connection-status">
-                                    {% if has_calendar %}
-                                        <div class="alert alert-success d-flex align-items-center gap-2 mb-0" role="alert" style="background: #dcfce7; border: 1px solid #86efac; color: #15803d;">
+                                <div class="calendar-connection-status" id="calendar-status">
+                                    {% if has_calendar is defined and has_calendar %}
+                                        <div class="alert alert-success d-flex align-items-center gap-2 mb-0" role="alert" id="calendar-connected-notification" style="background: #dcfce7; border: 1px solid #86efac; color: #15803d;">
                                             <i data-feather="check-circle" style="width: 20px; height: 20px;"></i>
                                             <span style="font-weight: 500;">Google Calendar connected</span>
                                         </div>
-                                    {% else %}
-                                        <div class="d-flex align-items-center gap-3 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                                    {% elif has_calendar is defined %}
+                                        <div class="d-flex align-items-center gap-3 p-3" id="calendar-not-connected" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                                             <img src="{{ url_for('static', filename='images/google-calendar.svg') }}" alt="Google Calendar" style="width: 48px; height: 48px;">
                                             <div class="flex-grow-1">
                                                 <div class="fw-semibold mb-1" style="color: #0f172a;">Google Calendar</div>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
+                                                    <span style="display: inline-flex; align-items-center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
                                                         <span style="width: 6px; height: 6px; background: #dc2626; border-radius: 50%;"></span>
                                                         Not connected
                                                     </span>
@@ -62,6 +62,10 @@
                                             <a href="{{ url_for('google_auth.connect_calendar') }}" class="btn btn-outline-primary" style="white-space: nowrap;">
                                                 Connect
                                             </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-warning" role="alert">
+                                            Debug: has_calendar variable not defined. Please refresh the page.
                                         </div>
                                     {% endif %}
                                 </div>
