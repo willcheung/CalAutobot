@@ -254,6 +254,21 @@
         border: 1px solid #e5e7eb;
         display: flex;
         flex-direction: column;
+        position: relative;
+    }
+
+    .pricing-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.25rem 0.65rem;
+        border-radius: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .pricing-card h3 {
@@ -363,7 +378,7 @@
         background: #4f46e5;
         color: white;
         font-weight: 600;
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         padding: 0.65rem 0.85rem;
         margin-left: -10px;
         cursor: pointer;
@@ -984,6 +999,7 @@
 
         <div class="pricing-grid">
             <div class="pricing-card">
+                <span class="pricing-badge">Beta</span>
                 <h3>Free for Individuals</h3>
                 <p class="plan-subtitle">Perfect for solo founders and personal scheduling</p>
                 <div class="plan-price">
@@ -1015,8 +1031,8 @@
             </div>
 
             <div class="pricing-card">
-                <h3>Free for Individuals</h3>
-                <p class="plan-subtitle">For more Calendly & Cal.com users who want a smart assistant</p>
+                <h3>Power Users</h3>
+                <p class="plan-subtitle">For advanced Calendly & Cal.com users who want a smart assistant</p>
                 <div class="plan-price">
                     <span class="plan-price-current">$15</span>
                     <span class="plan-price-unit">/ user / mo</span>
@@ -1028,7 +1044,8 @@
                 <ul class="pricing-features">
                     <li><i data-feather="check"></i>Calendly integration</li>
                     <li><i data-feather="check"></i>Cal.com integration</li>
-                    <li><i data-feather="check"></i>CRM features for smarter AI assistant</li>
+                    <li><i data-feather="check"></i>Continue using Calendly or Cal.com for complex workflow</li>
+                    <li><i data-feather="check"></i>CRM features for smarter AI actions</li>
                 </ul>
             </div>
 
@@ -1057,10 +1074,11 @@
                 <p class="fw-semibold mb-2">Everything in Free, plus:</p>
                 <ul class="pricing-features">
                     <li><i data-feather="check"></i>Remove CalAutobot branding</li>
-                    <li><i data-feather="check"></i>Customize AI assistant</li>
-                    <li><i data-feather="check"></i>Personalize AI tone & style</li>
-                    <li><i data-feather="check"></i>Make AI smarter with your business context</li>
-                    <li><i data-feather="check"></i>Custom AI assistant email (AI-name@yourcompany.com)</li>
+                    <li><i data-feather="check"></i>Customize AI assistant 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Add custom instructions 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Personalize tone & style 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Make AI smarter with your business context 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Custom email (AI@company.com) 🤖</li>
                     <li><i data-feather="check"></i>Custom booking page with your branding</li>
                 </ul>
             </div>
