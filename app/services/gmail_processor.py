@@ -504,7 +504,7 @@ def send_provisional_summary_email(recipient_email: str, events_data: List):
         from flask import render_template
         
         base_url = get_base_url()
-        signup_url = f"{base_url}/signup?full=1"
+        signup_url = f"{base_url}/signup"
         
         # Render email template
         html_body = render_template(

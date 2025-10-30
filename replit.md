@@ -15,7 +15,8 @@ Preferred communication style: Simple, everyday language.
 - **AI Integration**: OpenAI `gpt-4.1-mini` model for text and attachment extraction.
 - **Deployment**: Gunicorn WSGI server.
 - **Core Components**:
-    - **User Authentication**: Handles Google OAuth, session management, provisional upgrades, and now uses a two-step consent (profile-only sign-in followed by an explicit "Connect Calendar" flow).
+    - **User Authentication**: Handles Google OAuth, session management, provisional upgrades, and uses a two-step consent (profile-only sign-in followed by an explicit "Connect Calendar" flow via the onboarding page).
+    - **Onboarding Flow**: First-time users and provisional user upgrades are directed to `/onboarding` after initial OAuth. The onboarding page shows three steps: (1) connect Google Calendar, (2) select timezone, (3) getting started instructions. Users must complete calendar connection before proceeding to the main app. Session flag `in_onboarding` ensures users return to onboarding after calendar OAuth.
     - **Provisional User System**: Emails to go@calautobot.com create provisional accounts capped at two processed messages; OAuth signup upgrades the account and auto-syncs stored events.
     - **AI Event Extraction**: Structured prompting, timezone-aware date resolution, emoji tagging, validation, and persistence via `process_text_to_events`, with OpenAI calls capped at a 90-second client timeout to avoid wedging workers.
     - **Task Classifier Agent**: Lightweight heuristic + LLM router that inspects email headers/body to decide between event extraction and meeting coordination.
