@@ -247,6 +247,7 @@ with app.app_context():
     from app.routes.event_types import event_types_routes
     from app.routes.availability import availability_routes
     from app.routes.public_booking import public_booking
+    from app.routes.onboarding import onboarding_routes
 
     # Register blueprints
     app.register_blueprint(main_routes)
@@ -257,6 +258,7 @@ with app.app_context():
     app.register_blueprint(event_types_routes)
     app.register_blueprint(availability_routes)
     app.register_blueprint(public_booking)
+    app.register_blueprint(onboarding_routes)
 
     # Setup Chrome extension API routes
     from app.routes.chrome_extension_api import setup_chrome_extension_routes

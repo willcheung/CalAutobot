@@ -300,6 +300,11 @@ def callback():
             logger.error(f"Error auto-syncing events for provisional user {users_email}: {str(e)}")
             # Don't fail the signup process if sync fails
 
+    # Redirect to onboarding for new users or provisional upgrades
+    if is_new_user or is_provisional_user_signup:
+        logger.info(f"Redirecting {users_email} to onboarding (is_new_user={is_new_user}, is_provisional={is_provisional_user_signup})")
+        return redirect(url_for("onboarding_routes.onboarding"))
+    
     return redirect(url_for("main_routes.bookings"))
 
 
