@@ -858,7 +858,6 @@ body {
 }
 
 .sidebar-link-danger {
-    margin-top: auto;
     color: rgba(255, 107, 107, 0.9);
 }
 
@@ -868,7 +867,8 @@ body {
 }
 
 .sidebar-link-subtle {
-    margin-top: 0.5rem;
+    margin-top: auto;
+    margin-bottom: 0.5rem;
     font-size: 0.85rem;
     opacity: 0.7;
     color: rgba(255, 255, 255, 0.6);
