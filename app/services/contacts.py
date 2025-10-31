@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import joinedload
+from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.models import Contact, ContactLabel, ContactLabelLink, User
@@ -80,7 +81,23 @@ def ensure_contact(
         first_seen_at=timestamp,
     )
     db.session.add(contact)
-    db.session.flush()
+    
+    try:
+        db.session.flush()
+    except IntegrityError:
+        db.session.rollback()
+        contact = (
+            Contact.query.options(joinedload(Contact.label_links))
+            .filter_by(user_id=user.id, email=normalised)
+            .first()
+        )
+        if contact:
+            if not contact.first_seen_at:
+                contact.first_seen_at = timestamp
+            if not contact.first_seen_source and first_seen_source:
+                contact.first_seen_source = first_seen_source
+        return contact
+    
     return contact
 
 
