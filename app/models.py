@@ -162,6 +162,7 @@ class MeetingRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'), nullable=True)
+    thread_id = db.Column(db.String(255), nullable=True, index=True)
     subject = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default='pending')  # pending, collecting, proposed, confirmed, reschedule_requested, completed
     current_step = db.Column(db.String(50), nullable=True)
@@ -180,6 +181,11 @@ class MeetingRequest(db.Model):
     participants = db.relationship('MeetingParticipant', backref='meeting_request', lazy=True, cascade='all, delete-orphan')
     messages = db.relationship('MeetingMessage', backref='meeting_request', lazy=True, cascade='all, delete-orphan')
     events = db.relationship('Event', backref='meeting_request', lazy=True)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'thread_id', name='uq_meeting_request_user_thread'),
+        db.Index('ix_meeting_request_thread_id', 'thread_id'),
+    )
 
     @property
     def proposed_slots(self):
@@ -239,7 +245,7 @@ class MeetingMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     meeting_request_id = db.Column(db.Integer, db.ForeignKey('meeting_request.id'), nullable=False)
     sender_email = db.Column(db.String(255), nullable=False)
-    message_id = db.Column(db.String(255), nullable=True)
+    message_id = db.Column(db.String(255), nullable=True, index=True)
     thread_id = db.Column(db.String(255), nullable=True)
     body_text = db.Column(db.Text, nullable=True)
     body_html = db.Column(db.Text, nullable=True)
@@ -247,6 +253,11 @@ class MeetingMessage(db.Model):
     metadata_json = db.Column(db.Text, nullable=True)  # additional metadata (headers, etc.)
     received_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('message_id', name='uq_meeting_message_message_id'),
+        db.Index('ix_meeting_message_message_id', 'message_id'),
+    )
 
     @property
     def parsed_slots(self):
