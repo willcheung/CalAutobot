@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Dict, List, Optional, Tuple
 
+from sqlalchemy.exc import IntegrityError
+
 from app import db
 from app.models import (
     Event,
@@ -413,7 +415,20 @@ def _sync_participants(meeting_request: MeetingRequest, email_data: Dict):
 
 def _record_meeting_message(
     meeting_request: MeetingRequest, email_data: Dict
-) -> MeetingMessage:
+) -> Optional[MeetingMessage]:
+    message_id = email_data.get("message_id")
+    
+    # Check if this message was already processed by another worker
+    if message_id:
+        existing = MeetingMessage.query.filter_by(message_id=message_id).first()
+        if existing:
+            logger.info(
+                "Message %s already processed (meeting_request=%s), skipping duplicate",
+                message_id,
+                existing.meeting_request_id,
+            )
+            return None  # Signal that this message was already processed
+    
     raw_headers = email_data.get("raw_headers")
     if isinstance(raw_headers, (dict, list)):
         raw_headers = json.dumps(raw_headers)
@@ -426,7 +441,7 @@ def _record_meeting_message(
     message = MeetingMessage(
         meeting_request_id=meeting_request.id,
         sender_email=(email_data.get("sender") or "").strip().lower(),
-        message_id=email_data.get("message_id"),
+        message_id=message_id,
         thread_id=email_data.get("thread_id"),
         body_text=email_data.get("body_text"),
         body_html=email_data.get("body_html"),
@@ -434,7 +449,18 @@ def _record_meeting_message(
         received_at=received_at,
     )
     db.session.add(message)
-    db.session.flush()
+    
+    try:
+        db.session.flush()
+    except IntegrityError as exc:
+        # Race condition: another worker just inserted this message
+        db.session.rollback()
+        logger.warning(
+            "Concurrent message insertion detected for message_id=%s: %s",
+            message_id,
+            exc,
+        )
+        return None  # Signal that another worker is processing this message
 
     owner = meeting_request.user
     owner_email = (owner.email or "").strip().lower() if owner and owner.email else None
@@ -712,6 +738,11 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     meeting_request = _get_or_create_meeting_request(user, email_data, text_input)
     _sync_participants(meeting_request, email_data)
     meeting_message = _record_meeting_message(meeting_request, email_data)
+    
+    # If message was already processed by another worker, exit early to prevent duplicate replies
+    if meeting_message is None:
+        logger.info("Message already processed by another worker, skipping reply")
+        return None
 
     meeting_request.last_message_at = meeting_message.received_at or datetime.utcnow()
     meeting_request.updated_at = datetime.utcnow()
