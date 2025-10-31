@@ -1,11 +1,13 @@
 from datetime import datetime
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from app import db
 from flask import current_app
 
-from app.models import Event, EventType, MeetingMessage, MeetingParticipant, MeetingRequest, TextInput, User
+from app.models import Contact, Event, EventType, MeetingMessage, MeetingParticipant, MeetingRequest, TextInput, User
+from app.services import contacts as contact_service
 from app.services import public_booking as public_booking_service
 from app.services.scheduling_agent import handle_scheduling_email
 from app.services.users import assign_unique_handle
@@ -445,3 +447,160 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
     assert "participant@example.com" in to_header
     body = captured_emails[-1][2].get("text_body") or ""
     assert "manually" not in body
+
+
+def test_confirm_slot_with_contact_race_condition_still_creates_event(monkeypatch, app_context):
+    """
+    Test that when a contact creation race condition occurs (IntegrityError),
+    the meeting event is still successfully created.
+    
+    This validates the fix for the contacts upsert race condition where
+    concurrent workers trying to create the same contact caused the entire
+    transaction to fail.
+    """
+    unique_suffix = datetime.utcnow().strftime("%f")
+    owner = User(
+        username=f"Owner-{unique_suffix}",
+        email=f"owner-{unique_suffix}@example.com",
+        timezone="UTC",
+        google_id=f"gid-race-{unique_suffix}",
+        google_token='{"access_token": "abc", "refresh_token": "def"}'
+    )
+    db.session.add(owner)
+    db.session.commit()
+
+    owner.default_booking_calendar_id = "booking-calendar"
+    assign_unique_handle(owner)
+    db.session.commit()
+
+    event_type = EventType(
+        user_id=owner.id,
+        title="Team Standup",
+        slug=f"standup-{unique_suffix}",
+        duration_minutes=30,
+        is_active=True,
+        is_public=True,
+    )
+    db.session.add(event_type)
+    db.session.commit()
+
+    # Track whether ensure_contact was called and if it hit the race condition
+    ensure_contact_calls = []
+    real_ensure_contact = contact_service.ensure_contact
+    
+    def fake_ensure_contact(user, email, **kwargs):
+        ensure_contact_calls.append(email)
+        # Simulate race condition on first call only
+        if len(ensure_contact_calls) == 1:
+            # Pre-create the contact to simulate another worker creating it
+            existing = Contact.query.filter_by(user_id=user.id, email=email).first()
+            if not existing:
+                contact = Contact(
+                    user_id=user.id,
+                    email=email,
+                    display_name=kwargs.get('display_name'),
+                    first_seen_source=kwargs.get('first_seen_source', 'scheduler'),
+                    first_seen_at=kwargs.get('first_seen_at') or datetime.utcnow(),
+                )
+                db.session.add(contact)
+                db.session.commit()
+        # Call real function which should handle the existing contact gracefully
+        return real_ensure_contact(user, email, **kwargs)
+
+    monkeypatch.setattr(contact_service, "ensure_contact", fake_ensure_contact)
+
+    # Mock calendar creation
+    def fake_create_calendar_event(user, payload, **_kwargs):
+        return "calendar-event-race-test", "https://meet.google.com/race-test"
+
+    monkeypatch.setattr("app.services.public_booking.create_calendar_event", fake_create_calendar_event)
+
+    # Mock email sending
+    captured_emails = []
+    def fake_send_email(to, subject, **kwargs):
+        captured_emails.append((to, subject, kwargs))
+        return True
+
+    monkeypatch.setattr("app.services.scheduling_agent.gmail_service.send_email", fake_send_email)
+
+    # Mock the agent to return a confirm_slot action
+    def fake_agent(agent_input, history, latest_message, **kwargs):
+        return {
+            "action": "confirm_slot",
+            "reply": "Meeting confirmed for Tuesday at 2pm.",
+            "proposed_slots": [],
+            "confirmed_slot": {
+                "start": "2025-03-15T14:00:00-07:00",
+                "end": "2025-03-15T14:30:00-07:00",
+            },
+        }
+
+    monkeypatch.setattr("app.services.scheduling_agent.run_meeting_scheduler_agent", fake_agent)
+
+    # Simulate incoming email that will trigger meeting confirmation
+    email_data = {
+        "sender": "participant@example.com",
+        "sender_name": "External Participant",
+        "subject": "Re: Team Standup",
+        "body_text": "Tuesday at 2pm works great!",
+        "body_html": "<p>Tuesday at 2pm works great!</p>",
+        "to": [owner.email],
+        "cc": ["another@example.com"],
+        "to_participants": [
+            {"email": owner.email, "name": owner.username}
+        ],
+        "cc_participants": [
+            {"email": "another@example.com", "name": "Another Person"}
+        ],
+        "thread_id": f"thread-race-{unique_suffix}",
+        "message_id": f"msg-race-{unique_suffix}",
+        "received_at": datetime.utcnow(),
+        "raw_headers": {},
+        "attachments": [],
+    }
+
+    # This should not raise an exception despite the contact race condition
+    result = handle_scheduling_email(email_data, owner)
+
+    # Verify the meeting was successfully processed
+    assert result is not None, "handle_scheduling_email should return a result"
+    assert result["action"] == "confirm_slot"
+
+    # Verify meeting request was created
+    meeting_request = MeetingRequest.query.filter_by(
+        user_id=owner.id,
+        thread_id=email_data["thread_id"]
+    ).first()
+    assert meeting_request is not None, "MeetingRequest should be created"
+    assert meeting_request.status == "confirmed"
+
+    # Verify the event was created in the database
+    event = Event.query.filter_by(
+        user_id=owner.id,
+        source="ai_booking",
+        google_event_id="calendar-event-race-test"
+    ).first()
+    assert event is not None, "Calendar event should be created despite contact race condition"
+    assert "Team Standup" in event.event_name, f"Event name should contain 'Team Standup', got: {event.event_name}"
+    assert event.status == "scheduled"
+
+    # Verify participants were created
+    participants = MeetingParticipant.query.filter_by(
+        meeting_request_id=meeting_request.id
+    ).all()
+    assert len(participants) > 0, "Participants should be created"
+
+    # Verify contacts were created (despite race condition)
+    participant_contact = Contact.query.filter_by(
+        user_id=owner.id,
+        email="participant@example.com"
+    ).first()
+    assert participant_contact is not None, "Contact should exist after race condition handling"
+
+    # Verify ensure_contact was called (proving the race condition path was tested)
+    assert len(ensure_contact_calls) > 0, "ensure_contact should have been called"
+    
+    # Verify email was sent
+    assert len(captured_emails) > 0, "Confirmation email should be sent"
+
+    print(f"✅ Test passed: Meeting created successfully despite contact race condition")

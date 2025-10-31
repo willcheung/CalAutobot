@@ -162,7 +162,7 @@ class MeetingRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'), nullable=True)
-    thread_id = db.Column(db.String(255), nullable=True, index=True)
+    thread_id = db.Column(db.String(255), nullable=True)
     subject = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(50), default='pending')  # pending, collecting, proposed, confirmed, reschedule_requested, completed
     current_step = db.Column(db.String(50), nullable=True)
@@ -245,7 +245,7 @@ class MeetingMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     meeting_request_id = db.Column(db.Integer, db.ForeignKey('meeting_request.id'), nullable=False)
     sender_email = db.Column(db.String(255), nullable=False)
-    message_id = db.Column(db.String(255), nullable=True, index=True)
+    message_id = db.Column(db.String(255), nullable=True)
     thread_id = db.Column(db.String(255), nullable=True)
     body_text = db.Column(db.Text, nullable=True)
     body_html = db.Column(db.Text, nullable=True)
