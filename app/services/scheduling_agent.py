@@ -256,17 +256,20 @@ def _get_or_create_meeting_request(
 
     meeting_request = None
     if thread_id:
+        # Query by thread_id directly without joining on MeetingMessage
+        # This prevents race conditions when multiple messages arrive simultaneously
         meeting_request = (
-            MeetingRequest.query.join(MeetingMessage)
+            MeetingRequest.query
             .filter(
                 MeetingRequest.user_id == user.id,
-                MeetingMessage.thread_id == thread_id,
+                MeetingRequest.thread_id == thread_id,
             )
             .order_by(MeetingRequest.created_at.desc())
             .first()
         )
 
     if not meeting_request and message_id:
+        # Fallback: check if a message with this ID already exists
         meeting_request = (
             MeetingRequest.query.join(MeetingMessage)
             .filter(
@@ -286,17 +289,46 @@ def _get_or_create_meeting_request(
             meeting_request.text_input = text_input
         return meeting_request
 
+    # Create new MeetingRequest with thread_id
     meeting_request = MeetingRequest(
         user_id=user.id,
         text_input=text_input,
+        thread_id=thread_id,
         subject=email_data.get("subject"),
         status="pending",
         current_step="reviewing",
         last_message_at=datetime.utcnow(),
     )
     db.session.add(meeting_request)
-    db.session.flush()
-    logger.info("Created new meeting request %s", meeting_request.id)
+    
+    try:
+        db.session.flush()
+        logger.info("Created new meeting request %s for thread %s", meeting_request.id, thread_id)
+    except IntegrityError as exc:
+        # Race condition: another worker just created a MeetingRequest for this thread
+        db.session.rollback()
+        logger.warning(
+            "Concurrent creation detected for thread %s, re-querying: %s",
+            thread_id,
+            exc,
+        )
+        if thread_id:
+            meeting_request = (
+                MeetingRequest.query
+                .filter(
+                    MeetingRequest.user_id == user.id,
+                    MeetingRequest.thread_id == thread_id,
+                )
+                .order_by(MeetingRequest.created_at.desc())
+                .first()
+            )
+            if meeting_request:
+                logger.info("Re-query found meeting request %s", meeting_request.id)
+                if text_input and not meeting_request.text_input_id:
+                    meeting_request.text_input = text_input
+                return meeting_request
+        raise  # Re-raise if we couldn't find the meeting request
+    
     return meeting_request
 
 
