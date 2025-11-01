@@ -226,12 +226,12 @@ class AttachmentProcessor:
         """
         from app.services.event_processing import process_text_to_events
         from app.agents.event_extractor import validate_and_clean_event
-from datetime import datetime
+        from datetime import datetime
         from app import db
         from app.models import Event
-from app.helpers.text_processing import sanitize_text_for_db
-from app.services.google_calendar import create_calendar_event
-from app.helpers.datetime_utils import ensure_timezone
+        from app.helpers.text_processing import sanitize_text_for_db
+        from app.services.google_calendar import create_calendar_event
+        from app.helpers.datetime_utils import ensure_timezone
         
         user = User.query.get(text_input.user_id)
         user_timezone = user.timezone if user and user.timezone else "UTC"
