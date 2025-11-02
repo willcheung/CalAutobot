@@ -157,14 +157,15 @@ Return a JSON object with this exact structure:
 ---
 
 ### Inputs Provided
-- `conversation_history`: full email thread (chronological)
-- `latest_message`: most recent email content
-- `available_slots`: list of ISO 8601 availability windows
-- `timezone`: owner’s timezone (e.g., "America/Los_Angeles")
-- `current_date`: ISO 8601 date reference
-- `owner_name`: owner’s display name
-- `owner_email`: owner’s email
-- `default_meeting_duration`: default meeting length
+- 'conversation_history': full email thread (chronological)
+- 'latest_message': most recent email content
+- 'available_slots': list of ISO 8601 availability windows
+- 'timezone': owner’s timezone (e.g., "America/Los_Angeles")
+- 'current_date': ISO 8601 date reference
+- 'owner_name': owner’s display name
+- 'owner_email': owner’s email
+- 'default_meeting_duration': default meeting length
+- 'follow_up_context': optional context for follow-ups when participants haven't responded yet
 
 ---
 
@@ -205,6 +206,8 @@ def run_meeting_scheduler_agent(
     owner_email = meeting_context.get("owner_email") or "[unknown]"
     owner_name = meeting_context.get("owner_name") or owner_email
     event_duration_minutes = meeting_context.get("event_duration_minutes") or 30
+    follow_up_context = meeting_context.get("follow_up_context")
+    follow_up_section = f"\nfollow_up_context: {follow_up_context}" if follow_up_context else ""
     system_prompt = (
         SCHEDULER_SYSTEM_PROMPT_TEMPLATE
         .replace("{owner_name}", owner_name)
@@ -242,6 +245,7 @@ timezone: {timezone}
 current_date: {current_date}
 current_time_local: {current_time_display}
 default_meeting_duration: {event_duration_minutes} minutes
+{follow_up_section}
 
 Conversation so far:
 {conversation_text or '[no prior messages]'}
