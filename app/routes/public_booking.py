@@ -36,11 +36,33 @@ def _render_profile_page(user: User):
         .all()
     )
 
+    handle_or_id = user.handle or str(user.id)
+    profile_url = url_for("public_booking.profile_page", handle=handle_or_id, _external=True)
+
+    if event_types:
+        primary_event = event_types[0]
+        if primary_event.description:
+            description = primary_event.description
+        else:
+            description = f"Book a {primary_event.duration_minutes}-minute {primary_event.title} with {user.display_name}."
+    else:
+        description = f"Schedule meetings with {user.display_name} using CalAutobot."
+
+    meta_kwargs = {
+        "meta_title": f"{user.display_name} | CalAutobot meetings",
+        "meta_description": description,
+        "meta_url": profile_url,
+        "meta_type": "profile",
+    }
+    if user.profile_picture_url:
+        meta_kwargs["meta_image"] = user.profile_picture_url
+
     return render_template(
         "public/profile.html",
         user=user,
         event_types=event_types,
         display_sidebar=False,
+        **meta_kwargs,
     )
 
 
@@ -234,6 +256,26 @@ def _render_event_type_page(user: User, slug: str):
     current_month_start = today.replace(day=1)
     prev_month_enabled = prev_month >= current_month_start
 
+    handle_or_id = user.handle or str(user.id)
+    event_url = url_for(
+        "public_booking.event_type_page",
+        handle=handle_or_id,
+        slug=event_type.slug,
+        _external=True,
+    )
+    if event_type.description:
+        meta_description = event_type.description
+    else:
+        meta_description = f"Book a {event_type.duration_minutes}-minute {event_type.title} with {user.display_name}."
+    meta_kwargs = {
+        "meta_title": f"{event_type.title} with {user.display_name}",
+        "meta_description": meta_description,
+        "meta_url": event_url,
+        "meta_type": "event",
+    }
+    if user.profile_picture_url:
+        meta_kwargs["meta_image"] = user.profile_picture_url
+
     return render_template(
         "public/event_type.html",
         user=user,
@@ -255,6 +297,7 @@ def _render_event_type_page(user: User, slug: str):
         former_slot_iso=former_slot_iso,
         reschedule_token=reschedule_token,
         display_sidebar=False,
+        **meta_kwargs,
     )
 
 

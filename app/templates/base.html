@@ -23,6 +23,26 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% set site_name = 'CalAutobot' %}
+    {% set meta_title = meta_title | default('CalAutobot | Your AI scheduling copilot') %}
+    {% set meta_description = meta_description | default('CalAutobot.com turns emails, images, and requests into calendar-ready meetings so you can book faster with AI.') %}
+    {% set meta_type = meta_type | default('website') %}
+    {% set meta_url = meta_url | default(request.base_url) %}
+    {% set meta_image = meta_image | default(url_for('static', filename='images/logo.png', _external=True)) %}
+
+    <meta name="description" content="{{ meta_description }}">
+    <meta property="og:site_name" content="{{ site_name }}">
+    <meta property="og:type" content="{{ meta_type }}">
+    <meta property="og:title" content="{{ meta_title }}">
+    <meta property="og:description" content="{{ meta_description }}">
+    <meta property="og:url" content="{{ meta_url }}">
+    <meta property="og:image" content="{{ meta_image }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ meta_title }}">
+    <meta name="twitter:description" content="{{ meta_description }}">
+    <meta name="twitter:image" content="{{ meta_image }}">
+    <link rel="canonical" href="{{ meta_url }}">
     
     {% block head %}{% endblock %}
 </head>
