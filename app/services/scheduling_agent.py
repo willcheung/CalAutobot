@@ -853,6 +853,11 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     elif action != "cancel_meeting":
         meeting_request.status = "proposed"
 
+    # Clear follow-ups for terminal states to prevent sending follow-ups after confirmation
+    if meeting_request.status in ["confirmed", "cancelled", "completed"]:
+        meeting_request.next_follow_up_at = None
+        meeting_request.follow_up_count = 0
+
     invitee_email = None
     invitee_name = None
     calendar_event_id = None
