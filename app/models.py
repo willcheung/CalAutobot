@@ -26,7 +26,15 @@ class User(UserMixin, db.Model):
     webhook_channel_id = db.Column(db.String(100), nullable=True)  # Google webhook channel ID
     webhook_resource_id = db.Column(db.String(100), nullable=True)  # Google webhook resource ID
     webhook_expiration = db.Column(db.DateTime, nullable=True)  # When webhook expires
-    
+
+    # Calendly integration fields
+    calendly_access_token = db.Column(db.Text, nullable=True)
+    calendly_refresh_token = db.Column(db.Text, nullable=True)
+    calendly_user_uri = db.Column(db.String(255), nullable=True)
+    calendly_organization_uri = db.Column(db.String(255), nullable=True)
+    calendly_scheduling_url = db.Column(db.String(512), nullable=True)
+    calendly_connected_at = db.Column(db.DateTime, nullable=True)
+
     # Relationship with events
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
     text_inputs = db.relationship('TextInput', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -67,6 +75,11 @@ class Event(db.Model):
     google_event_id = db.Column(db.String(100))
     public_token = db.Column(db.String(64), nullable=True, unique=True)
     is_synced = db.Column(db.Boolean, default=False)
+
+    # Calendly integration fields
+    calendly_event_uri = db.Column(db.String(255), nullable=True, unique=True)
+    calendly_invitee_uri = db.Column(db.String(255), nullable=True)
+    calendly_last_synced_at = db.Column(db.DateTime, nullable=True)
     
     # Event duration
     duration_minutes = db.Column(db.Integer)  # Duration in minutes calculated from start/end times
@@ -408,6 +421,11 @@ class EventType(db.Model):
     is_public = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Calendly integration fields
+    calendly_event_type_uri = db.Column(db.String(255), nullable=True, unique=True)
+    is_calendly_managed = db.Column(db.Boolean, default=False, server_default="false")
+    calendly_last_synced_at = db.Column(db.DateTime, nullable=True)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'slug', name='uq_event_type_user_slug'),)
 
