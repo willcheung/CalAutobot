@@ -33,6 +33,7 @@ class User(UserMixin, db.Model):
     calendly_user_uri = db.Column(db.String(255), nullable=True)
     calendly_organization_uri = db.Column(db.String(255), nullable=True)
     calendly_scheduling_url = db.Column(db.String(512), nullable=True)
+    calendly_webhook_subscription_uri = db.Column(db.String(255), nullable=True)
     calendly_connected_at = db.Column(db.DateTime, nullable=True)
 
     # Relationship with events

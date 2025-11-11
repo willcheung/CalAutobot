@@ -263,6 +263,92 @@ def _slot_overlaps(slot: Slot, busy_slots: Iterable[Slot]) -> bool:
     return False
 
 
+def _get_calendly_availability(
+    user: User,
+    event_type: EventType,
+    start_date: date,
+    end_date: date,
+    tz,
+) -> Optional[AvailabilityBatch]:
+    """
+    Get availability from Calendly API.
+
+    Returns None if Calendly is not configured or fails.
+    """
+    # Check if user has Calendly and event type has URI
+    if not user.calendly_access_token:
+        return None
+
+    if not event_type.calendly_event_type_uri:
+        return None
+
+    try:
+        from app.services.calendly_api import CalendlyAPIClient, CalendlyAPIError
+
+        client = CalendlyAPIClient(user)
+
+        slots_by_date: Dict[date, List[Slot]] = {}
+        availability_map: Dict[date, bool] = {}
+
+        # Calendly API limits to 7-day ranges, so chunk the request
+        current_start = start_date
+        while current_start <= end_date:
+            current_end = min(current_start + timedelta(days=6), end_date)
+
+            # Convert dates to datetime for API call
+            range_start_dt = tz.localize(datetime.combine(current_start, time.min))
+            range_end_dt = tz.localize(datetime.combine(current_end, time.max))
+
+            # Call Calendly API
+            calendly_slots = client.get_event_type_available_times(
+                event_type_uri=event_type.calendly_event_type_uri,
+                start_time=range_start_dt,
+                end_time=range_end_dt,
+            )
+
+            # Convert Calendly response to Slot objects grouped by date
+            for calendly_slot in calendly_slots:
+                if calendly_slot.get("status") != "available":
+                    continue
+
+                start_time_str = calendly_slot.get("start_time")
+                if not start_time_str:
+                    continue
+
+                # Parse ISO datetime and convert to user timezone
+                slot_start_utc = parser.isoparse(start_time_str)
+                slot_start = slot_start_utc.astimezone(tz)
+                slot_end = slot_start + timedelta(minutes=event_type.duration_minutes)
+
+                slot = Slot(start=slot_start, end=slot_end)
+                slot_date = slot_start.date()
+
+                if slot_date not in slots_by_date:
+                    slots_by_date[slot_date] = []
+
+                slots_by_date[slot_date].append(slot)
+
+            # Move to next chunk
+            current_start = current_end + timedelta(days=1)
+
+        # Fill in empty dates
+        current_date = start_date
+        while current_date <= end_date:
+            if current_date not in slots_by_date:
+                slots_by_date[current_date] = []
+            availability_map[current_date] = bool(slots_by_date[current_date])
+            current_date += timedelta(days=1)
+
+        return AvailabilityBatch(
+            slots_by_date=slots_by_date,
+            availability_map=availability_map,
+        )
+
+    except Exception as exc:
+        logger.warning(f"Failed to fetch availability from Calendly: {exc}")
+        return None
+
+
 def get_availability_for_range(
     user: User,
     event_type: EventType,
@@ -272,8 +358,17 @@ def get_availability_for_range(
     if end_date < start_date:
         raise ValueError("end_date must be on or after start_date")
 
-    ensure_default_windows(user)
     tz = get_timezone(user)
+
+    # Try Calendly first if configured
+    calendly_result = _get_calendly_availability(user, event_type, start_date, end_date, tz)
+    if calendly_result is not None:
+        logger.info(f"Using Calendly availability for user {user.id}, event type {event_type.id}")
+        return calendly_result
+
+    # Fall back to local availability windows
+    logger.info(f"Using local availability for user {user.id}, event type {event_type.id}")
+    ensure_default_windows(user)
 
     weekly_windows = [
         window for window in get_weekly_windows(user) if window.is_active

@@ -243,6 +243,7 @@ with app.app_context():
     from app.routes.main_routes import main_routes
     from app.routes.google_auth import google_auth
     from app.routes.calendly_auth import calendly_auth
+    from app.routes.calendly_webhooks import calendly_webhooks
     from app.routes.google_webhook import google_webhook
     from app.routes.settings import settings_routes
     from app.routes.event_types import event_types_routes
@@ -254,6 +255,7 @@ with app.app_context():
     app.register_blueprint(main_routes)
     app.register_blueprint(google_auth)
     app.register_blueprint(calendly_auth)
+    app.register_blueprint(calendly_webhooks)
     # Removed mailgun_webhook blueprint - migrated to Gmail API
     app.register_blueprint(google_webhook)
     app.register_blueprint(settings_routes)

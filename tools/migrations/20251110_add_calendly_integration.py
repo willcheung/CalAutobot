@@ -34,6 +34,7 @@ def add_calendly_user_fields() -> None:
         ("calendly_user_uri", "VARCHAR(255)"),
         ("calendly_organization_uri", "VARCHAR(255)"),
         ("calendly_scheduling_url", "VARCHAR(512)"),
+        ("calendly_webhook_subscription_uri", "VARCHAR(255)"),
         ("calendly_connected_at", "TIMESTAMP"),
     ]
 
