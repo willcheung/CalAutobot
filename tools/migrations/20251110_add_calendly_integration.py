@@ -42,7 +42,7 @@ def add_calendly_user_fields() -> None:
         for column_name, column_type in columns_to_add:
             if not _column_exists("user", column_name):
                 app.logger.info(f"Adding column user.{column_name}")
-                conn.execute(text(f"ALTER TABLE user ADD COLUMN {column_name} {column_type}"))
+                conn.execute(text(f'ALTER TABLE "user" ADD COLUMN {column_name} {column_type}'))
             else:
                 app.logger.info(f"Column user.{column_name} already exists, skipping")
 
