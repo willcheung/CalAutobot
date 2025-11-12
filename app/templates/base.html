@@ -138,6 +138,20 @@
                             <i data-feather="users"></i>
                             <span>Contacts</span>
                         </a>
+                        {% if current_user.calendly_access_token %}
+                        <a class="sidebar-link sidebar-link-disabled" style="cursor: not-allowed; opacity: 0.5;" title="Managed via Calendly">
+                            <i data-feather="calendar"></i>
+                            <span>Event Types <i data-feather="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></span>
+                        </a>
+                        <a class="sidebar-link sidebar-link-disabled" style="cursor: not-allowed; opacity: 0.5;" title="Managed via Calendly">
+                            <i data-feather="clock"></i>
+                            <span>Availability <i data-feather="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></span>
+                        </a>
+                        <a class="sidebar-link sidebar-link-disabled" style="cursor: not-allowed; opacity: 0.5;" title="Use Calendly booking page">
+                            <i data-feather="external-link"></i>
+                            <span>View Public Page <i data-feather="lock" style="width: 14px; height: 14px; margin-left: 4px;"></i></span>
+                        </a>
+                        {% else %}
                         <a class="sidebar-link{% if is_event_types_active %} sidebar-link-active{% endif %}" href="{{ url_for('event_types_routes.list_event_types') }}">
                             <i data-feather="calendar"></i>
                             <span>Event Types</span>
@@ -150,6 +164,7 @@
                             <i data-feather="external-link"></i>
                             <span>View Public Page</span>
                         </a>
+                        {% endif %}
                         <a class="sidebar-link{% if is_settings_active %} sidebar-link-active{% endif %}" href="{{ url_for('settings_routes.calendar_settings') }}">
                             <i data-feather="settings"></i>
                             <span>Settings{% if calendar_needs_connection() %} <span title="Please connect your Google Calendar">⚠️</span>{% endif %}</span>

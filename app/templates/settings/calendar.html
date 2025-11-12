@@ -99,9 +99,9 @@
                 </div>
 
                 {% if writable_calendars %}
-                    <div class="mb-3">
+                    <div class="mb-3" {% if current_user.calendly_access_token %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
                         <label class="form-label" for="booking_calendar_id">Add booking events to:</label>
-                        <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id" onchange="this.form.submit()">
+                        <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id" onchange="this.form.submit()" {% if current_user.calendly_access_token %}disabled{% endif %}>
                             {% for calendar in writable_calendars %}
                                 <option value="{{ calendar.id }}" {% if calendar.id == booking_calendar_id %}selected{% endif %}>
                                     {{ calendar.name }}
@@ -109,7 +109,11 @@
                             {% endfor %}
                         </select>
                         <div class="form-text">
-                            All meetings booked through Cal and scheduling page will be added to this calendar.
+                            {% if current_user.calendly_access_token %}
+                                <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly - bookings are saved to your Calendly-connected calendar.
+                            {% else %}
+                                All meetings booked through Cal and scheduling page will be added to this calendar.
+                            {% endif %}
                         </div>
                         {% if booking_calendar_missing %}
                             <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
@@ -149,12 +153,18 @@
             </div>
         </div>
 
-        <div class="settings-section card shadow-sm">
+        <div class="settings-section card shadow-sm" {% if current_user.calendly_access_token %}style="opacity: 0.5;"{% endif %}>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <h5 class="card-title mb-1">Check for conflicts</h5>
-                        <p class="text-muted small mb-0">Select which calendars you want to check for conflicts to prevent double bookings.</p>
+                        <p class="text-muted small mb-0">
+                            {% if current_user.calendly_access_token %}
+                                <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly - conflict checking is handled by Calendly's availability system.
+                            {% else %}
+                                Select which calendars you want to check for conflicts to prevent double bookings.
+                            {% endif %}
+                        </p>
                     </div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
                         + Add
@@ -162,7 +172,7 @@
                 </div>
 
                 {% if calendars %}
-                    <div class="calendar-list">
+                    <div class="calendar-list" {% if current_user.calendly_access_token %}style="pointer-events: none;"{% endif %}>
                         {% for calendar in calendars %}
                             <div class="calendar-entry {% if calendar.id == primary_calendar_id %}calendar-entry-primary{% endif %}">
                                 <div class="calendar-entry-meta">
@@ -191,6 +201,7 @@
                                         name="conflict_calendar_ids"
                                         value="{{ calendar.id }}"
                                         {% if calendar.selected_for_conflicts %}checked{% endif %}
+                                        {% if current_user.calendly_access_token %}disabled{% endif %}
                                         onchange="this.form.submit()"
                                     >
                                     <label class="form-check-label" for="conflict-{{ loop.index }}"></label>
