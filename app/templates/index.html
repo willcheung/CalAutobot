@@ -426,6 +426,154 @@
         color: #6b7280;
     }
 
+    .ai-agents-section {
+        padding: clamp(2.5rem, 8vw, 5rem) 0;
+        background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #8b5cf6 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ai-agents-section::before {
+        content: '';
+        position: absolute;
+        top: -20%;
+        right: -15%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .ai-agents-section h2 {
+        color: white;
+    }
+
+    .ai-agents-section .text-muted {
+        color: rgba(255, 255, 255, 0.9) !important;
+        opacity: 1;
+    }
+
+    .ai-agents-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(1rem, 2vw, 1.5rem);
+        position: relative;
+        z-index: 1;
+    }
+
+    .ai-agent-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: clamp(1.5rem, 3vw, 2rem);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        backdrop-filter: blur(10px);
+    }
+
+    .ai-agent-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+    }
+
+    .ai-agent-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ai-agent-icon {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .ai-agent-icon i,
+    .ai-agent-icon [data-feather] {
+        color: white;
+        stroke: white;
+        width: 24px;
+        height: 24px;
+    }
+
+    .ai-agent-card h3 {
+        font-size: clamp(1.1rem, 2vw, 1.25rem);
+        font-weight: 600;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .ai-agent-card p {
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .coming-soon-badge {
+        display: inline-block;
+        font-style: italic;
+        color: #8b5cf6;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .ai-agent-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6366f1;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .ai-agent-link:hover {
+        color: #8b5cf6;
+        gap: 0.75rem;
+        text-decoration: none;
+    }
+
+    .ai-agent-link i,
+    .ai-agent-link [data-feather] {
+        width: 18px;
+        height: 18px;
+        transition: transform 0.2s ease;
+    }
+
+    .ai-agent-link:hover i,
+    .ai-agent-link:hover [data-feather] {
+        transform: translateX(4px);
+    }
+
+    @media (max-width: 992px) {
+        .ai-agents-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .ai-agents-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ai-agents-section::before {
+            width: 400px;
+            height: 400px;
+            top: -10%;
+            right: -25%;
+        }
+    }
+
     @media (max-width: 576px) {
         .pricing-waitlist-input-group {
             flex-direction: column;
@@ -664,11 +812,11 @@
                     🚀 BETA
                 </div>
 
-                <h1 class="waitlist-title"><strong>Cal,</strong> can you find a time<br/> for us to meet next week?</h1>
+                <h1 class="waitlist-title"><strong>Cal,</strong> qualify my leads and<br/>schedule to meet with them next week</h1>
 
                 <p class="waitlist-subtitle">
-                    Meet Cal — your AI scheduling assistant for Google Calendar. 
-                    Keep your leads warm and no more "what time works for you?" 
+                    Meet Cal — your AI leads warmer and scheduling assistant. 
+                    Keep your leads warm with personal touch without changing your workflow.
                     Just CC Cal and focus on your real work.
                 </p>
 
@@ -699,7 +847,7 @@
         </div>
     </div>
 </div>
-<section class="email-stack" id="how-it-works">
+<!-- <section class="email-stack" id="how-it-works">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-7 text-center">
@@ -744,6 +892,83 @@
                 </div>
             </figure>
         </div>
+    </div>
+</section> -->
+
+<section class="ai-agents-section" id="ai-agents">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">AI agents that help manage your business 24/7</h2>
+                <p class="text-muted">Powerful AI assistants that understand your business and automate repetetiveness without sleeping</p>
+            </div>
+        </div>
+
+        <div class="ai-agents-grid">
+            <div class="ai-agent-card">
+                <div class="ai-agent-header">
+                    <div class="ai-agent-icon">
+                        <i data-feather="calendar"></i>
+                    </div>
+                    <h3>AI Scheduler</h3>
+                </div>
+                <p>Goal is to schedule a meeting via email like a real assistant. Use this when Calendly link is impersonal.</p>
+                <a href="#" class="ai-agent-link" data-bs-toggle="modal" data-bs-target="#aiSchedulerModal">
+                    Learn more <i data-feather="arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="ai-agent-card">
+                <div class="ai-agent-header">
+                    <div class="ai-agent-icon">
+                        <i data-feather="message-circle"></i>
+                    </div>
+                    <h3>AI Leads Closer</h3>
+                </div>
+                <p>Goal is to qualify leads and get to a meeting. It uses context from form data, contact enrichment, and other sources you provide. <em class="coming-soon-badge">$150 off when sign for on waitlist</em></p>
+                <p><em class="coming-soon-badge">Coming Soon! Join waitlist on <a href="#pricing">pricing page</a>.</em></p>
+            </div>
+
+            <div class="ai-agent-card">
+                <div class="ai-agent-header">
+                    <div class="ai-agent-icon">
+                        <i data-feather="file-text"></i>
+                    </div>
+                    <h3>AI CRM Tracker</h3>
+                </div>
+                <p>Goal is to update customer contacts with context from emails and meetings, so you can focus on the actual relationship. <em class="coming-soon-badge">$150 off when sign up for waitlist</em></p>
+                <p><em class="coming-soon-badge">Coming Soon! Join waitlist on <a href="#pricing">pricing page</a>.</em></p>
+            </div>
+
+            <div class="ai-agent-card">
+                <div class="ai-agent-header">
+                    <div class="ai-agent-icon">
+                        <i data-feather="search"></i>
+                    </div>
+                    <h3>AI Event Manager</h3>
+                </div>
+                <p>Goal is to find events from any images, itineraries, and emails, and add them to Google Calendar. Save hours from manually adding them yourself.</p>
+                <a href="#" class="ai-agent-link" data-bs-toggle="modal" data-bs-target="#eventOrganizerModal">
+                    Learn more <i data-feather="arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="hero-actions mt-5 text-center">
+        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
+            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign up free with Google
+        </a>
+
+        <p class="mt-2" style="font-size: 0.9rem; font-weight: 300; color:white">
+            No credit card required. Zero setup.
+        </p>
     </div>
 </section>
 
@@ -890,64 +1115,6 @@
     {% endif %}
 </div>
 
-<div class="other-uses-section" id="email-to-calendar">
-    <div class="container">
-        <div class="row justify-content-center mb-5">
-            <div class="col-lg-8 text-center">
-                <h2 class="mb-3">Other Ways to Save Time with Cal</h2>
-                <p class="text-muted">Our event extraction turns emails, pictures, and itineraries into calendar events. <a href="/image-to-calendar">Learn more.</a></p>
-            </div>
-        </div>
-
-        <div class="other-uses-flow">
-            <div class="other-uses-step">
-                <div class="other-uses-step__header">
-                    <span class="other-uses-step__badge">Step 1</span>
-                    <i data-feather="camera"></i>
-                </div>
-                <h5>Itineraries, flyers, images, you name it</h5>
-                <p>Snap a photo of the event or forward your event confirmation emails.</p>
-            </div>
-
-            <div class="other-uses-arrow">
-                <i data-feather="arrow-right"></i>
-            </div>
-
-            <div class="other-uses-step">
-                <div class="other-uses-step__header">
-                    <span class="other-uses-step__badge">Step 2</span>
-                    <i data-feather="mail"></i>
-                </div>
-                <h5>Forward to Cal</h5>
-                <p>Forward it to <strong>Cal@CalAutobot.com</strong> - no portals, forms, or uploads to manage.</p>
-            </div>
-
-            <div class="other-uses-arrow">
-                <i data-feather="arrow-right"></i>
-            </div>
-
-            <div class="other-uses-step">
-                <div class="other-uses-step__header">
-                    <span class="other-uses-step__badge">Done</span>
-                    <i data-feather="calendar"></i>
-                </div>
-                <h5>Event created in Google Calendar</h5>
-                <p>Cal syncs event details to Google Calendar so you don't have to manually create them.</p>
-            </div>
-        </div>
-
-        <div class="other-uses-cta text-center">
-            <p class="mb-3 fw-semibold text-dark">Forward your emails or pictures to</p>
-            <div class="email-cta-wrapper other-uses-cta-wrapper">
-                <a href="mailto:Cal@CalAutobot.com" class="email-address-chip">Cal@CalAutobot.com</a>
-                <button class="copy-email-btn copy-email-btn-light" data-email="cal@calautobot.com" onclick="copyEmailAddress('Cal@CalAutobot.com', this); return false;" title="Copy email address">
-                    <i data-feather="copy"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <section class="pricing-section" id="pricing">
     <div class="container">
         <div class="row justify-content-center mb-5">
@@ -980,24 +1147,21 @@
                 </p>
                 <p class="fw-semibold mb-2">Includes:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Cal - your email AI assistant 🤖</li>
-                    <li><i data-feather="check"></i><span><span class="strikethrough-text">30/mo</span> Unlimited email scheduling 🤖 <span class="lock-in-text"><br/>(sign up now to lock in)</span></span></li>
+                    <li><i data-feather="check"></i>AI Scheduler 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Unlimited email scheduling 🤖 </li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Follow up email 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Email reminders 🤖</li>
+                    <li><i data-feather="check"></i>AI Event Manager 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Unlimited event extraction (images & emails) 🤖</li>
+                    <li><i data-feather="check"></i>Use our AI Agents on existing Calendly or Cal.com workflows</li>
+                    <li><i data-feather="check"></i>Calendly integration</li>
+                    <li><i data-feather="check"></i>Cal.com integration <span class="coming-soon-text">(coming soon)</span></li>
                     <li><i data-feather="check"></i>Unlimited bookings</li>
                     <li><i data-feather="check"></i>Unlimited calendars</li>
                     <li><i data-feather="check"></i>Unlimited event types</li>
-                    <li><i data-feather="check"></i><span><span class="strikethrough-text">30/mo</span> Unlimited event extraction (images & emails) 🤖</li>
-                    <li><i data-feather="check"></i>Follow up email 🤖</li>
-                    <li><i data-feather="check"></i>Email reminders 🤖</li>
                     <li><i data-feather="check"></i>Public booking page</li>
                     <li><i data-feather="check"></i>Availability settings</li>
                     <li><i data-feather="check"></i>Timezone support</li>
-                </ul>
-                <p class="fw-semibold mb-2">Integrations:</p>
-                <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Add Cal to your Calendly or Cal.com workflows</li>
-                    <li><i data-feather="check"></i>Calendly integration <span class="coming-soon-text">(coming soon)</span></li>
-                    <li><i data-feather="check"></i>Cal.com integration <span class="coming-soon-text">(coming soon)</span></li>
-                    <li><i data-feather="check"></i>Zoom integration <span class="coming-soon-text">(coming soon)</span></li>
                 </ul>
             </div>
 
@@ -1005,35 +1169,11 @@
                 <h3>Power Users</h3>
                 <p class="plan-subtitle">For more advanced and customizable AI assistant</p>
                 <div class="plan-price">
-                    <span class="plan-price-current">$20</span>
-                    <span class="plan-price-unit">/ user / mo</span>
-                </div>
-                <div class="pricing-cta pricing-cta-primary" style="background: #6b7280; cursor: default;">
-                    Coming soon
-                </div>
-                <p class="fw-semibold mb-2">Everything in Free, plus:</p>
-                <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Unlimited email scheduling 🤖 </li>
-                    <li><i data-feather="check"></i>Customize AI assistant 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Add custom instructions 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Personalize tone & style 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Make AI smarter with your business context 🤖</li>
-                    <li><i data-feather="check"></i>CRM integration</li>
-                    <li><i data-feather="check"></i>Smarter AI actions 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Intelligent timeline for each contact 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Auto-updates last touch point 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Summarizes past email conversations 🤖</li>                </ul>
-            </div>
-
-            <div class="pricing-card">
-                <h3>Small Business</h3>
-                <p class="plan-subtitle">For businesses that want custom AI assistant and branding</p>
-                <div class="plan-price">
                     <span class="plan-price-original">$50</span>
-                    <span class="plan-price-current">$25</span>
-                    <span class="plan-price-unit">/ user / mo</span>
+                    <span class="plan-price-current">$0</span>
+                    <span class="plan-price-unit">/ user / mo (first 3 months)</span>
                 </div>
-                <p class="pricing-waitlist-helper pricing-price-note">50% off for waitlist customers</p>
+                <p class="pricing-waitlist-helper pricing-price-note">$150 off for waitlist customers</p>
                 <form class="pricing-waitlist-form" method="post" action="{{ url_for('main_routes.join_waitlist') }}" data-global-handlers="off" novalidate>
                     <div class="pricing-waitlist-input-group">
                         <input 
@@ -1047,13 +1187,38 @@
                     </div>
                     <p class="pricing-waitlist-feedback" aria-live="polite"></p>
                 </form>
+                <p class="fw-semibold mb-2">Everything in Free, plus:</p>
+                <ul class="pricing-features">
+                    <li><i data-feather="check"></i>AI Leads Closer 🤖</li>
+                    <li><i data-feather="check"></i>AI CRM Tracker 🤖</li>
+                    <li><i data-feather="check"></i>Remove CalAutobot branding</li>
+                    <li><i data-feather="check"></i>Custom email (AI@company.com) </li>
+                    <li><i data-feather="check"></i>Customize AI assistant 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Add custom instructions 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Personalize tone & style 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Make AI smarter with your business context 🤖</li>
+                    <li><i data-feather="check"></i>Smarter AI actions 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Intelligent timeline for each contact 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Auto-updates last touch point 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Summarizes past email conversations 🤖</li>
+                    <li><i data-feather="check"></i>CRM integration</li>
+                </ul>
+            </div>
+
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <p class="plan-subtitle">For businesses that want scale and custom workflows</p>
+                <div class="plan-price">
+                    <span class="plan-price-current">$10k+</span>
+                </div>
+                <div class="pricing-cta pricing-cta-primary" style="background: #6b7280; cursor: default;">
+                    Contact Us
+                </div>
                 <p class="fw-semibold mb-2">Everything in Power, plus:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>Remove CalAutobot branding</li>
-                    <li><i data-feather="check"></i>Custom email (AI@company.com) 🤖</li>
                     <li><i data-feather="check"></i>See your team's interaction with contacts via shared smart inbox</li>
-                    <li><i data-feather="check"></i>Premium onboarding</li>
-                    <li><i data-feather="check"></i>Custom booking page with your branding</li>
+                    
+                    <li><i data-feather="check"></i>Customize AI Agent workflow</li>
                 </ul>
             </div>
         </div>
@@ -1166,7 +1331,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingEight">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseEight" aria-expanded="false" aria-controls="faqCollapseEight">
-                                I'm a physical small business—can I use your booking tool?
+                                I'm a physical small business. Can I use your booking tool?
                             </button>
                         </h2>
                         <div id="faqCollapseEight" class="accordion-collapse collapse" aria-labelledby="faqHeadingEight" data-bs-parent="#faqAccordion">
@@ -1187,7 +1352,7 @@
             <div class="col-lg-8 text-center">
                 <h2 class="mb-4">Smart, Simpler Scheduling</h2>
                 <p class="mb-4" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">
-                    Join forward-thinking individuals who are eliminating scheduling friction
+                    Join forward-thinking individuals who are using AI to reclaim their time and focus on what truly matters.
                 </p>
                 
                 {% if not current_user.is_authenticated %}
@@ -1213,6 +1378,89 @@
                         </a>
                     </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Scheduler Modal -->
+<div class="modal fade" id="aiSchedulerModal" tabindex="-1" aria-labelledby="aiSchedulerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiSchedulerModalLabel">AI Scheduler</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ url_for('static', filename='images/learn-more-ai-scheduler.png') }}"
+                     alt="AI Scheduler example"
+                     class="img-fluid"
+                     loading="lazy"
+                     style="max-width: 100%; height: auto; border-radius: 8px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Event Organizer Modal -->
+<div class="modal fade" id="eventOrganizerModal" tabindex="-1" aria-labelledby="eventOrganizerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventOrganizerModalLabel">AI Event Manager</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <p class="text-muted">Our event extraction turns emails, pictures, and itineraries into calendar events.</p>
+                </div>
+
+                <div class="other-uses-flow">
+                    <div class="other-uses-step">
+                        <div class="other-uses-step__header">
+                            <span class="other-uses-step__badge">Step 1</span>
+                            <i data-feather="camera"></i>
+                        </div>
+                        <h5>Itineraries, flyers, images, you name it</h5>
+                        <p>Snap a photo of the event or forward your event confirmation emails.</p>
+                    </div>
+
+                    <div class="other-uses-arrow">
+                        <i data-feather="arrow-right"></i>
+                    </div>
+
+                    <div class="other-uses-step">
+                        <div class="other-uses-step__header">
+                            <span class="other-uses-step__badge">Step 2</span>
+                            <i data-feather="mail"></i>
+                        </div>
+                        <h5>Forward to Cal</h5>
+                        <p>Forward it to <strong>Cal@CalAutobot.com</strong> - no portals, forms, or uploads to manage.</p>
+                    </div>
+
+                    <div class="other-uses-arrow">
+                        <i data-feather="arrow-right"></i>
+                    </div>
+
+                    <div class="other-uses-step">
+                        <div class="other-uses-step__header">
+                            <span class="other-uses-step__badge">Done</span>
+                            <i data-feather="calendar"></i>
+                        </div>
+                        <h5>Event created in Google Calendar</h5>
+                        <p>Cal syncs event details to Google Calendar so you don't have to manually create them.</p>
+                    </div>
+                </div>
+
+                <div class="other-uses-cta text-center mt-4">
+                    <p class="mb-3 fw-semibold text-dark">Forward your emails or pictures to</p>
+                    <div class="email-cta-wrapper other-uses-cta-wrapper">
+                        <a href="mailto:Cal@CalAutobot.com" class="email-address-chip">Cal@CalAutobot.com</a>
+                        <button class="copy-email-btn copy-email-btn-light" data-email="cal@calautobot.com" onclick="copyEmailAddress('Cal@CalAutobot.com', this); return false;" title="Copy email address">
+                            <i data-feather="copy"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
