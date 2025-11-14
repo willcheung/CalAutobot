@@ -309,8 +309,8 @@ class Contact(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     participants = db.relationship('MeetingParticipant', back_populates='contact', lazy=True)
-    label_links = db.relationship('ContactLabelLink', back_populates='contact', cascade='all, delete-orphan', lazy=True)
-    labels = db.relationship('ContactLabel', secondary='contact_label_link', back_populates='contacts', lazy='selectin')
+    label_links = db.relationship('ContactLabelLink', back_populates='contact', cascade='all, delete-orphan', lazy=True, overlaps="labels")
+    labels = db.relationship('ContactLabel', secondary='contact_label_link', back_populates='contacts', lazy='selectin', overlaps="label_links")
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'email', name='uq_contact_user_email'),
@@ -327,8 +327,8 @@ class ContactLabel(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    label_links = db.relationship('ContactLabelLink', back_populates='label', cascade='all, delete-orphan', lazy=True)
-    contacts = db.relationship('Contact', secondary='contact_label_link', back_populates='labels', lazy='selectin')
+    label_links = db.relationship('ContactLabelLink', back_populates='label', cascade='all, delete-orphan', lazy=True, overlaps="contacts")
+    contacts = db.relationship('Contact', secondary='contact_label_link', back_populates='labels', lazy='selectin', overlaps="label_links")
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'name', name='uq_contact_label_user_name'),
@@ -342,8 +342,8 @@ class ContactLabelLink(db.Model):
     applied_by_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    contact = db.relationship('Contact', back_populates='label_links')
-    label = db.relationship('ContactLabel', back_populates='label_links')
+    contact = db.relationship('Contact', back_populates='label_links', overlaps="contacts,labels")
+    label = db.relationship('ContactLabel', back_populates='label_links', overlaps="contacts,labels")
     applied_by = db.relationship('User', foreign_keys=[applied_by_user_id])
 
     __table_args__ = (

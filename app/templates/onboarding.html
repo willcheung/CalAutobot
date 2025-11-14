@@ -39,7 +39,7 @@
                             <div class="step-number" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-weight: 600;">2</div>
                             <div style="flex-grow: 1;">
                                 <h5 class="mb-2" style="font-weight: 600; color: #0f172a;">Connect your calendar</h5>
-                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect Calendly for smart scheduling and availability management.</p>
+                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect Calendly if you want to continue using its booking link and event types.</p>
 
                                 <!-- Calendly Connection -->
                                 <div class="calendar-connection-status mb-3">
@@ -75,7 +75,7 @@
 
                                 <!-- Google Calendar Connection (for conflict checking) -->
                                 <div class="calendar-connection-status">
-                                    <p class="text-muted mb-2" style="font-size: 0.85rem;">Optional: Connect Google Calendar for conflict checking</p>
+                                    <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect Google Calendar for availability checks. If you're primarily using Calendly, this will be used as backup.</p>
                                     {% if has_calendar %}
                                         <div class="alert alert-permanent alert-success d-flex align-items-center gap-2 mb-0" role="alert" style="background: #dcfce7; border: 1px solid #86efac; color: #15803d;">
                                             <i data-feather="check-circle" style="width: 20px; height: 20px;"></i>
@@ -156,14 +156,14 @@
                         id="complete-onboarding-btn"
                         class="btn btn-lg btn-primary px-5 py-3"
                         style="font-size: 1.1rem; font-weight: 600; border-radius: 12px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);"
-                        {% if not current_user.calendly_access_token %}disabled{% endif %}
+                        {% if not current_user.calendly_access_token and not has_calendar %}disabled{% endif %}
                     >
                         Start using Cal
                     </button>
-                    {% if not current_user.calendly_access_token %}
+                    {% if not current_user.calendly_access_token and not has_calendar %}
                         <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">
                             <i data-feather="info" style="width: 16px; height: 16px;"></i>
-                            Connect Calendly to continue
+                            Connect Calendly or Google Calendar to continue
                         </p>
                     {% endif %}
                 </div>
