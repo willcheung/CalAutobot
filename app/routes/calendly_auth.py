@@ -4,6 +4,7 @@ Calendly OAuth integration for CalAutobot.
 Handles OAuth flow for connecting user's Calendly account.
 """
 
+import logging
 import os
 import requests
 from datetime import datetime
@@ -13,6 +14,8 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.models import User
+
+logger = logging.getLogger(__name__)
 
 # Calendly OAuth configuration
 CALENDLY_CLIENT_ID = os.environ.get("CALENDLY_CLIENT_ID", "")
