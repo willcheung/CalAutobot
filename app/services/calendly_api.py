@@ -160,13 +160,13 @@ class CalendlyAPIClient:
 
     def get_event_types(self, user_uri: Optional[str] = None) -> List[Dict]:
         """
-        Get all event types for a user.
+        Get ALL event types for a user (handles pagination).
 
         Args:
             user_uri: Calendly user URI. If None, uses current user's URI.
 
         Returns:
-            List of event type objects
+            List of ALL event type objects (across all pages)
 
         Example response item:
             {
@@ -178,6 +178,7 @@ class CalendlyAPIClient:
                 "duration": 30,
                 "kind": "solo",
                 "type": "StandardEventType",
+                "location": {...},
                 ...
             }
         """
@@ -187,10 +188,29 @@ class CalendlyAPIClient:
         if not user_uri:
             raise CalendlyAPIError("User URI is required to fetch event types")
 
-        params = {"user": user_uri, "count": 100}  # Max 100 per page
-        response = self._make_request("GET", "/event_types", params=params)
+        all_event_types = []
+        params = {"user": user_uri, "count": 100}
 
-        return response.get("collection", [])
+        while True:
+            response = self._make_request("GET", "/event_types", params=params)
+
+            # Add event types from this page
+            collection = response.get("collection", [])
+            all_event_types.extend(collection)
+
+            # Check if there are more pages
+            pagination = response.get("pagination", {})
+            next_page_token = pagination.get("next_page_token")
+
+            if not next_page_token:
+                # No more pages
+                break
+
+            # Prepare for next page
+            params["page_token"] = next_page_token
+
+        logger.info(f"Fetched {len(all_event_types)} event types for user")
+        return all_event_types
 
     def get_event_type_available_times(
         self,

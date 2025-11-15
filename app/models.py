@@ -427,6 +427,9 @@ class EventType(db.Model):
     calendly_event_type_uri = db.Column(db.String(255), nullable=True, unique=True)
     is_calendly_managed = db.Column(db.Boolean, default=False, server_default="false")
     calendly_last_synced_at = db.Column(db.DateTime, nullable=True)
+    calendly_scheduling_url = db.Column(db.String(512), nullable=True)
+    calendly_location_json = db.Column(db.Text, nullable=True)
+    calendly_kind = db.Column(db.String(50), nullable=True)
 
     __table_args__ = (db.UniqueConstraint('user_id', 'slug', name='uq_event_type_user_slug'),)
 

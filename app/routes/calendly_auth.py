@@ -124,6 +124,15 @@ def callback():
         flash(f"Failed to save Calendly connection: {str(e)}", "error")
         return redirect(url_for("onboarding_routes.onboarding"))
 
+    # Sync event types from Calendly
+    try:
+        from app.services.sync_calendly import sync_calendly_event_types
+        num_synced = sync_calendly_event_types(current_user)
+        logger.info(f"Synced {num_synced} event types from Calendly for user {current_user.id}")
+    except Exception as e:
+        logger.warning(f"Failed to sync event types from Calendly: {e}")
+        # Don't fail the connection if sync fails - user can manually sync later
+
     # Check if we're in onboarding flow
     if session.get('in_onboarding'):
         return redirect(url_for("onboarding_routes.onboarding"))
