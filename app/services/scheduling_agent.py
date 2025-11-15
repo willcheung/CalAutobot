@@ -563,11 +563,25 @@ def prepare_agent_context_for_request(
     availability_blocks: List[Dict[str, str]] = []
     extended_availability_blocks: List[Dict[str, str]] = []
     availability_lookup_error = None
-    default_event_type = (
-        EventType.query.filter_by(user_id=user.id, is_active=True)
-        .order_by(EventType.duration_minutes.asc())
-        .first()
-    )
+    # Prefer Calendly-managed event types when Calendly is connected so availability pulls from Calendly.
+    default_event_type = None
+    base_query = EventType.query.filter_by(user_id=user.id, is_active=True)
+    if user.calendly_access_token:
+        default_event_type = (
+            base_query.filter(EventType.calendly_event_type_uri.isnot(None))
+            .order_by(EventType.duration_minutes.asc(), EventType.id.asc())
+            .first()
+        )
+        if not default_event_type:
+            logger.info(
+                "User %s has Calendly connected but no active Calendly event types; falling back to local event types",
+                user.id,
+            )
+
+    if default_event_type is None:
+        default_event_type = (
+            base_query.order_by(EventType.duration_minutes.asc(), EventType.id.asc()).first()
+        )
     event_duration_minutes = (
         default_event_type.duration_minutes
         if default_event_type and default_event_type.duration_minutes

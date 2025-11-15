@@ -40,28 +40,32 @@ def sync_calendly_event_types(user: User) -> int:
 
     logger.info(f"Fetched {len(calendly_event_types)} event types from Calendly")
 
+    synced_count = 0
+
     # Sync each event type
     for calendly_et in calendly_event_types:
-        _sync_single_event_type(user, calendly_et)
+        try:
+            _sync_single_event_type(user, calendly_et)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Skipping Calendly event type due to error: %s", exc)
+            continue
+        synced_count += 1
 
     db.session.commit()
 
-    logger.info(f"Successfully synced {len(calendly_event_types)} event types for user {user.id}")
-    return len(calendly_event_types)
+    logger.info(f"Successfully synced {synced_count} event types for user {user.id}")
+    return synced_count
 
 
 def _sync_single_event_type(user: User, calendly_data: dict) -> EventType:
-    """
-    Sync a single event type from Calendly data to local database.
+    """Sync a single event type from Calendly data to local database."""
+    calendly_uri = calendly_data.get("uri")
+    if not calendly_uri:
+        raise CalendlyAPIError("Calendly event type is missing URI")
 
-    Args:
-        user: User object
-        calendly_data: Event type data from Calendly API
-
-    Returns:
-        EventType object (created or updated)
-    """
-    calendly_uri = calendly_data['uri']
+    duration = calendly_data.get("duration")
+    if duration is None:
+        raise CalendlyAPIError(f"Calendly event type {calendly_uri} is missing duration")
 
     # Find existing event type by Calendly URI
     event_type = EventType.query.filter_by(
@@ -84,7 +88,7 @@ def _sync_single_event_type(user: User, calendly_data: dict) -> EventType:
     event_type.title = calendly_data['name']
     event_type.slug = calendly_data['slug']
     event_type.is_active = calendly_data['active']
-    event_type.duration_minutes = calendly_data['duration']
+    event_type.duration_minutes = duration
     event_type.description = calendly_data.get('description_plain')
 
     # Sync new fields
