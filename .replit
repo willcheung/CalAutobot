@@ -43,10 +43,6 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 33399
-externalPort = 8000
-
-[[ports]]
 localPort = 34511
 externalPort = 5000
 
@@ -74,6 +70,11 @@ externalPort = 3001
 [[ports]]
 localPort = 45361
 externalPort = 5173
+
+[[ports]]
+localPort = 48455
+externalPort = 8000
+exposeLocalhost = true
 
 [[ports]]
 localPort = 52450
