@@ -47,10 +47,6 @@ localPort = 34511
 externalPort = 5000
 
 [[ports]]
-localPort = 36141
-externalPort = 3000
-
-[[ports]]
 localPort = 39979
 externalPort = 4200
 
@@ -78,6 +74,11 @@ externalPort = 5173
 [[ports]]
 localPort = 52450
 externalPort = 3003
+exposeLocalhost = true
+
+[[ports]]
+localPort = 54270
+externalPort = 3000
 exposeLocalhost = true
 
 [objectStorage]
