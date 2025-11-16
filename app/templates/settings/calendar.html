@@ -44,12 +44,24 @@
                                     Connected on {{ current_user.calendly_connected_at.strftime('%B %d, %Y') }}
                                 </div>
                             {% endif %}
+                            <div class="small text-muted mt-2">
+                                <i data-feather="info" style="width: 14px; height: 14px;"></i>
+                                Use <strong>Sync Event Types</strong> after updating event types in Calendly (duration, name, or settings)
+                            </div>
                         </div>
-                        <form method="post" action="{{ url_for('calendly_auth.disconnect') }}">
-                            <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to disconnect Calendly? Your event types and bookings will no longer sync.');">
-                                Disconnect
-                            </button>
-                        </form>
+                        <div class="d-flex gap-2">
+                            <form method="post" action="{{ url_for('calendly_auth.sync_event_types') }}">
+                                <button type="submit" class="btn btn-outline-primary btn-sm" title="Sync event types from Calendly">
+                                    <i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i>
+                                    Sync Event Types
+                                </button>
+                            </form>
+                            <form method="post" action="{{ url_for('calendly_auth.disconnect') }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to disconnect Calendly? Your event types and bookings will no longer sync.');">
+                                    Disconnect
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 {% else %}
                     <div class="d-flex align-items-center gap-3 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">

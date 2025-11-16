@@ -103,7 +103,7 @@ Note: Redirect URI is built dynamically as `{domain}/auth/calendly/callback`
 - **User Info**: `GET https://api.calendly.com/users/me`
 - **Event Types**: `GET https://api.calendly.com/event_types?user={uri}`
 - **Availability**: `GET https://api.calendly.com/event_type_available_times?event_type={uri}&start_time={iso}&end_time={iso}`
-- **Create Booking**: `POST https://api.calendly.com/scheduled_events` (Scheduling API)
+- **Create Booking**: `POST https://api.calendly.com/invitees` (Scheduling API - requires paid Calendly plan)
 - **Cancel Booking**: `POST https://api.calendly.com/scheduled_events/{uuid}/cancellation`
 
 ## OAuth Flow
@@ -125,12 +125,23 @@ The meeting scheduler agent already uses:
 
 Agent workflow stays the same!
 
-## Backward Compatibility
+## Calendar Requirements
 
-Users without Calendly connection continue using Google Calendar for:
-- Availability checking
-- Booking creation
-- Event management
+**Google Calendar: REQUIRED**
+- Always needed for booking creation (fallback when Calendly fails or for free plan users)
+- Needed for event extraction
+- Needed for conflict checking
+- Needed for all core CalAutobot features
+
+**Calendly: OPTIONAL**
+- Enhancement for users who want to use Calendly's scheduling
+- Provides availability from Calendly schedules
+- Creates bookings via Calendly API (requires paid plan)
+- Falls back to Google Calendar if booking creation fails
+
+**Onboarding Flow:**
+1. Google Calendar connection is REQUIRED to complete onboarding
+2. Calendly connection is OPTIONAL (can be added later in settings)
 
 ## Implementation Checklist
 

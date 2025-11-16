@@ -158,6 +158,32 @@ class CalendlyAPIClient:
         """
         return self._make_request("GET", "/users/me")
 
+    def get_organization(self, organization_uri: str) -> Dict:
+        """
+        Get organization information including plan details.
+
+        Args:
+            organization_uri: Calendly organization URI
+
+        Returns:
+            Organization data from Calendly
+
+        Example response:
+            {
+                "resource": {
+                    "uri": "https://api.calendly.com/organizations/AAAAAAAAAAAAAAAA",
+                    "name": "Acme Corporation",
+                    "slug": "acme-corporation",
+                    "created_at": "2020-01-01T00:00:00.000000Z",
+                    "updated_at": "2020-01-01T00:00:00.000000Z"
+                }
+            }
+        """
+        # Extract UUID from organization URI
+        org_uuid = organization_uri.split("/")[-1]
+        response = self._make_request("GET", f"/organizations/{org_uuid}")
+        return response.get("resource", {})
+
     def get_event_types(self, user_uri: Optional[str] = None) -> List[Dict]:
         """
         Get ALL event types for a user (handles pagination).
@@ -275,6 +301,8 @@ class CalendlyAPIClient:
         """
         Create a new scheduled event (book a meeting) via Scheduling API.
 
+        NOTE: Requires Calendly Standard plan or above. Free plan users will receive 403 Forbidden.
+
         Args:
             event_type_uri: Calendly event type URI
             start_time: Start time for the meeting
@@ -325,7 +353,7 @@ class CalendlyAPIClient:
         if questions_and_answers:
             payload["invitee"]["questions_and_answers"] = questions_and_answers
 
-        response = self._make_request("POST", "/scheduled_events", json_data=payload)
+        response = self._make_request("POST", "/invitees", json_data=payload)
         return response.get("resource", {})
 
     def cancel_invitee(self, invitee_uri: str, reason: Optional[str] = None) -> bool:

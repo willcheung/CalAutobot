@@ -161,13 +161,20 @@ def create_booking_event(
 
     # Try Calendly first if configured
     if user.calendly_access_token and event_type.calendly_event_type_uri:
+        logger.info(f"Creating booking via Calendly for event type '{event_type.title}' (uri: {event_type.calendly_event_type_uri})")
         try:
             return _create_calendly_booking(
                 user, event_type, start_dt, end_dt, invitee_name, invitee_email, notes, source, meeting_request_id
             )
         except Exception as exc:
-            logger.warning(f"Failed to create Calendly booking, falling back to Google Calendar: {exc}")
+            error_msg = str(exc)
+            if "403" in error_msg or "Forbidden" in error_msg:
+                logger.warning(f"Calendly booking failed (likely requires paid plan): {exc}. Falling back to Google Calendar.")
+            else:
+                logger.warning(f"Failed to create Calendly booking, falling back to Google Calendar: {exc}")
             # Fall through to Google Calendar
+    elif user.calendly_access_token and not event_type.calendly_event_type_uri:
+        logger.warning(f"User has Calendly connected but event type '{event_type.title}' (id={event_type.id}) has no calendly_event_type_uri. Falling back to Google Calendar.")
 
     # Fall back to Google Calendar
     booking_calendar_id = getattr(user, "default_booking_calendar_id", None)

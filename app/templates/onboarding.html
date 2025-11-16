@@ -19,7 +19,7 @@
                             <div class="flex-grow-1">
                                 <h5 class="mb-2" style="font-weight: 600; color: #0f172a;">Select time zone</h5>
                                 <p class="text-muted mb-3" style="font-size: 0.95rem;">Choose your timezone for accurate scheduling.</p>
-                                
+
                                 <div class="timezone-selector">
                                     <select class="form-select" id="timezone" name="timezone" style="font-size: 1rem; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
                                         {% for tz in timezones %}
@@ -39,10 +39,41 @@
                             <div class="step-number" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-weight: 600;">2</div>
                             <div style="flex-grow: 1;">
                                 <h5 class="mb-2" style="font-weight: 600; color: #0f172a;">Connect your calendar</h5>
-                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect Calendly if you want to continue using its booking link and event types.</p>
+                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Google Calendar is required for bookings and availability. Calendly is optional if you want to use it for scheduling.</p>
 
-                                <!-- Calendly Connection -->
+                                <!-- Google Calendar Connection (REQUIRED) -->
                                 <div class="calendar-connection-status mb-3">
+                                    {% if has_calendar %}
+                                        <div class="alert alert-permanent alert-success d-flex align-items-center gap-2 mb-0" role="alert" style="background: #dcfce7; border: 1px solid #86efac; color: #15803d;">
+                                            <i data-feather="check-circle" style="width: 20px; height: 20px;"></i>
+                                            <span style="font-weight: 500;">Google Calendar connected</span>
+                                        </div>
+                                    {% else %}
+                                        <div class="d-flex align-items-center gap-3 p-3" style="background: #fff7ed; border: 2px solid #fb923c; border-radius: 12px;">
+                                            <img src="{{ url_for('static', filename='images/google-calendar.svg') }}" alt="Google Calendar" style="width: 48px; height: 48px;">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <div class="fw-semibold" style="color: #0f172a;">Google Calendar</div>
+                                                    <span style="display: inline-flex; align-items-center; gap: 4px; padding: 2px 8px; background: #dc2626; color: white; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">
+                                                        REQUIRED
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span style="display: inline-flex; align-items-center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
+                                                        <span style="width: 6px; height: 6px; background: #dc2626; border-radius: 50%;"></span>
+                                                        Not connected
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <a href="{{ url_for('google_auth.connect_calendar') }}" class="btn btn-primary" style="white-space: nowrap;">
+                                                Connect
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Calendly Connection (OPTIONAL) -->
+                                <div class="calendar-connection-status">
                                     {% if current_user.calendly_access_token %}
                                         <div class="alert alert-permanent alert-success d-flex align-items-center gap-2 mb-0" role="alert" style="background: #dcfce7; border: 1px solid #86efac; color: #15803d;">
                                             <i data-feather="check-circle" style="width: 20px; height: 20px;"></i>
@@ -58,42 +89,20 @@
                                                 </svg>
                                             </div>
                                             <div class="flex-grow-1">
-                                                <div class="fw-semibold mb-1" style="color: #0f172a;">Calendly</div>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <div class="fw-semibold" style="color: #0f172a;">Calendly</div>
+                                                    <span style="display: inline-flex; align-items: center; padding: 2px 8px; background: #e0e7ff; color: #1d4ed8; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">
+                                                        OPTIONAL
+                                                    </span>
+                                                </div>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
-                                                        <span style="width: 6px; height: 6px; background: #dc2626; border-radius: 50%;"></span>
+                                                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: #f1f5f9; color: #64748b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
+                                                        <span style="width: 6px; height: 6px; background: #94a3b8; border-radius: 50%;"></span>
                                                         Not connected
                                                     </span>
                                                 </div>
                                             </div>
-                                            <a href="{{ url_for('calendly_auth.connect') }}" class="btn btn-outline-primary" style="white-space: nowrap;">
-                                                Connect
-                                            </a>
-                                        </div>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Google Calendar Connection (for conflict checking) -->
-                                <div class="calendar-connection-status">
-                                    <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect Google Calendar for availability checks. If you're primarily using Calendly, this will be used as backup.</p>
-                                    {% if has_calendar %}
-                                        <div class="alert alert-permanent alert-success d-flex align-items-center gap-2 mb-0" role="alert" style="background: #dcfce7; border: 1px solid #86efac; color: #15803d;">
-                                            <i data-feather="check-circle" style="width: 20px; height: 20px;"></i>
-                                            <span style="font-weight: 500;">Google Calendar connected</span>
-                                        </div>
-                                    {% else %}
-                                        <div class="d-flex align-items-center gap-3 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
-                                            <img src="{{ url_for('static', filename='images/google-calendar.svg') }}" alt="Google Calendar" style="width: 48px; height: 48px;">
-                                            <div class="flex-grow-1">
-                                                <div class="fw-semibold mb-1" style="color: #0f172a;">Google Calendar</div>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span style="display: inline-flex; align-items-center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
-                                                        <span style="width: 6px; height: 6px; background: #dc2626; border-radius: 50%;"></span>
-                                                        Not connected
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <a href="{{ url_for('google_auth.connect_calendar') }}" class="btn btn-outline-secondary btn-sm" style="white-space: nowrap;">
+                                            <a href="{{ url_for('calendly_auth.connect') }}" class="btn btn-outline-secondary btn-sm" style="white-space: nowrap;">
                                                 Connect
                                             </a>
                                         </div>
@@ -111,7 +120,7 @@
                             <div class="step-number" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-weight: 600;">3</div>
                             <div>
                                 <h5 class="mb-3" style="font-weight: 600; color: #0f172a;">Ways to save time with Cal</h5>
-                                
+
                                 <div class="getting-started-tips">
                                     <div class="tip-item mb-3">
                                         <div class="d-flex align-items-start gap-2">
@@ -132,7 +141,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="tip-item mb-3">
                                         <div class="d-flex align-items-start gap-2">
                                             <i data-feather="calendar" style="width: 20px; height: 20px; color: #2563eb; flex-shrink: 0; margin-top: 2px;"></i>
@@ -142,7 +151,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                             </div>
                         </div>
@@ -156,14 +165,14 @@
                         id="complete-onboarding-btn"
                         class="btn btn-lg btn-primary px-5 py-3"
                         style="font-size: 1.1rem; font-weight: 600; border-radius: 12px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);"
-                        {% if not current_user.calendly_access_token and not has_calendar %}disabled{% endif %}
+                        {% if not has_calendar %}disabled{% endif %}
                     >
                         Start using Cal
                     </button>
-                    {% if not current_user.calendly_access_token and not has_calendar %}
+                    {% if not has_calendar %}
                         <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">
                             <i data-feather="info" style="width: 16px; height: 16px;"></i>
-                            Connect Calendly or Google Calendar to continue
+                            Connect Google Calendar to continue
                         </p>
                     {% endif %}
                 </div>

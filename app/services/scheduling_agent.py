@@ -929,12 +929,15 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                         slot_end = slot_end.astimezone(tz)
 
                     duration_minutes = int((slot_end - slot_start).total_seconds() // 60)
+                    # Prioritize Calendly-managed event types when user has Calendly connected
+                    # If multiple event types match, pick the one created first (oldest id)
                     selected_event_type = (
                         EventType.query.filter_by(
                             user_id=user.id,
                             duration_minutes=duration_minutes,
                             is_active=True,
                         )
+                        .order_by(EventType.is_calendly_managed.desc(), EventType.id.asc())
                         .first()
                         or default_event_type
                     )
@@ -943,6 +946,14 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                             title=meeting_request.subject or "Meeting",
                             description=None,
                             duration_minutes=duration_minutes or 30,
+                        )
+                    else:
+                        # Log which event type was selected
+                        is_calendly = getattr(selected_event_type, "is_calendly_managed", False)
+                        calendly_uri = getattr(selected_event_type, "calendly_event_type_uri", None)
+                        logger.info(
+                            f"Selected event type '{selected_event_type.title}' (id={getattr(selected_event_type, 'id', 'N/A')}, "
+                            f"is_calendly_managed={is_calendly}, has_calendly_uri={bool(calendly_uri)})"
                         )
 
                     owner_name = agent_input.get("owner_name") or user.display_name

@@ -112,6 +112,28 @@ def callback():
     scheduling_url = resource.get("scheduling_url")
     calendly_timezone = resource.get("timezone")  # e.g., "America/Los_Angeles"
 
+    # Fetch organization details to get plan information
+    calendly_plan = None
+    if organization_uri:
+        try:
+            from app.services.calendly_api import CalendlyAPIClient
+            client = CalendlyAPIClient(current_user)
+            current_user.calendly_access_token = access_token  # Temporarily set for API call
+            org_data = client.get_organization(organization_uri)
+            # Calendly plan might be in different fields depending on API version
+            # Common field names: plan, tier, subscription_tier, plan_tier
+            calendly_plan = (
+                org_data.get("plan") or
+                org_data.get("tier") or
+                org_data.get("subscription_tier") or
+                org_data.get("plan_tier") or
+                "unknown"
+            )
+            logger.info(f"Fetched Calendly organization data for user {current_user.id}: plan={calendly_plan}")
+        except Exception as e:
+            logger.warning(f"Failed to fetch Calendly organization details: {e}")
+            calendly_plan = "unknown"
+
     # Save to database
     current_user.calendly_access_token = access_token
     current_user.calendly_refresh_token = refresh_token
@@ -119,6 +141,7 @@ def callback():
     current_user.calendly_organization_uri = organization_uri
     current_user.calendly_scheduling_url = scheduling_url
     current_user.calendly_timezone = calendly_timezone
+    current_user.calendly_plan = calendly_plan
     current_user.calendly_connected_at = datetime.utcnow()
 
     try:
@@ -143,6 +166,53 @@ def callback():
         return redirect(url_for("onboarding_routes.onboarding"))
     else:
         return redirect(url_for("main_routes.settings"))
+
+
+@calendly_auth.route("/auth/calendly/sync", methods=["POST"])
+@login_required
+def sync_event_types():
+    """Manually sync event types and plan from Calendly."""
+    if not current_user.calendly_access_token:
+        flash("Calendly is not connected.", "error")
+        return redirect(url_for("settings_routes.calendar_settings"))
+
+    try:
+        from app.services.sync_calendly import sync_calendly_event_types
+        from app.services.calendly_api import CalendlyAPIClient
+
+        # Sync plan information
+        if current_user.calendly_organization_uri:
+            try:
+                client = CalendlyAPIClient(current_user)
+                org_data = client.get_organization(current_user.calendly_organization_uri)
+                calendly_plan = (
+                    org_data.get("plan") or
+                    org_data.get("tier") or
+                    org_data.get("subscription_tier") or
+                    org_data.get("plan_tier") or
+                    "unknown"
+                )
+                current_user.calendly_plan = calendly_plan
+                logger.info(f"Updated Calendly plan for user {current_user.id}: {calendly_plan}")
+            except Exception as plan_err:
+                logger.warning(f"Failed to update Calendly plan for user {current_user.id}: {plan_err}")
+
+        # Sync event types
+        num_synced = sync_calendly_event_types(current_user)
+
+        if num_synced == 0:
+            flash("No event types found to sync from Calendly.", "warning")
+        elif num_synced == 1:
+            flash("Successfully synced 1 event type from Calendly.", "success")
+        else:
+            flash(f"Successfully synced {num_synced} event types from Calendly.", "success")
+
+        logger.info(f"User {current_user.id} manually synced {num_synced} event types from Calendly")
+    except Exception as e:
+        logger.error(f"Failed to sync event types for user {current_user.id}: {e}", exc_info=True)
+        flash(f"Failed to sync event types from Calendly: {str(e)}", "error")
+
+    return redirect(url_for("settings_routes.calendar_settings"))
 
 
 @calendly_auth.route("/auth/calendly/disconnect", methods=["POST"])
