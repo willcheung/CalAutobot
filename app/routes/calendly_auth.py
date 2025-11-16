@@ -110,6 +110,7 @@ def callback():
     user_uri = resource.get("uri")
     organization_uri = resource.get("current_organization")
     scheduling_url = resource.get("scheduling_url")
+    calendly_timezone = resource.get("timezone")  # e.g., "America/Los_Angeles"
 
     # Save to database
     current_user.calendly_access_token = access_token
@@ -117,6 +118,7 @@ def callback():
     current_user.calendly_user_uri = user_uri
     current_user.calendly_organization_uri = organization_uri
     current_user.calendly_scheduling_url = scheduling_url
+    current_user.calendly_timezone = calendly_timezone
     current_user.calendly_connected_at = datetime.utcnow()
 
     try:
@@ -198,8 +200,10 @@ def refresh_calendly_token(user: User) -> bool:
             if refresh_token:
                 user.calendly_refresh_token = refresh_token
             db.session.commit()
+            logger.info(f"Successfully refreshed Calendly token for user {user.id}")
             return True
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to refresh Calendly token for user {user.id}: {e}")
         return False
 
     return False

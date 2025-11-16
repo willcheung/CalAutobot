@@ -9,7 +9,7 @@ Provides methods to interact with Calendly API for:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 import requests
@@ -243,10 +243,20 @@ class CalendlyAPIClient:
 
         Note: Calendly API limits to 7-day ranges
         """
+        # Convert to UTC (Calendly requirement)
+        start_utc = start_time.astimezone(timezone.utc)
+        end_utc = end_time.astimezone(timezone.utc)
+
+        # Ensure start_time is in the future (Calendly requirement)
+        now_utc = datetime.now(timezone.utc)
+        if start_utc <= now_utc:
+            start_utc = now_utc + timedelta(minutes=1)
+
+        # Format exactly as shown in Calendly API docs: 2023-11-06T00:00:00.000000Z
         params = {
             "event_type": event_type_uri,
-            "start_time": start_time.isoformat(),
-            "end_time": end_time.isoformat(),
+            "start_time": start_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "end_time": end_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         }
 
         response = self._make_request("GET", "/event_type_available_times", params=params)

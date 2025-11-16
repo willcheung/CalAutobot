@@ -35,6 +35,7 @@ class User(UserMixin, db.Model):
     calendly_scheduling_url = db.Column(db.String(512), nullable=True)
     calendly_webhook_subscription_uri = db.Column(db.String(255), nullable=True)
     calendly_connected_at = db.Column(db.DateTime, nullable=True)
+    calendly_timezone = db.Column(db.String(64), nullable=True)  # IANA timezone from Calendly user
 
     # Relationship with events
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')

@@ -69,8 +69,19 @@ class AvailabilityError(Exception):
         self.code = code
 
 
-def get_timezone(user: User) -> pytz.BaseTzInfo:
-    tz_name = user.timezone or "UTC"
+def get_timezone(user: User, event_type: Optional[EventType] = None) -> pytz.BaseTzInfo:
+    """
+    Get the appropriate timezone for the user.
+
+    If event_type is provided and is Calendly-managed, use Calendly's timezone.
+    Otherwise, use the user's CalAutobot timezone.
+    """
+    # For Calendly-managed event types, use Calendly's timezone
+    if event_type and event_type.is_calendly_managed and user.calendly_timezone:
+        tz_name = user.calendly_timezone
+    else:
+        tz_name = user.timezone or "UTC"
+
     try:
         return pytz.timezone(tz_name)
     except Exception:
@@ -268,7 +279,7 @@ def _get_calendly_availability(
     event_type: EventType,
     start_date: date,
     end_date: date,
-    tz,
+    tz: pytz.BaseTzInfo,
 ) -> Optional[AvailabilityBatch]:
     """
     Get availability from Calendly API.
@@ -296,8 +307,15 @@ def _get_calendly_availability(
             current_end = min(current_start + timedelta(days=6), end_date)
 
             # Convert dates to datetime for API call
+            # Use time(23, 59, 59) instead of time.max to avoid microseconds that Calendly API rejects
             range_start_dt = tz.localize(datetime.combine(current_start, time.min))
-            range_end_dt = tz.localize(datetime.combine(current_end, time.max))
+            range_end_dt = tz.localize(datetime.combine(current_end, time(23, 59, 59)))
+
+            # Calendly requires start_time to be in the future
+            # If start time is in the past, use current time instead
+            now = datetime.now(tz)
+            if range_start_dt < now:
+                range_start_dt = now
 
             # Call Calendly API
             calendly_slots = client.get_event_type_available_times(
@@ -358,7 +376,8 @@ def get_availability_for_range(
     if end_date < start_date:
         raise ValueError("end_date must be on or after start_date")
 
-    tz = get_timezone(user)
+    # Use Calendly's timezone for Calendly-managed event types
+    tz = get_timezone(user, event_type)
 
     # Try Calendly first if configured
     calendly_result = _get_calendly_availability(user, event_type, start_date, end_date, tz)
