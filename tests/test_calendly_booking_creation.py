@@ -458,9 +458,11 @@ class TestCalendlyBookingCreation:
 
             event = Event(
                 user_id=user.id,
-                title="Test Event",
-                start_datetime=datetime.utcnow(),
-                end_datetime=datetime.utcnow() + timedelta(hours=1),
+                event_name="Test Event",
+                start_date=datetime.utcnow().date(),
+                start_time=datetime.utcnow().time(),
+                end_date=(datetime.utcnow() + timedelta(hours=1)).date(),
+                end_time=(datetime.utcnow() + timedelta(hours=1)).time(),
                 calendly_event_uri="https://api.calendly.com/scheduled_events/TEST123",
             )
             db.session.add(event)

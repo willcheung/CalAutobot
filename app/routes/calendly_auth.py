@@ -165,7 +165,7 @@ def callback():
     if session.get('in_onboarding'):
         return redirect(url_for("onboarding_routes.onboarding"))
     else:
-        return redirect(url_for("main_routes.settings"))
+        return redirect(url_for("settings_routes.calendar_settings"))
 
 
 @calendly_auth.route("/auth/calendly/sync", methods=["POST"])
@@ -234,7 +234,7 @@ def disconnect():
         db.session.rollback()
         flash(f"Failed to disconnect Calendly: {str(e)}", "error")
 
-    return redirect(url_for("main_routes.settings"))
+    return redirect(url_for("settings_routes.calendar_settings"))
 
 
 def refresh_calendly_token(user: User) -> bool:

@@ -38,6 +38,26 @@ def test_app(tmp_path_factory):
         db.engine.dispose()
 
 
+@pytest.fixture(autouse=True, scope="function")
+def reset_db(test_app):
+    """Automatically clear database state between tests to prevent constraint violations."""
+    # Run test
+    yield
+    
+    # Clean up after test - just truncate all tables to reset state
+    with test_app.app_context():
+        try:
+            # Fast cleanup: just delete all rows from all tables
+            meta = db.metadata
+            for table in reversed(meta.sorted_tables):
+                db.session.execute(table.delete())
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        finally:
+            db.session.remove()
+
+
 @pytest.fixture()
 def client(test_app):
     """Return a test client for the Flask app."""
