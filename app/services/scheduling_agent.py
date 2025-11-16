@@ -142,6 +142,8 @@ def _validate_confirmed_slot(
             slot_start.date(),
         )
     except AvailabilityError:
+        # Notify owner about calendar access issue
+        notify_owner_calendar_issue(user, "availability_verify_error")
         return _system_issue_agent_result(owner_name, "availability_verify_error")
 
     if day_slots and not _slot_matches_target(slot_start, day_slots):
@@ -149,6 +151,8 @@ def _validate_confirmed_slot(
         try:
             fallback_slots = _find_fallback_slots(user, event_type, slot_start)
         except AvailabilityError:
+            # Notify owner about calendar refresh issue
+            notify_owner_calendar_issue(user, "availability_refresh_error")
             return _system_issue_agent_result(owner_name, "availability_refresh_error")
 
         fallback_lines = [
