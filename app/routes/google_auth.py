@@ -119,7 +119,7 @@ def callback():
     userinfo = userinfo_response.json()
     if userinfo.get("email_verified"):
         users_email = userinfo["email"]
-        users_name = userinfo["email"]  # Use email as username instead of given_name
+        users_name = userinfo.get("name") or userinfo.get("given_name") or userinfo["email"]
         google_id = userinfo["sub"]
         profile_picture = userinfo.get("picture")
     else:

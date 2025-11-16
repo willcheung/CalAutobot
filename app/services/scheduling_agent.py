@@ -542,9 +542,9 @@ def prepare_agent_context_for_request(
     agent_input: Dict[str, object] = {
         "subject": meeting_request.subject,
         "owner_email": user.email,
-        "owner_name": user.username or user.email,
+        "owner_name": user.display_name,
         "participants": [
-            {"name": p.name, "email": p.email} 
+            {"name": p.name, "email": p.email}
             for p in meeting_request.participants
         ],
         "status": meeting_request.status,
@@ -945,7 +945,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                             duration_minutes=duration_minutes or 30,
                         )
 
-                    owner_name = agent_input.get("owner_name") or (user.username or user.email)
+                    owner_name = agent_input.get("owner_name") or user.display_name
                     validation_result = _validate_confirmed_slot(
                         user,
                         selected_event_type,
@@ -987,7 +987,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
                         if not invitee_email:
                             invitee_email = user.email
-                            invitee_name = user.username
+                            invitee_name = user.display_name
 
                         booking_event_type = selected_event_type or SimpleNamespace(
                             title=meeting_request.subject or "Meeting",
@@ -1003,7 +1003,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                 invitee_name,
                                 invitee_email,
                                 _build_calendar_description(
-                                    history, user.username or user.email, user.email
+                                    history, user.display_name, user.email
                                 ),
                                 source="ai_booking",
                                 meeting_request_id=meeting_request.id,
