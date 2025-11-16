@@ -35,8 +35,8 @@ class User(UserMixin, db.Model):
     calendly_scheduling_url = db.Column(db.String(512), nullable=True)
     calendly_webhook_subscription_uri = db.Column(db.String(255), nullable=True)
     calendly_timezone = db.Column(db.String(64), nullable=True)
+    calendly_plan = db.Column(db.String(50), nullable=True)
     calendly_connected_at = db.Column(db.DateTime, nullable=True)
-    calendly_plan = db.Column(db.String(50), nullable=True)  # Calendly plan tier (e.g., "standard", "teams", "enterprise")
 
     # Relationship with events
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
