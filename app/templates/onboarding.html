@@ -39,7 +39,7 @@
                             <div class="step-number" style="flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: #e0e7ff; color: #1d4ed8; display: flex; align-items: center; justify-content: center; font-weight: 600;">2</div>
                             <div style="flex-grow: 1;">
                                 <h5 class="mb-2" style="font-weight: 600; color: #0f172a;">Connect your calendar</h5>
-                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Google Calendar is required for bookings and availability. Calendly is optional if you want to use it for scheduling.</p>
+                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Google Calendar is required for bookings and availability.</p>
 
                                 <!-- Google Calendar Connection (REQUIRED) -->
                                 <div class="calendar-connection-status mb-3">
@@ -54,9 +54,6 @@
                                             <div class="flex-grow-1">
                                                 <div class="d-flex align-items-center gap-2 mb-1">
                                                     <div class="fw-semibold" style="color: #0f172a;">Google Calendar</div>
-                                                    <span style="display: inline-flex; align-items-center; gap: 4px; padding: 2px 8px; background: #dc2626; color: white; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">
-                                                        REQUIRED
-                                                    </span>
                                                 </div>
                                                 <div class="d-flex align-items-center gap-2">
                                                     <span style="display: inline-flex; align-items-center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
@@ -72,6 +69,7 @@
                                     {% endif %}
                                 </div>
 
+                                <p class="text-muted mb-3" style="font-size: 0.95rem;">Connect to Calendly if you want to use it as primary source to check availability and book meeting (instead of directly via Google Calendar). You have to be on Calendly's paid plan.</p>
                                 <!-- Calendly Connection (OPTIONAL) -->
                                 <div class="calendar-connection-status">
                                     {% if current_user.calendly_access_token %}
@@ -102,7 +100,7 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                            <a href="{{ url_for('calendly_auth.connect') }}" class="btn btn-outline-secondary btn-sm" style="white-space: nowrap;">
+                                            <a href="{{ url_for('calendly_auth.connect') }}" class="btn btn-outline-secondary" style="white-space: nowrap;">
                                                 Connect
                                             </a>
                                         </div>
