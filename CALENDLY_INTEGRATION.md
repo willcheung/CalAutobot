@@ -14,8 +14,32 @@ CalAutobot integrates with Calendly as the backend for scheduling. The AI agent 
 **Calendly handles:**
 - Event types
 - Availability calculation
-- Booking creation
-- Calendar conflicts
+- Booking creation (paid plans only)
+- Calendar conflicts (paid plans only)
+
+## Plan-Specific Behavior
+
+### Paid Plans (Standard, Teams, Enterprise)
+- ✅ Full Calendly integration with Scheduling API
+- ✅ Event types managed via Calendly
+- ✅ Availability calculated by Calendly
+- ✅ Bookings created via Calendly API
+- 🔒 Google Calendar settings disabled in UI (managed by Calendly)
+- 🔒 Sidebar links (Event Types, Availability, Public Page) disabled with tooltips
+
+### Free/Unknown Plans
+- ✅ Event types synced from Calendly (read-only)
+- ✅ Availability calculated by Calendly
+- ❌ Booking creation NOT available via Calendly (403 Forbidden)
+- ✅ **Automatic fallback to Google Calendar** for bookings
+- ✅ Google Calendar settings remain enabled in UI
+- ✅ Full access to CalAutobot's booking functionality
+- 💡 Plan badge displayed in settings showing "Free plan"
+
+### Why This Matters
+- **Free plan users** still get full CalAutobot functionality via Google Calendar fallback
+- **Paid plan users** get seamless Calendly integration without manual configuration
+- The UI automatically adapts based on detected plan tier
 
 ## Database Changes
 
@@ -95,6 +119,13 @@ Updated `cancel_booking_event()`:
 - If event has `calendly_event_uri`, cancel via Calendly API
 - Otherwise, use existing Google Calendar logic
 
+### app/templates/base.html
+Updated sidebar navigation:
+- When Calendly is connected, Event Types, Availability, and View Public Page links are disabled
+- Bootstrap tooltips added to explain "Managed via Calendly" for disabled links
+- Tooltips positioned to the right of sidebar items for better UX
+- Links show lock icon and reduced opacity (0.5) to indicate they're managed externally
+
 ### app/templates/onboarding.html
 Updated Step 2 calendar connection:
 - **Google Calendar shown FIRST with "REQUIRED" badge** (orange border, primary button)
@@ -103,9 +134,14 @@ Updated Step 2 calendar connection:
 
 ### app/templates/settings/calendar.html
 Added Calendly section:
-- Show connection status
+- Show connection status with plan badge
 - Show "Sync Event Types" button (syncs event types and plan)
 - Show "Disconnect" button if connected
+
+**Calendar Settings Behavior by Plan:**
+- **Paid Plans (Standard/Teams/Enterprise)**: Google Calendar settings ("Add to calendar" and "Check for conflicts") are disabled and managed via Calendly
+- **Free/Unknown Plans**: Google Calendar settings remain enabled because Calendly Scheduling API is not available on free plans, so bookings fall back to Google Calendar
+- This ensures free plan users can still use CalAutobot's booking functionality
 
 ## Environment Variables
 
@@ -167,12 +203,19 @@ Agent workflow stays the same!
 
 ## Key Features
 
-### 1. Plan Tracking
+### 1. Plan Tracking & UI Adaptation
 - Fetches user's Calendly plan during OAuth (standard, teams, enterprise, free)
 - Stores plan in `calendly_plan` field
 - Updates plan during manual sync
 - Handles multiple field name variations (plan, tier, subscription_tier, plan_tier)
 - Gracefully defaults to "unknown" if plan field missing
+
+**UI Behavior Based on Plan:**
+- **Plan Badge Display**: Shows capitalized plan name (e.g., "Standard plan", "Free plan") in calendar settings
+- **Google Calendar Settings**:
+  - **Paid Plans (standard/teams/enterprise)**: "Add to calendar" and "Check for conflicts" sections are disabled (opacity 0.5, pointer-events: none)
+  - **Free/Unknown Plans**: Settings remain fully enabled for Google Calendar configuration
+- **Rationale**: Free plan users cannot use Calendly Scheduling API (returns 403 Forbidden), so they need direct Google Calendar access for bookings
 
 ### 2. Timezone Handling
 - Fetches and stores Calendly timezone during OAuth
@@ -198,6 +241,65 @@ Agent workflow stays the same!
 - Handles API failures gracefully
 - Shows user-friendly success/error messages
 
+## Implementation Details
+
+### Plan-Based UI Conditionals
+
+The application uses a Jinja2 template variable to determine when to disable Google Calendar settings:
+
+```jinja2
+{% set calendly_paid_plan = current_user.calendly_access_token
+    and current_user.calendly_plan
+    and current_user.calendly_plan in ['standard', 'teams', 'enterprise'] %}
+```
+
+**Where This Variable is Used:**
+
+1. **Booking Calendar Selection** (`app/templates/settings/calendar.html:114-116`)
+   ```jinja2
+   <div class="mb-3" {% if calendly_paid_plan %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
+       <select ... {% if calendly_paid_plan %}disabled{% endif %}>
+   ```
+
+2. **Conflict Checking Section** (`app/templates/settings/calendar.html:168-187`)
+   ```jinja2
+   <div class="settings-section card shadow-sm" {% if calendly_paid_plan %}style="opacity: 0.5;"{% endif %}>
+       <div class="calendar-list" {% if calendly_paid_plan %}style="pointer-events: none;"{% endif %}>
+           <input ... {% if calendly_paid_plan %}disabled{% endif %}>
+   ```
+
+3. **Help Text** - Shows different messages based on plan:
+   - Paid plans: "Managed via Calendly - bookings are saved to your Calendly-connected calendar"
+   - Free/unknown plans: "All meetings booked through Cal and scheduling page will be added to this calendar"
+
+### Bootstrap Tooltips Implementation
+
+**Template Code** (`app/templates/base.html:141-152`):
+```html
+<a class="sidebar-link sidebar-link-disabled"
+   data-bs-toggle="tooltip"
+   data-bs-placement="right"
+   title="Managed via Calendly">
+    <span>Event Types <i data-feather="lock"></i></span>
+</a>
+```
+
+**JavaScript Initialization** (`app/static/js/main.js:771-789`):
+```javascript
+function initializeTooltips() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+}
+
+window.addEventListener('load', function() {
+    if (typeof bootstrap !== 'undefined') {
+        initializeTooltips();
+    }
+});
+```
+
 ## Implementation Checklist
 
 - [x] Database migration
@@ -209,7 +311,8 @@ Agent workflow stays the same!
 - [x] Manual sync endpoint
 - [x] Webhook handlers
 - [x] Update onboarding.html (Google Calendar required, Calendly optional)
-- [x] Update settings.html (manual sync button)
+- [x] Update base.html (Bootstrap tooltips for sidebar)
+- [x] Update settings.html (plan badge, plan-based UI conditionals)
 - [x] Update availability service (use Calendly timezone)
 - [x] Update booking service (403 fallback to Google Calendar)
 - [x] Update cancellation service
