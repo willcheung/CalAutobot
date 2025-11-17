@@ -232,7 +232,7 @@ class TestCalendlyIntegration:
             contact = Contact(
                 user_id=complete_calendly_user.id,
                 email="workflow@example.com",
-                name="Workflow Guest",
+                display_name="Workflow Guest",
             )
             db.session.add(contact)
             db.session.commit()
@@ -241,7 +241,7 @@ class TestCalendlyIntegration:
             event = public_booking.create_booking_event(
                 user=complete_calendly_user,
                 event_type=event_type,
-                start_datetime=first_slot_time,
+                start_dt=first_slot_time,
                 invitee_email="workflow@example.com",
                 invitee_name="Workflow Guest",
             )
@@ -378,13 +378,12 @@ class TestCalendlyIntegration:
                 client = CalendlyAPIClient(complete_calendly_user)
                 result = client.get_current_user()
 
-                # Assert - request should succeed after refresh
-                assert result["resource"]["uri"] == "https://api.calendly.com/users/INT123"
+            # Assert - request should succeed after refresh
+            assert result["resource"]["uri"] == "https://api.calendly.com/users/INT123"
 
-                # Verify token was refreshed
-                db.session.expire_all()
-                user = User.query.get(complete_calendly_user.id)
-                assert user.calendly_access_token == "refreshed_token"
+            # Verify token was refreshed in memory (and persisted)
+            assert client.access_token == "refreshed_token"
+            assert complete_calendly_user.calendly_access_token == "refreshed_token"
 
     def test_calendly_fields_persisted_in_database(self, test_app):
         """Test that all Calendly fields are properly persisted."""

@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 from app import db
 from app.models import User
@@ -38,18 +39,18 @@ def test_connect_calendly_redirects_to_oauth(client, auth_user):
 
 
 @patch.dict("os.environ", {}, clear=False)
-def test_connect_calendly_without_config(client, auth_user):
+def test_connect_calendly_without_config(client, auth_user, monkeypatch):
     """Test that connect fails gracefully without Calendly config."""
-    # Clear Calendly config
-    import os
-    os.environ.pop("CALENDLY_CLIENT_ID", None)
-    os.environ.pop("CALENDLY_CLIENT_SECRET", None)
+    # Ensure module-level config is empty
+    import app.routes.calendly_auth as ca
+    monkeypatch.setattr(ca, "CALENDLY_CLIENT_ID", "")
+    monkeypatch.setattr(ca, "CALENDLY_CLIENT_SECRET", "")
 
-    response = client.get("/auth/calendly", follow_redirects=True)
+    response = client.get("/auth/calendly", follow_redirects=False)
 
-    # Should redirect back to onboarding with error
-    assert response.status_code == 200
-    # Flash message should indicate configuration issue
+    # Should redirect back to onboarding
+    assert response.status_code == 302
+    assert "/onboarding" in response.location
 
 
 @patch("app.routes.calendly_auth.requests.post")
@@ -124,16 +125,17 @@ def test_callback_token_exchange_failure(mock_post, client, auth_user):
     """Test callback when token exchange fails."""
     mock_response = Mock()
     mock_response.status_code = 400
-    mock_response.raise_for_status.side_effect = Exception("Bad Request")
+    mock_response.raise_for_status.side_effect = requests.RequestException("Bad Request")
     mock_post.return_value = mock_response
 
     response = client.get(
         "/auth/calendly/callback?code=test_code",
-        follow_redirects=True,
+        follow_redirects=False,
     )
 
     # Should redirect with error
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert "/onboarding" in response.location
 
     # User should not have Calendly credentials
     db.session.expire_all()
@@ -188,7 +190,7 @@ def test_refresh_calendly_token(mock_post, auth_user, app_context):
 
     result = refresh_calendly_token(auth_user)
 
-    assert result is True
+    assert result == "new_access_token"
     db.session.expire_all()
     user = User.query.get(auth_user.id)
     assert user.calendly_access_token == "new_access_token"
@@ -211,7 +213,7 @@ def test_refresh_calendly_token_failure(mock_post, auth_user, app_context):
 
     result = refresh_calendly_token(auth_user)
 
-    assert result is False
+    assert result is None
 
 
 def test_refresh_token_without_refresh_token(auth_user, app_context):
@@ -223,4 +225,4 @@ def test_refresh_token_without_refresh_token(auth_user, app_context):
 
     result = refresh_calendly_token(auth_user)
 
-    assert result is False
+    assert result is None

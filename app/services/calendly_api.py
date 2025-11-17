@@ -127,11 +127,12 @@ class CalendlyAPIClient:
         """
         from app.routes.calendly_auth import refresh_calendly_token
 
-        success = refresh_calendly_token(self.user)
-        if success:
-            # Update the access token in this client instance
-            self.access_token = self.user.calendly_access_token
-        return success
+        new_token = refresh_calendly_token(self.user)
+        if new_token:
+            # Update in-memory user and client token
+            self.user.calendly_access_token = new_token
+            self.access_token = new_token
+        return bool(new_token)
 
     def get_current_user(self) -> Dict:
         """
@@ -356,7 +357,10 @@ class CalendlyAPIClient:
             payload["invitee"]["questions_and_answers"] = questions_and_answers
 
         if location:
-            payload["location"] = location
+            loc_payload = dict(location)
+            if "type" not in loc_payload and "kind" in loc_payload:
+                loc_payload["type"] = loc_payload["kind"]
+            payload["location"] = loc_payload
 
         response = self._make_request("POST", "/invitees", json_data=payload)
         return response.get("resource", {})

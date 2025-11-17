@@ -117,8 +117,9 @@ def callback():
     if organization_uri:
         try:
             from app.services.calendly_api import CalendlyAPIClient
+            # Ensure access token is set before instantiating client
+            current_user.calendly_access_token = access_token
             client = CalendlyAPIClient(current_user)
-            current_user.calendly_access_token = access_token  # Temporarily set for API call
             org_data = client.get_organization(organization_uri)
 
             # Log the full organization response for debugging
@@ -245,7 +246,7 @@ def disconnect():
     return redirect(url_for("settings_routes.calendar_settings"))
 
 
-def refresh_calendly_token(user: User) -> bool:
+def refresh_calendly_token(user: User) -> str | None:
     """
     Refresh Calendly access token for a user.
 
@@ -253,10 +254,10 @@ def refresh_calendly_token(user: User) -> bool:
         user: User object with calendly_refresh_token
 
     Returns:
-        True if successful, False otherwise
+        New access token if successful, otherwise None
     """
     if not user.calendly_refresh_token:
-        return False
+        return None
 
     token_data = {
         "grant_type": "refresh_token",
@@ -279,9 +280,9 @@ def refresh_calendly_token(user: User) -> bool:
                 user.calendly_refresh_token = refresh_token
             db.session.commit()
             logger.info(f"Successfully refreshed Calendly token for user {user.id}")
-            return True
+            return access_token
     except Exception as e:
         logger.error(f"Failed to refresh Calendly token for user {user.id}: {e}")
-        return False
+        return None
 
-    return False
+    return None

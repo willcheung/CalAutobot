@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 from app import db
 from app.models import User
@@ -166,11 +167,15 @@ def test_create_invitee(mock_request, calendly_user):
         start_time=start_time,
         email="invitee@example.com",
         name="John Doe",
+        location={"kind": "zoom_conference"},
     )
 
     assert event["uri"] == "https://api.calendly.com/scheduled_events/EVENT123"
     assert event["status"] == "active"
     assert len(event["invitees"]) == 1
+    # Verify location kind normalized to type in payload
+    call_args = mock_request.call_args
+    assert call_args[1]["json"]["location"]["type"] == "zoom_conference"
 
 
 @patch("app.services.calendly_api.requests.request")
@@ -198,13 +203,16 @@ def test_api_error_handling(mock_request, calendly_user):
     mock_response = Mock()
     mock_response.status_code = 400
     mock_response.json.return_value = {"message": "Invalid request"}
-    mock_response.raise_for_status.side_effect = Exception("Bad Request")
+    mock_response.raise_for_status.side_effect = requests.HTTPError(
+        "Bad Request", response=mock_response
+    )
     mock_request.return_value = mock_response
 
     client = CalendlyAPIClient(calendly_user)
 
-    with pytest.raises(CalendlyAPIError):
+    with pytest.raises(CalendlyAPIError) as exc:
         client.get_current_user()
+    assert "Invalid request" in str(exc.value)
 
 
 @patch("app.services.calendly_api.requests.request")
@@ -226,7 +234,7 @@ def test_token_refresh_on_401(mock_refresh, mock_request, calendly_user, app_con
     # Mock successful token refresh
     def refresh_side_effect(user):
         user.calendly_access_token = "new_token"
-        return True
+        return "new_token"
 
     mock_refresh.side_effect = refresh_side_effect
 
