@@ -11,6 +11,7 @@ OWNER_ALERT_MESSAGES = {
     "availability_verify_error": "I couldn't confirm that the selected meeting slot is still available.",
     "availability_refresh_error": "I couldn't refresh your up-to-date availability from Google Calendar.",
     "calendar_access_error": "I couldn't access Google Calendar to manage events. Please reconnect your account.",
+    "booking_creation_error": "I couldn't create a calendar event for a confirmed meeting. Please check your calendar settings.",
 }
 
 

@@ -189,23 +189,6 @@ def test_reschedule_meeting_creates_new_event(monkeypatch, app_context):
     old_start = "2025-02-01T10:00:00+00:00"
     old_end = "2025-02-01T10:30:00+00:00"
 
-    existing_event = Event(
-        user_id=owner.id,
-        event_name="Project Sync",
-        start_datetime=old_start,
-        end_datetime=old_end,
-        start_date=datetime.fromisoformat(old_start).date(),
-        start_time=datetime.fromisoformat(old_start).time(),
-        end_date=datetime.fromisoformat(old_end).date(),
-        end_time=datetime.fromisoformat(old_end).time(),
-        duration_minutes=30,
-        status="scheduled",
-        source="ai_booking",
-        google_event_id="evt-123",
-    )
-    db.session.add(existing_event)
-    db.session.commit()
-
     meeting_request = MeetingRequest(
         user_id=owner.id,
         subject="Project Sync",
@@ -219,6 +202,24 @@ def test_reschedule_meeting_creates_new_event(monkeypatch, app_context):
     }
     db.session.add(meeting_request)
     db.session.flush()
+
+    existing_event = Event(
+        user_id=owner.id,
+        event_name="Project Sync",
+        start_datetime=old_start,
+        end_datetime=old_end,
+        start_date=datetime.fromisoformat(old_start).date(),
+        start_time=datetime.fromisoformat(old_start).time(),
+        end_date=datetime.fromisoformat(old_end).date(),
+        end_time=datetime.fromisoformat(old_end).time(),
+        duration_minutes=30,
+        status="scheduled",
+        source="ai_booking",
+        google_event_id="evt-123",
+        meeting_request_id=meeting_request.id,  # Link to meeting request
+    )
+    db.session.add(existing_event)
+    db.session.commit()
 
     db.session.add(
         MeetingMessage(
@@ -351,23 +352,6 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
     start_iso = "2025-02-01T10:00:00+00:00"
     end_iso = "2025-02-01T10:30:00+00:00"
 
-    existing_event = Event(
-        user_id=owner.id,
-        event_name="Project Sync",
-        start_datetime=start_iso,
-        end_datetime=end_iso,
-        start_date=datetime.fromisoformat(start_iso).date(),
-        start_time=datetime.fromisoformat(start_iso).time(),
-        end_date=datetime.fromisoformat(end_iso).date(),
-        end_time=datetime.fromisoformat(end_iso).time(),
-        duration_minutes=30,
-        status="scheduled",
-        source="ai_booking",
-        google_event_id="evt-123",
-    )
-    db.session.add(existing_event)
-    db.session.commit()
-
     meeting_request = MeetingRequest(
         user_id=owner.id,
         subject="Project Sync",
@@ -381,6 +365,24 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
     }
     db.session.add(meeting_request)
     db.session.flush()
+
+    existing_event = Event(
+        user_id=owner.id,
+        event_name="Project Sync",
+        start_datetime=start_iso,
+        end_datetime=end_iso,
+        start_date=datetime.fromisoformat(start_iso).date(),
+        start_time=datetime.fromisoformat(start_iso).time(),
+        end_date=datetime.fromisoformat(end_iso).date(),
+        end_time=datetime.fromisoformat(end_iso).time(),
+        duration_minutes=30,
+        status="scheduled",
+        source="ai_booking",
+        google_event_id="evt-123",
+        meeting_request_id=meeting_request.id,  # Link to meeting request
+    )
+    db.session.add(existing_event)
+    db.session.commit()
 
     db.session.add(
         MeetingMessage(
@@ -401,6 +403,9 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
         return True
 
     monkeypatch.setattr("app.services.scheduling_agent.gmail_service.send_email", fake_send_email)
+
+    # Mock delete_calendar_event so it doesn't try to actually cancel in Google
+    monkeypatch.setattr("app.services.public_booking.delete_calendar_event", lambda *_, **__: None)
     monkeypatch.setattr(
         "app.services.scheduling_agent.run_meeting_scheduler_agent",
         lambda *args, **kwargs: {
@@ -604,3 +609,136 @@ def test_confirm_slot_with_contact_race_condition_still_creates_event(monkeypatc
     assert len(captured_emails) > 0, "Confirmation email should be sent"
 
     print(f"✅ Test passed: Meeting created successfully despite contact race condition")
+
+
+def test_confirm_slot_does_not_send_email_when_booking_fails(monkeypatch, app_context):
+    """
+    Test that when calendar event creation fails during confirm_slot,
+    the scheduler agent does NOT send a confirmation email to participants.
+
+    This validates the bug fix where previously the agent would send
+    confirmation emails even when the calendar event creation failed,
+    causing participants to think the meeting was confirmed when it wasn't.
+    """
+    unique_suffix = datetime.utcnow().strftime("%f")
+    owner = User(
+        username=f"Owner-{unique_suffix}",
+        email=f"owner-{unique_suffix}@example.com",
+        timezone="UTC",
+        google_id=f"gid-fail-{unique_suffix}",
+        google_token='{"access_token": "abc", "refresh_token": "def"}'
+    )
+    db.session.add(owner)
+    db.session.commit()
+
+    owner.default_booking_calendar_id = "booking-calendar"
+    assign_unique_handle(owner)
+    db.session.commit()
+
+    event_type = EventType(
+        user_id=owner.id,
+        title="Project Sync",
+        slug=f"project-sync-fail-{unique_suffix}",
+        duration_minutes=30,
+        is_active=True,
+        is_public=True,
+    )
+    db.session.add(event_type)
+    db.session.commit()
+
+    # Mock create_booking_event to FAIL
+    def fake_create_booking_event_that_fails(*args, **kwargs):
+        raise Exception("Calendar API error: Unable to create event")
+
+    monkeypatch.setattr(
+        "app.services.scheduling_agent.create_booking_event",
+        fake_create_booking_event_that_fails
+    )
+
+    # Track emails sent
+    captured_emails = []
+    def fake_send_email(to, subject, **kwargs):
+        captured_emails.append((to, subject, kwargs))
+        return True
+
+    monkeypatch.setattr("app.services.scheduling_agent.gmail_service.send_email", fake_send_email)
+
+    # Mock the agent to return a confirm_slot action
+    def fake_agent(agent_input, history, latest_message, **kwargs):
+        return {
+            "action": "confirm_slot",
+            "reply": "Meeting confirmed for Feb 1 at 10am.",
+            "proposed_slots": [],
+            "confirmed_slot": {
+                "start": "2025-02-01T10:00:00+00:00",
+                "end": "2025-02-01T10:30:00+00:00",
+            },
+            "notes": None,
+        }
+
+    monkeypatch.setattr("app.services.scheduling_agent.run_meeting_scheduler_agent", fake_agent)
+
+    email_data = {
+        "sender": "participant@example.com",
+        "sender_name": "Participant",
+        "subject": "Meeting confirmation",
+        "body_text": "Feb 1 at 10am works!",
+        "body_html": "",
+        "to": [owner.email],
+        "cc": ["participant@example.com"],
+        "thread_id": f"thread-fail-{unique_suffix}",
+        "message_id": f"msg-fail-{unique_suffix}",
+        "received_at": datetime.utcnow(),
+        "raw_headers": {},
+        "attachments": [],
+    }
+
+    # Process the email
+    result = handle_scheduling_email(email_data, owner)
+
+    # Verify the agent returned confirm_slot
+    assert result is not None
+    assert result["action"] == "confirm_slot"
+
+    # CRITICAL: Verify NO confirmation email was sent to participants
+    # Only owner notification email should be sent
+    participant_emails = [
+        email for email in captured_emails
+        if "participant@example.com" in email[0]
+    ]
+    assert len(participant_emails) == 0, (
+        "Confirmation email should NOT be sent to participants when booking creation fails. "
+        f"Found {len(participant_emails)} emails sent to participants."
+    )
+
+    # Verify owner WAS notified about the failure
+    owner_notifications = [
+        email for email in captured_emails
+        if owner.email in email[0] and "Action needed" in email[1]
+    ]
+    assert len(owner_notifications) > 0, (
+        "Owner should be notified when booking creation fails"
+    )
+
+    # Verify the notification mentions calendar/booking issue
+    notification_body = owner_notifications[0][2].get("text_body", "")
+    assert "calendar" in notification_body.lower() or "booking" in notification_body.lower(), (
+        "Owner notification should mention calendar or booking issue"
+    )
+
+    # Verify meeting request exists but has no google_event_id
+    meeting_request = MeetingRequest.query.filter_by(
+        user_id=owner.id,
+        thread_id=email_data["thread_id"]
+    ).first()
+    assert meeting_request is not None
+    confirmed_slot = meeting_request.confirmed_slot or {}
+    assert "google_event_id" not in confirmed_slot or confirmed_slot.get("google_event_id") is None, (
+        "MeetingRequest should not have google_event_id when booking creation fails"
+    )
+
+    # Verify no Event record was created
+    event = Event.query.filter_by(user_id=owner.id, source="ai_booking").first()
+    assert event is None, "No Event record should be created when booking creation fails"
+
+    print(f"✅ Test passed: No confirmation email sent when booking creation fails")

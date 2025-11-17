@@ -879,6 +879,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     invitee_email = None
     invitee_name = None
     calendar_event_id = None
+    calendar_creation_failed = False
     if effective_action == "confirm_slot" and meeting_request.confirmed_slot:
         confirmed_info = meeting_request.confirmed_slot or {}
         existing_event_id = None
@@ -1033,44 +1034,54 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                                 meeting_request.confirmed_slot = updated_confirmed
                                 confirmed_info = updated_confirmed
                         except Exception as calendar_err:
-                            logger.warning(
+                            calendar_creation_failed = True
+                            logger.error(
                                 "Failed to create calendar event for meeting_request %s: %s",
                                 meeting_request.id,
                                 calendar_err,
                             )
+                            # Notify owner about the booking failure
+                            notify_owner_calendar_issue(user, "booking_creation_error")
 
     notify_owner_calendar_issue(user, agent_result.get("notes"))
 
     sent_reply = False
     if reply_text:
-        if effective_action == "confirm_slot":
-            confirmed_info = meeting_request.confirmed_slot or {}
-            conference_url = None
-            if isinstance(confirmed_info, dict):
-                conference_url = confirmed_info.get("conference_url")
-            if conference_url and conference_url not in reply_text:
-                reply_text = reply_text.rstrip() + f"\n\nVideo conference: {conference_url}\n"
+        # Don't send confirmation email if calendar event creation failed
+        if effective_action == "confirm_slot" and calendar_creation_failed:
+            logger.warning(
+                "Skipping confirmation email for meeting_request %s because calendar event creation failed",
+                meeting_request.id,
+            )
+        else:
+            if effective_action == "confirm_slot":
+                confirmed_info = meeting_request.confirmed_slot or {}
+                conference_url = None
+                if isinstance(confirmed_info, dict):
+                    conference_url = confirmed_info.get("conference_url")
+                if conference_url and conference_url not in reply_text:
+                    reply_text = reply_text.rstrip() + f"\n\nVideo conference: {conference_url}\n"
 
-        extra_recipients: List[str] = []
-        sender_addr = (email_data.get("sender") or "").strip().lower()
-        if sender_addr:
-            extra_recipients.append(sender_addr)
+            extra_recipients: List[str] = []
+            sender_addr = (email_data.get("sender") or "").strip().lower()
+            if sender_addr:
+                extra_recipients.append(sender_addr)
 
-        for field in ("to", "cc"):
-            for addr in email_data.get(field) or []:
-                clean = (addr or "").strip().lower()
-                if clean:
-                    extra_recipients.append(clean)
+            for field in ("to", "cc"):
+                for addr in email_data.get(field) or []:
+                    clean = (addr or "").strip().lower()
+                    if clean:
+                        extra_recipients.append(clean)
 
-        sent_reply = send_agent_reply_email(
-            user,
-            meeting_request,
-            reply_text,
-            thread_id=email_data.get("thread_id"),
-            reply_to_message_id=email_data.get("message_id"),
-            subject=email_data.get("subject"),
-            extra_recipients=extra_recipients,
-        )
+            sent_reply = send_agent_reply_email(
+                user,
+                meeting_request,
+                reply_text,
+                thread_id=email_data.get("thread_id"),
+                reply_to_message_id=email_data.get("message_id"),
+                subject=email_data.get("subject"),
+                extra_recipients=extra_recipients,
+            )
 
         if sent_reply:
             now = datetime.utcnow()

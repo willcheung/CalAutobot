@@ -197,6 +197,74 @@ Agent workflow stays the same!
 - Creates bookings via Calendly API (requires paid plan)
 - Falls back to Google Calendar if booking creation fails (403 for free plans, network errors, etc.)
 
+## Error Handling and Owner Notifications
+
+### Booking Creation Error Handling
+
+**Issue Identified**: Previously, when calendar event creation failed, the scheduler agent would:
+1. Catch the exception and log it
+2. Continue execution
+3. Send confirmation email to participants anyway
+4. Not notify the owner about the failure
+
+**Fix Implemented** (`app/services/scheduling_agent.py:882, 1036-1044, 1050-1056`):
+- Track `calendar_creation_failed` flag when event creation fails
+- Skip sending confirmation email if calendar creation failed
+- Notify owner immediately when booking creation fails
+- Prevent participants from thinking the meeting is confirmed when it's not
+
+**Code Changes**:
+```python
+# Initialize flag at line 882
+calendar_creation_failed = False
+
+# Set flag on error at lines 1036-1044
+except Exception as calendar_err:
+    calendar_creation_failed = True
+    logger.error("Failed to create calendar event for meeting_request %s: %s", ...)
+    # Notify owner about the booking failure
+    notify_owner_calendar_issue(user, "booking_creation_error")
+
+# Skip confirmation email if creation failed at lines 1050-1056
+if effective_action == "confirm_slot" and calendar_creation_failed:
+    logger.warning("Skipping confirmation email because calendar event creation failed")
+else:
+    # Send normal confirmation email
+```
+
+### Owner Notification Messages
+
+**Added New Notification Type** (`app/services/calendar_notifications.py:14`):
+```python
+OWNER_ALERT_MESSAGES = {
+    # ... existing messages ...
+    "booking_creation_error": "I couldn't create a calendar event for a confirmed meeting. Please check your calendar settings.",
+}
+```
+
+**Notification Behavior**:
+- Email sent to owner when booking creation fails
+- Subject: "Action needed: Restore Google Calendar access"
+- Body includes link to settings page: https://calautobot.com/settings/calendars
+- Owner can investigate and fix the issue (permissions, calendar selection, etc.)
+
+### Error Scenarios Covered
+
+1. **Calendly API Errors** (location misconfiguration, network issues, etc.)
+   - Attempt Calendly booking
+   - On failure, fallback to Google Calendar
+   - If both fail, notify owner and skip confirmation email
+
+2. **Google Calendar Errors** (permissions, quota limits, etc.)
+   - Attempt Google Calendar event creation
+   - On failure, notify owner and skip confirmation email
+
+3. **Free Plan Fallback**
+   - Calendly returns 403 Forbidden for free plans
+   - Automatic fallback to Google Calendar
+   - Owner not notified (this is expected behavior)
+   - Only notified if Google Calendar also fails
+
 **Onboarding Flow:**
 1. Google Calendar connection is **REQUIRED** to complete onboarding
 2. Calendly connection is **OPTIONAL** (can be added later in settings)
@@ -318,6 +386,9 @@ window.addEventListener('load', function() {
 - [x] Update cancellation service
 - [x] Environment variables
 - [x] Comprehensive testing (103 tests!)
+- [x] **Bug fix**: Prevent confirmation emails when booking creation fails
+- [x] **Bug fix**: Add owner notification for booking creation failures
+- [x] **Enhancement**: Location field support for Calendly bookings
 
 ## Testing
 
