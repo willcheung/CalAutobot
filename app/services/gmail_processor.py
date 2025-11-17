@@ -169,6 +169,40 @@ def process_single_email(email_data: Dict) -> bool:
             result = handle_scheduling_email(scheduling_payload, owner_user=existing_owner)
             return result is not None
 
+        # Check if there's an authenticated user in TO or CC (even without existing thread)
+        # This handles cases where a provisional user cc's an authenticated user
+        authenticated_owner = None
+        for recipient in (email_data.get("to") or []) + (email_data.get("cc") or []):
+            recipient_email = recipient.strip().lower() if isinstance(recipient, str) else recipient
+            if recipient_email and recipient_email not in ASSISTANT_EMAILS:
+                potential_owner = db.session.query(User).filter_by(email=recipient_email).first()
+                if potential_owner and potential_owner.google_id:
+                    authenticated_owner = potential_owner
+                    break
+
+        if authenticated_owner:
+            # Route to scheduling flow with authenticated owner, skip provisional user limits
+            logger.info(
+                f"Found authenticated user {authenticated_owner.email} in recipients. "
+                f"Routing to scheduling flow for owner, bypassing provisional user limits for sender {sender_email}"
+            )
+            scheduling_payload = {
+                "sender": email_data.get("sender"),
+                "sender_name": email_data.get("sender_name"),
+                "subject": subject,
+                "body_text": body_text,
+                "body_html": email_data.get("body_html"),
+                "to": email_data.get("to") or [],
+                "cc": email_data.get("cc") or [],
+                "thread_id": thread_id,
+                "message_id": email_data.get("message_id"),
+                "received_at": email_data.get("received_at"),
+                "raw_headers": email_data.get("raw_headers"),
+                "attachments": attachments_info,
+            }
+            result = handle_scheduling_email(scheduling_payload, owner_user=authenticated_owner)
+            return result is not None
+
         if task_type == "schedule_meeting" or (task_type == "no_action" and (not user or user.google_id is None)):
             if not user:
                 user = ensure_provisional_user(sender_email)
