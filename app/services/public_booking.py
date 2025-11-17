@@ -4,6 +4,7 @@ import logging
 import secrets
 
 from flask import current_app, has_request_context, url_for
+import sentry_sdk
 
 from app import db
 from app.helpers.text_processing import sanitize_text_for_db
@@ -189,9 +190,27 @@ def create_booking_event(
         except Exception as exc:
             error_msg = str(exc)
             if "403" in error_msg or "Forbidden" in error_msg:
+                # Expected for free plan users - just log and fallback
                 logger.warning(f"Calendly booking failed (likely requires paid plan): {exc}. Falling back to Google Calendar.")
             else:
-                logger.warning(f"Failed to create Calendly booking, falling back to Google Calendar: {exc}")
+                # Unexpected error - log, report to Sentry, and fallback
+                logger.error(f"Unexpected Calendly booking error (non-403): {exc}", exc_info=True)
+                sentry_sdk.capture_exception(
+                    exc,
+                    extras={
+                        "user_id": user.id,
+                        "event_type_id": event_type.id,
+                        "event_type_title": event_type.title,
+                        "calendly_event_type_uri": event_type.calendly_event_type_uri,
+                        "start_dt": start_dt.isoformat(),
+                        "source": source,
+                        "error_message": error_msg,
+                    },
+                    tags={
+                        "calendly_error": "booking_creation_failed",
+                        "fallback": "google_calendar",
+                    }
+                )
             # Fall through to Google Calendar
     elif user.calendly_access_token and not event_type.calendly_event_type_uri:
         logger.warning(f"User has Calendly connected but event type '{event_type.title}' (id={event_type.id}) has no calendly_event_type_uri. Falling back to Google Calendar.")

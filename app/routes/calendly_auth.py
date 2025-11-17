@@ -176,7 +176,7 @@ def callback():
 @calendly_auth.route("/auth/calendly/sync", methods=["POST"])
 @login_required
 def sync_event_types():
-    """Manually sync event types and plan from Calendly."""
+    """Manually sync event types, plan, and timezone from Calendly."""
     if not current_user.calendly_access_token:
         flash("Calendly is not connected.", "error")
         return redirect(url_for("settings_routes.calendar_settings"))
@@ -185,10 +185,22 @@ def sync_event_types():
         from app.services.sync_calendly import sync_calendly_event_types
         from app.services.calendly_api import CalendlyAPIClient
 
+        client = CalendlyAPIClient(current_user)
+
+        # Sync user info (timezone)
+        try:
+            user_data = client.get_current_user()
+            resource = user_data.get("resource", {})
+            calendly_timezone = resource.get("timezone")
+            if calendly_timezone:
+                current_user.calendly_timezone = calendly_timezone
+                logger.info(f"Updated Calendly timezone for user {current_user.id}: {calendly_timezone}")
+        except Exception as tz_err:
+            logger.warning(f"Failed to update Calendly timezone for user {current_user.id}: {tz_err}", exc_info=True)
+
         # Sync plan information
         if current_user.calendly_organization_uri:
             try:
-                client = CalendlyAPIClient(current_user)
                 org_data = client.get_organization(current_user.calendly_organization_uri)
 
                 # Log the full organization response for debugging
@@ -227,12 +239,14 @@ def sync_event_types():
 @calendly_auth.route("/auth/calendly/disconnect", methods=["POST"])
 @login_required
 def disconnect():
-    """Disconnect Calendly account."""
+    """Disconnect Calendly account and clear all related data."""
     current_user.calendly_access_token = None
     current_user.calendly_refresh_token = None
     current_user.calendly_user_uri = None
     current_user.calendly_organization_uri = None
     current_user.calendly_scheduling_url = None
+    current_user.calendly_timezone = None
+    current_user.calendly_plan = None
     current_user.calendly_webhook_subscription_uri = None
     current_user.calendly_connected_at = None
 
