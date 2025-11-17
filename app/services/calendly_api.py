@@ -297,6 +297,7 @@ class CalendlyAPIClient:
         timezone: str = "UTC",
         guests: Optional[List[str]] = None,
         questions_and_answers: Optional[List[Dict]] = None,
+        location: Optional[Dict] = None,
     ) -> Dict:
         """
         Create a new scheduled event (book a meeting) via Scheduling API.
@@ -311,6 +312,7 @@ class CalendlyAPIClient:
             timezone: Invitee timezone
             guests: List of guest email addresses
             questions_and_answers: Custom form questions/answers
+            location: Location configuration (must match event type's configured locations)
 
         Returns:
             Created event data
@@ -352,6 +354,9 @@ class CalendlyAPIClient:
 
         if questions_and_answers:
             payload["invitee"]["questions_and_answers"] = questions_and_answers
+
+        if location:
+            payload["location"] = location
 
         response = self._make_request("POST", "/invitees", json_data=payload)
         return response.get("resource", {})

@@ -33,6 +33,7 @@ def _create_calendly_booking(
     """Create a booking via Calendly API."""
     from app.services.calendly_api import CalendlyAPIClient
     import pytz
+    import json
 
     logger.info(f"Creating Calendly booking for user {user.id}, event type {event_type.id}")
 
@@ -43,6 +44,21 @@ def _create_calendly_booking(
 
     client = CalendlyAPIClient(user)
 
+    # Parse location from event type if available
+    # Location format: {"kind": "physical|google_meet|zoom|...", "location": "optional string"}
+    location_config = None
+    if event_type.calendly_location_json:
+        try:
+            location_data = json.loads(event_type.calendly_location_json)
+            if isinstance(location_data, dict) and 'kind' in location_data:
+                # Build location object matching Calendly API schema
+                location_config = {'kind': location_data['kind']}
+                # Include location string for physical locations
+                if location_data.get('location'):
+                    location_config['location'] = location_data['location']
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Failed to parse calendly_location_json for event type {event_type.id}")
+
     # Create booking via Calendly API
     calendly_response = client.create_invitee(
         event_type_uri=event_type.calendly_event_type_uri,
@@ -51,6 +67,7 @@ def _create_calendly_booking(
         name=invitee_name,
         timezone=user.timezone or "UTC",
         questions_and_answers=[{"question": "Notes", "answer": notes}] if notes else None,
+        location=location_config,
     )
 
     # Extract data from Calendly response
