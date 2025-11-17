@@ -120,6 +120,10 @@ def callback():
             client = CalendlyAPIClient(current_user)
             current_user.calendly_access_token = access_token  # Temporarily set for API call
             org_data = client.get_organization(organization_uri)
+
+            # Log the full organization response for debugging
+            logger.info(f"Calendly organization API response for user {current_user.id}: {org_data}")
+
             # Calendly plan might be in different fields depending on API version
             # Common field names: plan, tier, subscription_tier, plan_tier
             calendly_plan = (
@@ -129,9 +133,9 @@ def callback():
                 org_data.get("plan_tier") or
                 "unknown"
             )
-            logger.info(f"Fetched Calendly organization data for user {current_user.id}: plan={calendly_plan}")
+            logger.info(f"Extracted Calendly plan for user {current_user.id}: plan={calendly_plan}")
         except Exception as e:
-            logger.warning(f"Failed to fetch Calendly organization details: {e}")
+            logger.warning(f"Failed to fetch Calendly organization details: {e}", exc_info=True)
             calendly_plan = "unknown"
 
     # Save to database
@@ -185,6 +189,10 @@ def sync_event_types():
             try:
                 client = CalendlyAPIClient(current_user)
                 org_data = client.get_organization(current_user.calendly_organization_uri)
+
+                # Log the full organization response for debugging
+                logger.info(f"Calendly organization API response for user {current_user.id}: {org_data}")
+
                 calendly_plan = (
                     org_data.get("plan") or
                     org_data.get("tier") or
@@ -195,7 +203,7 @@ def sync_event_types():
                 current_user.calendly_plan = calendly_plan
                 logger.info(f"Updated Calendly plan for user {current_user.id}: {calendly_plan}")
             except Exception as plan_err:
-                logger.warning(f"Failed to update Calendly plan for user {current_user.id}: {plan_err}")
+                logger.warning(f"Failed to update Calendly plan for user {current_user.id}: {plan_err}", exc_info=True)
 
         # Sync event types
         num_synced = sync_calendly_event_types(current_user)
