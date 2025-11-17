@@ -309,6 +309,13 @@ OWNER_ALERT_MESSAGES = {
 - Handles API failures gracefully
 - Shows user-friendly success/error messages
 
+### 6. Dual Authenticated User Handling
+- Deterministic owner selection when multiple authenticated users are involved
+- Sender priority: If sender is authenticated, use their calendar as owner
+- Recipient fallback: If sender not authenticated, use first authenticated recipient
+- Maintains full automation - no manual intervention needed
+- See "Dual Authenticated User Scheduling" section for details
+
 ## Implementation Details
 
 ### Plan-Based UI Conditionals
@@ -388,6 +395,8 @@ window.addEventListener('load', function() {
 - [x] Comprehensive testing (103 tests!)
 - [x] **Bug fix**: Prevent confirmation emails when booking creation fails
 - [x] **Bug fix**: Add owner notification for booking creation failures
+- [x] **Bug fix**: Fix provisional user email counter to bypass limits when authenticated user is cc'd
+- [x] **Bug fix**: Deterministic owner selection for dual authenticated user scenarios (sender priority)
 - [x] **Enhancement**: Location field support for Calendly bookings
 
 ## Testing
@@ -477,7 +486,7 @@ test_manual_sync_updates_plan_and_event_types()
 test_token_refresh_on_401()
 ```
 
-### Existing Test Files (53 tests)
+### Existing Test Files (57 tests)
 
 - `tests/test_calendly_auth.py` - OAuth, token exchange, disconnect
 - `tests/test_calendly_api.py` - API client methods, error handling
@@ -485,10 +494,105 @@ test_token_refresh_on_401()
 - `tests/test_availability_calendly.py` - Availability calculation
 - `tests/test_public_booking_calendly.py` - Public booking page
 - `tests/test_sync_calendly_event_types.py` - Event type syncing
+- `tests/test_dual_user_scheduling.py` - Dual authenticated user owner selection (4 tests)
+
+## Dual Authenticated User Scheduling
+
+### Problem
+When two authenticated Cal users email each other with Cal cc'd (e.g., Alice emails Bob), the system needs to determine which user's calendar to use as the "owner" for scheduling.
+
+**Previous Behavior**: Non-deterministic selection based on recipient list ordering
+
+**Issue**: If both Alice and Bob are authenticated users, the system would select whichever user appeared first in the TO+CC list, leading to unpredictable behavior.
+
+### Solution Implemented
+
+**Sender Priority Logic** (`app/services/gmail_processor.py:172-194`):
+
+```python
+# Check if there's an authenticated user in TO or CC (even without existing thread)
+# Priority: sender first (they're initiating), then recipients
+authenticated_owner = None
+
+# First check if sender is authenticated
+if sender_email and sender_email not in ASSISTANT_EMAILS:
+    potential_sender = db.session.query(User).filter_by(email=sender_email).first()
+    if potential_sender and potential_sender.google_id:
+        authenticated_owner = potential_sender
+
+# If sender not authenticated, check recipients
+if not authenticated_owner:
+    for recipient in (email_data.get("to") or []) + (email_data.get("cc") or []):
+        # ... check recipients
+```
+
+**Decision Rules**:
+1. **Sender is authenticated** → Use sender's calendar as owner
+2. **Sender not authenticated, recipient(s) authenticated** → Use first authenticated recipient
+3. **Neither authenticated** → Fall back to provisional user flow
+
+### Why Sender Priority?
+
+- **Initiator context**: The sender is initiating the meeting request, so it makes sense to use their calendar
+- **Deterministic**: Always gives consistent results regardless of recipient list ordering
+- **Intuitive**: When Alice emails Bob to schedule a meeting, Alice is looking for time on her calendar
+- **Maintains automation**: No manual intervention needed - existing LLM scheduling flow takes over
+
+### Example Scenarios
+
+**Scenario 1: Both users authenticated**
+```
+From: alice@example.com (authenticated)
+To: bob@example.com (authenticated)
+CC: cal@calautobot.com
+
+Result: Alice's calendar is used as owner
+→ Cal proposes slots based on Alice's availability
+→ Bob confirms a time
+→ Cal books on Alice's calendar
+```
+
+**Scenario 2: Sender not authenticated**
+```
+From: charlie@external.com (not a Cal user)
+To: alice@example.com (authenticated)
+CC: cal@calautobot.com
+
+Result: Alice's calendar is used as owner
+→ Bypasses provisional user limits
+→ Uses Alice's calendar for scheduling
+```
+
+**Scenario 3: Multiple authenticated recipients**
+```
+From: alice@example.com (authenticated)
+To: bob@example.com (authenticated), carol@example.com (authenticated)
+CC: cal@calautobot.com
+
+Result: Alice's calendar is still used (sender priority)
+```
+
+### Testing
+
+New test file: `tests/test_dual_user_scheduling.py` (4 tests)
+
+**Tests cover**:
+- `test_dual_authenticated_users_sender_priority`: Verifies sender is selected when both are authenticated
+- `test_dual_authenticated_users_recipient_fallback`: Verifies recipient is selected when sender is not authenticated
+- `test_dual_authenticated_users_multiple_recipients`: Verifies sender priority even with multiple authenticated recipients
+- `test_provisional_user_with_authenticated_recipient_still_works`: Ensures existing provisional user bypass logic still works
+
+### Benefits
+
+✅ **Deterministic**: Same inputs always produce same owner selection
+✅ **Simple**: 5-line change with clear priority logic
+✅ **No overengineering**: Reuses existing scheduling flow
+✅ **Backward compatible**: Doesn't break existing functionality
+✅ **Well-tested**: 4 comprehensive tests covering all scenarios
 
 ### Total Test Coverage
 
-**Total Calendly Tests:** ~103 tests across 11 files
+**Total Calendly Tests:** ~107 tests across 12 files
 
 ### Features Tested
 

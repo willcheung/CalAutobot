@@ -171,14 +171,27 @@ def process_single_email(email_data: Dict) -> bool:
 
         # Check if there's an authenticated user in TO or CC (even without existing thread)
         # This handles cases where a provisional user cc's an authenticated user
+        # Priority: sender first (they're initiating), then recipients
         authenticated_owner = None
-        for recipient in (email_data.get("to") or []) + (email_data.get("cc") or []):
-            recipient_email = recipient.strip().lower() if isinstance(recipient, str) else recipient
-            if recipient_email and recipient_email not in ASSISTANT_EMAILS:
-                potential_owner = db.session.query(User).filter_by(email=recipient_email).first()
-                if potential_owner and potential_owner.google_id:
-                    authenticated_owner = potential_owner
-                    break
+
+        # First check if sender is authenticated
+        if sender_email and sender_email not in ASSISTANT_EMAILS:
+            potential_sender = db.session.query(User).filter_by(email=sender_email).first()
+            if potential_sender and potential_sender.google_id:
+                authenticated_owner = potential_sender
+                logger.info(
+                    f"Sender {sender_email} is authenticated. Using sender as owner for scheduling."
+                )
+
+        # If sender not authenticated, check recipients
+        if not authenticated_owner:
+            for recipient in (email_data.get("to") or []) + (email_data.get("cc") or []):
+                recipient_email = recipient.strip().lower() if isinstance(recipient, str) else recipient
+                if recipient_email and recipient_email not in ASSISTANT_EMAILS:
+                    potential_owner = db.session.query(User).filter_by(email=recipient_email).first()
+                    if potential_owner and potential_owner.google_id:
+                        authenticated_owner = potential_owner
+                        break
 
         if authenticated_owner:
             # Route to scheduling flow with authenticated owner, skip provisional user limits
