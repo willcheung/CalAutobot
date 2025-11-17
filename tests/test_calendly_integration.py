@@ -32,7 +32,7 @@ def complete_calendly_user(test_app):
             calendly_timezone="America/New_York",
             calendly_plan="standard",
             calendly_connected_at=datetime.utcnow(),
-            google_credentials_json='{"token": "test"}',
+            default_booking_calendar_id="primary",
         )
         db.session.add(user)
         db.session.commit()

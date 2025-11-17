@@ -12,3 +12,5 @@ venv/
 .env
 .venv
 .claude/
+pyproject.toml
+repl_nix_workspace.egg-info/

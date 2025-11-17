@@ -28,7 +28,7 @@ def paid_plan_user(test_app):
             calendly_organization_uri="https://api.calendly.com/organizations/ORG123",
             calendly_plan="standard",  # Paid plan
             calendly_connected_at=datetime.utcnow(),
-            google_credentials_json='{"token": "test"}',
+            default_booking_calendar_id="primary",
         )
         db.session.add(user)
         db.session.commit()
@@ -52,7 +52,7 @@ def free_plan_user(test_app):
             calendly_organization_uri="https://api.calendly.com/organizations/ORG456",
             calendly_plan="free",  # Free plan
             calendly_connected_at=datetime.utcnow(),
-            google_credentials_json='{"token": "test"}',
+            default_booking_calendar_id="primary",
         )
         db.session.add(user)
         db.session.commit()
@@ -272,7 +272,7 @@ class TestCalendlyBookingCreation:
             assert "403" in str(exc_info.value) or "Forbidden" in str(exc_info.value)
 
     @patch("app.services.calendly_api.CalendlyAPIClient.create_invitee")
-    @patch("app.services.public_booking.create_google_calendar_event")
+    @patch("app.services.public_booking.create_calendar_event")
     def test_booking_fallback_to_google_calendar_on_403(
         self, mock_gcal, mock_create_invitee, test_app, free_plan_user, calendly_event_type_free
     ):
@@ -282,10 +282,7 @@ class TestCalendlyBookingCreation:
             mock_create_invitee.side_effect = CalendlyAPIError("403 Forbidden", 403)
 
             # Mock Google Calendar success
-            mock_gcal.return_value = {
-                "id": "gcal_event_123",
-                "htmlLink": "https://calendar.google.com/event/123",
-            }
+            mock_gcal.return_value = ("gcal_event_123", "https://calendar.google.com/event/123")
 
             # Create contact
             contact = Contact(
@@ -322,7 +319,7 @@ class TestCalendlyBookingCreation:
             db.session.commit()
 
     @patch("app.services.calendly_api.CalendlyAPIClient.create_invitee")
-    @patch("app.services.public_booking.create_google_calendar_event")
+    @patch("app.services.public_booking.create_calendar_event")
     def test_booking_fallback_to_google_calendar_on_network_error(
         self, mock_gcal, mock_create_invitee, test_app, paid_plan_user, calendly_event_type_paid
     ):
@@ -332,10 +329,7 @@ class TestCalendlyBookingCreation:
             mock_create_invitee.side_effect = CalendlyAPIError("Network timeout")
 
             # Mock Google Calendar success
-            mock_gcal.return_value = {
-                "id": "gcal_event_456",
-                "htmlLink": "https://calendar.google.com/event/456",
-            }
+            mock_gcal.return_value = ("gcal_event_456", "https://calendar.google.com/event/456")
 
             # Create contact
             contact = Contact(

@@ -3,6 +3,11 @@ import logging
 import threading
 from datetime import datetime, timedelta
 
+# Load environment variables from .env file (for local development)
+# This will safely do nothing in production where .env file doesn't exist
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
