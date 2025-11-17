@@ -173,7 +173,11 @@ def _validate_confirmed_slot(
     return None
 
 
-def _find_event_for_cancellation(user: User, confirmed_info: Optional[Dict[str, object]]) -> Optional[Event]:
+def _find_event_for_cancellation(
+    user: User,
+    confirmed_info: Optional[Dict[str, object]],
+    meeting_request_id: Optional[int] = None,
+) -> Optional[Event]:
     if not confirmed_info:
         return None
 
@@ -183,11 +187,24 @@ def _find_event_for_cancellation(user: User, confirmed_info: Optional[Dict[str, 
         google_event_id = confirmed_info.get("google_event_id")
         start_iso = confirmed_info.get("start")
 
+    # Strategy 1: Look up by google_event_id (most reliable for new events)
     if google_event_id:
         event = Event.query.filter_by(user_id=user.id, google_event_id=google_event_id).first()
         if event:
             return event
 
+    # Strategy 2: Look up by meeting_request_id (reliable for AI-booked events)
+    if meeting_request_id:
+        event = (
+            Event.query.filter_by(user_id=user.id, meeting_request_id=meeting_request_id)
+            .filter(Event.status != "cancelled")
+            .order_by(Event.id.desc())
+            .first()
+        )
+        if event:
+            return event
+
+    # Strategy 3: Fall back to start_datetime string matching (least reliable)
     if start_iso:
         return (
             Event.query.filter_by(user_id=user.id, start_datetime=start_iso)
@@ -816,7 +833,9 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     if action in {"cancel_meeting", "reschedule"}:
         slot_reference = rescheduled_from or previous_confirmed_slot
-        event_to_cancel = _find_event_for_cancellation(user, slot_reference)
+        event_to_cancel = _find_event_for_cancellation(
+            user, slot_reference, meeting_request_id=meeting_request.id
+        )
         if event_to_cancel:
             try:
                 cancel_booking_event(user, event_to_cancel)

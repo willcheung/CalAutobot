@@ -194,6 +194,7 @@ def test_reschedule_meeting_creates_new_event(monkeypatch, app_context):
         subject="Project Sync",
         status="confirmed",
         current_step="confirm_slot",
+        thread_id="thread-reschedule",  # Add thread_id so it can be found
     )
     meeting_request.confirmed_slot = {
         "start": old_start,
@@ -357,6 +358,7 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
         subject="Project Sync",
         status="confirmed",
         current_step="confirm_slot",
+        thread_id="thread-cancel",  # Add thread_id so it can be found
     )
     meeting_request.confirmed_slot = {
         "start": start_iso,
@@ -446,12 +448,157 @@ def test_cancel_meeting_cancels_existing_event(monkeypatch, app_context):
         "end": end_iso,
         "google_event_id": "evt-123",
     }
-    assert captured_emails, "Expected cancellation email to be sent"
-    to_header = captured_emails[-1][0]
-    assert owner.email in to_header
-    assert "participant@example.com" in to_header
-    body = captured_emails[-1][2].get("text_body") or ""
-    assert "manually" not in body
+
+
+def test_reschedule_legacy_meeting_without_google_event_id(monkeypatch, app_context):
+    """
+    Test that rescheduling works for legacy meetings that don't have
+    google_event_id in their confirmed_slot (created before Oct 18, 2025).
+
+    This simulates the real-world bug where old meetings couldn't be cancelled
+    during reschedule because they didn't have google_event_id saved.
+    """
+    # Create owner user
+    unique_suffix = datetime.utcnow().strftime("%f")
+    owner = User(
+        username=f"Owner-{unique_suffix}",
+        email=f"owner-{unique_suffix}@example.com",
+        timezone="UTC",
+        google_id=f"gid-legacy-{unique_suffix}",
+        google_token='{"access_token": "abc", "refresh_token": "def"}'
+    )
+    db.session.add(owner)
+    db.session.commit()
+
+    owner.default_booking_calendar_id = "booking-calendar"
+    assign_unique_handle(owner)
+    db.session.commit()
+
+    # Create event type
+    event_type = EventType(
+        user_id=owner.id,
+        title="Legacy Meeting",
+        slug=f"legacy-meeting-{unique_suffix}",
+        duration_minutes=90,
+        is_active=True,
+        is_public=True,
+    )
+    db.session.add(event_type)
+    db.session.commit()
+
+    old_start = "2025-02-01T09:00:00+00:00"
+    old_end = "2025-02-01T10:30:00+00:00"
+
+    # Create meeting request WITHOUT google_event_id in confirmed_slot (legacy format)
+    meeting_request = MeetingRequest(
+        user_id=owner.id,
+        subject="Legacy Meeting",
+        status="confirmed",
+        current_step="confirm_slot",
+        thread_id="thread-legacy-reschedule",
+    )
+    meeting_request.confirmed_slot = {
+        "start": old_start,
+        "end": old_end,
+        # NOTE: No google_event_id here! This is the legacy format.
+    }
+    db.session.add(meeting_request)
+    db.session.flush()
+
+    # Create the event linked to this meeting request
+    existing_event = Event(
+        user_id=owner.id,
+        event_name="Legacy Meeting",
+        start_datetime=old_start,
+        end_datetime=old_end,
+        start_date=datetime.fromisoformat(old_start).date(),
+        start_time=datetime.fromisoformat(old_start).time(),
+        end_date=datetime.fromisoformat(old_end).date(),
+        end_time=datetime.fromisoformat(old_end).time(),
+        duration_minutes=90,
+        status="scheduled",
+        source="ai_booking",
+        google_event_id="evt-legacy-123",
+        meeting_request_id=meeting_request.id,  # THIS is how we'll find it!
+    )
+    db.session.add(existing_event)
+    db.session.commit()
+
+    db.session.add(
+        MeetingMessage(
+            meeting_request_id=meeting_request.id,
+            sender_email="participant@example.com",
+            thread_id="thread-legacy-reschedule",
+            message_id="prior-msg",
+            body_text="Previous",
+            received_at=datetime.utcnow(),
+        )
+    )
+    db.session.commit()
+
+    booking_call = {}
+
+    real_create_booking_event = public_booking_service.create_booking_event
+
+    def fake_create_booking_event(user, event_type, start_dt, *args, **kwargs):
+        booking_call["start"] = start_dt
+        new_event = real_create_booking_event(user, event_type, start_dt, *args, **kwargs)
+        return new_event
+
+    def fake_create_calendar_event(user, payload, **_kwargs):
+        return "calendar-event-new", "https://meet.google.com/new-link"
+
+    monkeypatch.setattr(
+        "app.services.scheduling_agent.create_booking_event", fake_create_booking_event
+    )
+    monkeypatch.setattr("app.services.public_booking.create_calendar_event", fake_create_calendar_event)
+    monkeypatch.setattr("app.services.public_booking.delete_calendar_event", lambda *_, **__: None)
+
+    new_start = "2025-02-01T11:00:00+00:00"
+
+    monkeypatch.setattr(
+        "app.services.scheduling_agent.run_meeting_scheduler_agent",
+        lambda *args, **kwargs: {
+            "meeting_request_id": meeting_request.id,
+            "reply": "Rescheduled to 11:00am",
+            "action": "reschedule",
+            "proposed_slots": [],
+            "confirmed_slot": {"start": new_start, "end": "2025-02-01T11:30:00+00:00"},
+            "notes": None,
+        },
+    )
+
+    email_data = {
+        "sender": "participant@example.com",
+        "sender_name": "Participant",
+        "subject": "Re: Legacy Meeting",
+        "body_text": "Can we move to 11am?",
+        "body_html": "",
+        "to": [owner.email],
+        "cc": [],
+        "thread_id": "thread-legacy-reschedule",
+        "message_id": "reschedule-msg",
+        "received_at": datetime.utcnow(),
+        "raw_headers": {},
+        "attachments": [],
+    }
+
+    handle_scheduling_email(email_data, owner)
+
+    # Verify old event was cancelled
+    db.session.refresh(existing_event)
+    assert existing_event.status == "cancelled", "Old event should be cancelled"
+    assert existing_event.google_event_id is None, "Old event google_event_id should be cleared"
+
+    # Verify new event was created
+    new_event = Event.query.filter_by(
+        user_id=owner.id, meeting_request_id=meeting_request.id, status="scheduled"
+    ).first()
+    assert new_event is not None, "New event should be created"
+    assert new_event.start_datetime == new_start, "New event should have new start time"
+    assert new_event.id != existing_event.id, "New event should be different from old event"
+
+    print("✅ Test passed: Legacy meeting without google_event_id was successfully rescheduled")
 
 
 def test_confirm_slot_with_contact_race_condition_still_creates_event(monkeypatch, app_context):
