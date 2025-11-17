@@ -4,6 +4,7 @@ Tests the create_invitee API, 403 error handling, and Google Calendar fallback.
 """
 
 import pytest
+import requests
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
 import pytz
@@ -254,7 +255,9 @@ class TestCalendlyBookingCreation:
             mock_response.json.return_value = {
                 "message": "This feature requires a Standard plan or above"
             }
-            mock_response.raise_for_status.side_effect = Exception("403 Forbidden")
+            mock_response.raise_for_status.side_effect = requests.HTTPError(
+                "403 Forbidden", response=mock_response
+            )
             mock_request.return_value = mock_response
 
             # Act & Assert
@@ -269,7 +272,7 @@ class TestCalendlyBookingCreation:
                 )
 
             # Verify error message mentions the issue
-            assert "403" in str(exc_info.value) or "Forbidden" in str(exc_info.value)
+            assert "Standard plan" in str(exc_info.value)
 
     @patch("app.services.calendly_api.CalendlyAPIClient.create_invitee")
     @patch("app.services.public_booking.create_calendar_event")
@@ -288,7 +291,7 @@ class TestCalendlyBookingCreation:
             contact = Contact(
                 user_id=free_plan_user.id,
                 email="guest@example.com",
-                name="Guest User",
+                display_name="Guest User",
             )
             db.session.add(contact)
             db.session.commit()
@@ -300,7 +303,7 @@ class TestCalendlyBookingCreation:
             event = public_booking.create_booking_event(
                 user=free_plan_user,
                 event_type=calendly_event_type_free,
-                start_datetime=start_time,
+                start_dt=start_time,
                 invitee_email="guest@example.com",
                 invitee_name="Guest User",
             )
@@ -335,7 +338,7 @@ class TestCalendlyBookingCreation:
             contact = Contact(
                 user_id=paid_plan_user.id,
                 email="guest@example.com",
-                name="Guest User",
+                display_name="Guest User",
             )
             db.session.add(contact)
             db.session.commit()
@@ -347,7 +350,7 @@ class TestCalendlyBookingCreation:
             event = public_booking.create_booking_event(
                 user=paid_plan_user,
                 event_type=calendly_event_type_paid,
-                start_datetime=start_time,
+                start_dt=start_time,
                 invitee_email="guest@example.com",
                 invitee_name="Guest User",
             )
@@ -416,7 +419,7 @@ class TestCalendlyBookingCreation:
             contact = Contact(
                 user_id=paid_plan_user.id,
                 email="guest@example.com",
-                name="Guest User",
+                display_name="Guest User",
             )
             db.session.add(contact)
             db.session.commit()
@@ -425,7 +428,7 @@ class TestCalendlyBookingCreation:
             event = public_booking.create_booking_event(
                 user=paid_plan_user,
                 event_type=calendly_event_type_paid,
-                start_datetime=start_time,
+                start_dt=start_time,
                 invitee_email="guest@example.com",
                 invitee_name="Guest User",
             )
