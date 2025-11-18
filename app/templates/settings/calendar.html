@@ -15,7 +15,7 @@
     {# Only disable calendar settings for paid Calendly plans (standard, teams, enterprise) #}
     {# Free plan users need Google Calendar settings because Calendly API doesn't support booking on free plans #}
     {% set calendly_paid_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan in ['standard', 'teams', 'enterprise'] %}
-    {% set calendly_free_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan|lower == 'free' %}
+    {% set calendly_free_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan|lower == 'basic' %}
 
     <!-- Calendly Integration Status -->
     <div class="settings-section card shadow-sm mb-3">
@@ -83,11 +83,11 @@
                     </div>
                 {% endif %}
                 {% if calendly_free_plan %}
-                    <div class="alert alert-warning d-flex align-items-start gap-2 mt-3 mb-0" role="alert" style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412;">
+                    <div class="alert alert-permanent alert-warning d-flex align-items-start gap-2 mt-3 mb-0" role="alert" style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412;">
                         <i data-feather="alert-circle" style="width: 18px; height: 18px; margin-top: 2px;"></i>
                         <div class="small mb-0" style="color: #9a3412;">
-                            <div class="fw-semibold">Calendly free plan</div>
-                            <div>All your meetings will bypass Calendly because you're on Calendly free plan. We will still use Calendly to check availability. Alternatively, you can disconnect Calendly and use Cal Autobot.</div>
+                            <div class="fw-semibold">Calendly free plan doesn't allow Cal to create meetings!</div>
+                                            <div>We will still use Calendly to check availability, but meetings will be booked directly to Google Calendar, bypassing Calendly. Alternatively, you can disconnect Calendly and use our native booking system.</div>
                         </div>
                     </div>
                 {% endif %}
@@ -175,13 +175,13 @@
             </div>
         </div>
 
-        <div class="settings-section card shadow-sm" {% if calendly_paid_plan %}style="opacity: 0.5;"{% endif %}>
+        <div class="settings-section card shadow-sm" {% if calendly_paid_plan or calendly_free_plan %}style="opacity: 0.5;"{% endif %}>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <h5 class="card-title mb-1">Check for conflicts</h5>
                         <p class="text-muted small mb-0">
-                            {% if calendly_paid_plan %}
+                            {% if calendly_paid_plan or calendly_free_plan %}
                                 <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly - conflict checking is handled by Calendly's availability system.
                             {% else %}
                                 Select which calendars you want to check for conflicts to prevent double bookings.
@@ -194,7 +194,7 @@
                 </div>
 
                 {% if calendars %}
-                    <div class="calendar-list" {% if calendly_paid_plan %}style="pointer-events: none;"{% endif %}>
+                    <div class="calendar-list" {% if calendly_paid_plan or calendly_free_plan %}style="pointer-events: none;"{% endif %}>
                         {% for calendar in calendars %}
                             <div class="calendar-entry {% if calendar.id == primary_calendar_id %}calendar-entry-primary{% endif %}">
                                 <div class="calendar-entry-meta">
@@ -223,7 +223,7 @@
                                         name="conflict_calendar_ids"
                                         value="{{ calendar.id }}"
                                         {% if calendar.selected_for_conflicts %}checked{% endif %}
-                                        {% if calendly_paid_plan %}disabled{% endif %}
+                                        {% if calendly_paid_plan or calendly_free_plan %}disabled{% endif %}
                                         onchange="this.form.submit()"
                                     >
                                     <label class="form-check-label" for="conflict-{{ loop.index }}"></label>

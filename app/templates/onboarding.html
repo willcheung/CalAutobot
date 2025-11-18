@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set display_sidebar = False %}
-{% set calendly_free_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan|lower == 'free' %}
+{% set calendly_free_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan|lower == 'basic' %}
 {% block title %}Welcome to Cal{% endblock %}
 {% block content %}
 <div class="container mt-5 mb-5">
@@ -99,11 +99,11 @@
                                     {% endif %}
                                 </div>
                                 {% if calendly_free_plan %}
-                                    <div class="alert alert-warning d-flex align-items-start gap-2 mt-3 mb-0" role="alert" style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412;">
+                                    <div class="alert alert-permanent alert-warning d-flex align-items-start gap-2 mt-3 mb-0" role="alert" style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412;">
                                         <i data-feather="alert-circle" style="width: 18px; height: 18px; margin-top: 2px;"></i>
                                         <div class="small mb-0" style="color: #9a3412;">
-                                            <div class="fw-semibold">Calendly free plan</div>
-                                            <div>All your meetings will bypass Calendly because you're on Calendly free plan. We will still use Calendly to check availability. Alternatively, you can disconnect Calendly and use Cal Autobot.</div>
+                                            <div class="fw-semibold">Calendly free plan doesn't allow Cal to create meetings!</div>
+                                            <div>We will still use Calendly to check availability, but meetings will be booked directly to Google Calendar, bypassing Calendly. Alternatively, you can disconnect Calendly and use our native booking system.</div>
                                         </div>
                                     </div>
                                 {% endif %}
