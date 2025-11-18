@@ -44,6 +44,7 @@
                                 <span class="badge bg-warning text-dark ms-2">Cancelled</span>
                             {% endif %}
                         </div>
+                        {% if not event.calendly_event_uri %}
                         <div class="booking-card__actions">
                             <a href="{{ url_for('main_routes.edit_event', event_id=event.id) }}" class="btn btn-sm btn-outline-primary">
                                 <i data-feather="edit-2"></i>
@@ -54,6 +55,7 @@
                                 </button>
                             </form>
                         </div>
+                        {% endif %}
                     </div>
 
                     <div class="booking-card__body">

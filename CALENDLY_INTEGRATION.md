@@ -186,6 +186,12 @@ Updated Step 2 calendar connection:
 - **Calendly shown SECOND with "OPTIONAL" badge** (gray border, secondary button)
 - "Start using Cal" button enabled only when Google Calendar connected
 
+### app/templates/bookings.html
+Updated bookings page:
+- **Hides edit and delete buttons** for events booked via Calendly
+- Calendly events are managed through Calendly dashboard, not CalAutobot UI
+- Check based on `event.calendly_event_uri` field
+
 ### app/templates/settings/calendar.html
 Added Calendly section:
 - Show connection status with plan badge
