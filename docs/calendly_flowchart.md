@@ -17,10 +17,10 @@ flowchart TD
   CREATE --> CALBOOK[_create_calendly_booking]
   CALBOOK --> LOC[normalize location payload]
   CALBOOK --> CI[CalendlyAPIClient.create_invitee]
-  CI --> EVT[Event persisted (calendly URIs)]
+  CI --> EVT[Event persisted calendly]
 
   CREATE --> GCREATE[create_calendar_event]
-  GCREATE --> EVT2[Event persisted (google_event_id)]
+  GCREATE --> EVT2[Event persisted google_id]
 
   CREATE --> SENT2[Sentry capture booking_creation_failed]
 
