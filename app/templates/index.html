@@ -801,6 +801,36 @@
         line-height: 1.6;
     }
 
+    .works-with-section {
+        padding: 2rem 0;
+        background: #e5e7eb;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .works-with-text {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #6b7280;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .works-with-logo {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 1rem;
+    }
+
+    .works-with-logo img {
+        height: 40px;
+        width: auto;
+        display: block;
+    }
+
     /* Mobile: Stack comparison table as cards */
     @media (max-width: 768px) {
         .comparison-section {
@@ -911,7 +941,6 @@
                             </svg>
                             Sign up free with Google
                         </a>
-
                         <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
                             No credit card required. Zero setup.
                         </p>
@@ -927,6 +956,12 @@
         </div>
     </div>
 </div>
+    <section class="works-with-section">
+        <span class="works-with-text">Works with</span>
+        <div class="works-with-logo">
+            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
+        </div>
+    </section>
 <!-- <section class="email-stack" id="how-it-works">
     <div class="container">
         <div class="row justify-content-center">
