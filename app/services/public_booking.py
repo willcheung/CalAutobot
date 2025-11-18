@@ -441,7 +441,23 @@ def cancel_booking_event(user: User, event: Event) -> None:
             client.cancel_invitee(event.calendly_invitee_uri, reason="Cancelled by host")
             logger.info(f"Successfully cancelled Calendly booking: event_id={event.id}")
         except Exception as exc:  # noqa: BLE001
-            logger.warning(f"Failed to cancel Calendly event {event.calendly_invitee_uri}: {exc}")
+            logger.warning(
+                "Failed to cancel Calendly event %s for user %s: %s",
+                event.calendly_invitee_uri,
+                user.id,
+                exc,
+                exc_info=True,
+            )
+            sentry_sdk.capture_exception(
+                exc,
+                extras={
+                    "user_id": user.id,
+                    "event_id": event.id,
+                    "calendly_invitee_uri": event.calendly_invitee_uri,
+                    "calendly_event_uri": event.calendly_event_uri,
+                },
+                tags={"calendly_error": "cancellation_failed"},
+            )
             # Continue to mark as cancelled locally even if Calendly fails
 
     # Fall back to Google Calendar if this is a Google event
@@ -455,7 +471,22 @@ def cancel_booking_event(user: User, event: Event) -> None:
                 use_extraction_calendar=False,
             )
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to delete Google Calendar event %s: %s", event.google_event_id, exc)
+            logger.warning(
+                "Failed to delete Google Calendar event %s for user %s: %s",
+                event.google_event_id,
+                user.id,
+                exc,
+                exc_info=True,
+            )
+            sentry_sdk.capture_exception(
+                exc,
+                extras={
+                    "user_id": user.id,
+                    "event_id": event.id,
+                    "google_event_id": event.google_event_id,
+                },
+                tags={"google_error": "cancellation_failed"},
+            )
 
     event.status = "cancelled"
     event.is_synced = False
