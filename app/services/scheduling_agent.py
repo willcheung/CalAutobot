@@ -862,12 +862,6 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
                 )
 
         if cancellation_failed:
-            if reply_text:
-                reply_text = (
-                    reply_text.rstrip()
-                    + "\n\n"
-                    + "I couldn't find that meeting on the calendar. Please remove it manually if it still appears."
-                )
             meeting_request.notes = "cancel_unverified"
             if action == "reschedule":
                 effective_action = "request_clarification"
@@ -1066,12 +1060,19 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     sent_reply = False
     if reply_text:
-        # Don't send confirmation email if calendar event creation failed
-        if effective_action == "confirm_slot" and calendar_creation_failed:
+        # Don't send confirmation email if calendar event creation failed or cancellation failed
+        if (
+            effective_action == "confirm_slot" and calendar_creation_failed
+        ) or cancellation_failed:
             logger.warning(
-                "Skipping confirmation email for meeting_request %s because calendar event creation failed",
+                "Skipping agent reply for meeting_request %s because calendar action failed (creation_failed=%s, cancellation_failed=%s)",
                 meeting_request.id,
+                calendar_creation_failed,
+                cancellation_failed,
             )
+            if cancellation_failed:
+                # Notify owner to cancel manually
+                notify_owner_calendar_issue(user, "booking_cancellation_error")
         else:
             # Note: Video conference link is included in the Google Calendar invitation,
             # so no need to add it to the email body
