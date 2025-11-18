@@ -173,9 +173,9 @@ def test_create_invitee(mock_request, calendly_user):
     assert event["uri"] == "https://api.calendly.com/scheduled_events/EVENT123"
     assert event["status"] == "active"
     assert len(event["invitees"]) == 1
-    # Verify location kind normalized to type in payload
+    # Verify location kind normalized to type/kind in payload
     call_args = mock_request.call_args
-    assert call_args[1]["json"]["location"]["type"] == "zoom_conference"
+    assert call_args[1]["json"]["location"] == {"kind": "zoom_conference"}
 
 
 @patch("app.services.calendly_api.requests.request")

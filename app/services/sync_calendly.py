@@ -95,14 +95,12 @@ def _sync_single_event_type(user: User, calendly_data: dict) -> EventType:
     event_type.calendly_scheduling_url = calendly_data['scheduling_url']
     event_type.calendly_kind = calendly_data.get('kind')
 
-    # Store first location entry (Calendly API v2 exposes "locations" array)
-    location_obj = None
-    if calendly_data.get("locations"):
-        location_obj = calendly_data["locations"][0]
-    elif calendly_data.get("location"):
-        location_obj = calendly_data["location"]
-
-    event_type.calendly_location_json = json.dumps(location_obj) if location_obj else None
+    # Store full locations payload (Calendly API v2 exposes "locations" array)
+    # We keep the array so later we can choose the best match; fallback to legacy "location".
+    locations_payload = calendly_data.get("locations")
+    if not locations_payload and calendly_data.get("location"):
+        locations_payload = calendly_data.get("location")
+    event_type.calendly_location_json = json.dumps(locations_payload) if locations_payload else None
 
     # Update sync timestamp
     event_type.calendly_last_synced_at = datetime.utcnow()

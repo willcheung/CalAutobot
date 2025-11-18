@@ -120,10 +120,10 @@ class CalendlyAPIClient:
 
     def _refresh_token(self) -> bool:
         """
-        Refresh the access token.
+        Refresh the access token and update the client/user in memory.
 
         Returns:
-            True if successful, False otherwise
+            True if refreshed, False otherwise
         """
         from app.routes.calendly_auth import refresh_calendly_token
 
@@ -357,10 +357,7 @@ class CalendlyAPIClient:
             payload["invitee"]["questions_and_answers"] = questions_and_answers
 
         if location:
-            loc_payload = dict(location)
-            if "type" not in loc_payload and "kind" in loc_payload:
-                loc_payload["type"] = loc_payload["kind"]
-            payload["location"] = loc_payload
+            payload["location"] = dict(location)
 
         response = self._make_request("POST", "/invitees", json_data=payload)
         return response.get("resource", {})

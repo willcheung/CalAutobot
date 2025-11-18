@@ -45,20 +45,19 @@ def _create_calendly_booking(
     client = CalendlyAPIClient(user)
 
     # Parse location from event type if available
-    # Expected JSON from sync: Calendly "locations" entry (kind/type, plus optional fields)
+    # Stored JSON is the Calendly "locations" array (or single dict) from sync
     location_config = None
     if event_type.calendly_location_json:
         try:
             location_data = json.loads(event_type.calendly_location_json)
+            # If we stored an array of locations, pick the first entry
+            if isinstance(location_data, list) and location_data:
+                location_data = location_data[0]
+
             if isinstance(location_data, dict):
-                # Calendly create_invitee expects "type"; fall back to "kind" if present
-                loc_type = location_data.get("type") or location_data.get("kind")
-                if loc_type:
-                    location_config = {"type": loc_type}
-                    # Pass through known optional fields
-                    for key in ("location", "join_url", "phone_number", "additional_info"):
-                        if location_data.get(key):
-                            location_config[key] = location_data[key]
+                location_config = dict(location_data)
+                if "type" not in location_config and "kind" in location_config:
+                    location_config["type"] = location_config["kind"]
         except (json.JSONDecodeError, TypeError):
             logger.warning(f"Failed to parse calendly_location_json for event type {event_type.id}")
 
