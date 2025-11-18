@@ -130,13 +130,8 @@ def _send_follow_up_for_request(meeting_request: MeetingRequest) -> bool:
         meeting_request.next_follow_up_at = None
         return False
 
-    if action == "confirm_slot":
-        confirmed_info = meeting_request.confirmed_slot or {}
-        conference_url = None
-        if isinstance(confirmed_info, dict):
-            conference_url = confirmed_info.get("conference_url")
-        if conference_url and conference_url not in reply_text:
-            reply_text = reply_text.rstrip() + f"\n\nVideo conference: {conference_url}\n"
+    # Note: Video conference link is included in the Google Calendar invitation,
+    # so no need to add it to the email body
 
     send_success = send_agent_reply_email(
         user,
