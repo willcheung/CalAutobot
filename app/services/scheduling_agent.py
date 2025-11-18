@@ -784,6 +784,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     meeting_request.follow_up_count = 0
     meeting_request.next_follow_up_at = None
 
+    # Build context (history, availability, latest message, defaults) for the scheduler agent
     context = prepare_agent_context_for_request(user, meeting_request)
     agent_input = context["agent_input"]
     history = context["history"]
@@ -792,6 +793,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     availability_lookup_error = context["availability_error"]
     default_event_type = context["default_event_type"]
 
+    # Compute agent result (or fallback on availability errors)
     if availability_lookup_error:
         agent_result = {
             "action": "request_clarification",
@@ -808,6 +810,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             availability=availability,
         )
 
+    # Log agent decision
     logger.info(
         "Scheduler agent result for meeting_request %s: action=%s proposed=%s confirmed=%s",
         meeting_request.id,
@@ -824,6 +827,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
     reply_text = agent_result.get("reply")
     effective_action = action
 
+    # Persist proposed/confirmed slots and mark text as processed
     meeting_request.proposed_slots = proposed_slots
     if new_confirmed_slot:
         meeting_request.confirmed_slot = new_confirmed_slot
@@ -831,6 +835,7 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
 
     cancellation_failed = False
 
+    # Attempt cancellation for cancel/reschedule actions
     if action in {"cancel_meeting", "reschedule"}:
         slot_reference = rescheduled_from or previous_confirmed_slot
         event_to_cancel = _find_event_for_cancellation(
