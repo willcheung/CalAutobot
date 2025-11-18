@@ -23,7 +23,7 @@ CalAutobot integrates with Calendly as the backend for scheduling. The AI agent 
 - ✅ Full Calendly integration with Scheduling API
 - ✅ Event types managed via Calendly
 - ✅ Availability calculated by Calendly
-- ✅ Bookings created via Calendly API
+- ✅ Bookings created via Calendly API (`POST /invitees`)
 - 🔒 Google Calendar settings disabled in UI (managed by Calendly)
 - 🔒 Sidebar links (Event Types, Availability, Public Page) disabled with tooltips
 
@@ -31,6 +31,7 @@ CalAutobot integrates with Calendly as the backend for scheduling. The AI agent 
 - ✅ Event types synced from Calendly (read-only)
 - ✅ Availability calculated by Calendly
 - ❌ Booking creation NOT available via Calendly (403 Forbidden)
+- ✅ **API call IS attempted but fails with 403 error**
 - ✅ **Automatic fallback to Google Calendar** for bookings
 - ✅ Google Calendar settings remain enabled in UI
 - ✅ Full access to CalAutobot's booking functionality
@@ -40,6 +41,59 @@ CalAutobot integrates with Calendly as the backend for scheduling. The AI agent 
 - **Free plan users** still get full CalAutobot functionality via Google Calendar fallback
 - **Paid plan users** get seamless Calendly integration without manual configuration
 - The UI automatically adapts based on detected plan tier
+
+### Technical Details: API Call Behavior
+
+**Question: Does the code actually make the Calendly create API call for basic/free plans, or does it skip the call?**
+
+**Answer: The code DOES make the API call.** It does not check the plan tier before attempting to create the booking via Calendly.
+
+**Workflow** ([public_booking.py:168-194](app/services/public_booking.py#L168-L194)):
+
+1. When a meeting is confirmed and Calendly is connected:
+   - Checks if `user.calendly_access_token` exists
+   - Checks if `event_type.calendly_event_type_uri` exists
+   - If both exist, calls `_create_calendly_booking()` ([public_booking.py:21-165](app/services/public_booking.py#L21-L165))
+
+2. Inside `_create_calendly_booking()`:
+   - Creates a CalendlyAPIClient instance ([public_booking.py:44](app/services/public_booking.py#L44))
+   - Calls `client.create_invitee()` ([public_booking.py:65](app/services/public_booking.py#L65))
+   - This makes a `POST` request to `/invitees` endpoint ([calendly_api.py:365](app/services/calendly_api.py#L365))
+
+3. For basic/free plan users:
+   - Calendly API returns **403 Forbidden** error (see attached documentation screenshot)
+   - Exception is caught in `create_booking_event()` ([public_booking.py:190-214](app/services/public_booking.py#L190-L214))
+   - Checks if error message contains "403" or "Forbidden"
+   - **403 errors**: Logs warning and falls back silently (expected for free plans)
+   - **Non-403 errors**: Logs error, captures to Sentry with context, then falls back
+   - Falls through to Google Calendar booking logic
+
+**Why This Design?**
+- **Simplicity**: No need to track/validate plan tier before every booking
+- **Future-proof**: If Calendly changes free plan features, no code changes needed
+- **Graceful degradation**: Automatic fallback ensures bookings always succeed
+- **Error handling**: Catches all Calendly API errors (403, network, etc.) uniformly
+
+**Performance Impact:**
+- Minimal - one extra API call that fails fast with 403
+- Calendly API typically responds within 200-500ms
+- Fallback to Google Calendar happens immediately after 403
+
+**Error Monitoring:**
+- **403 Forbidden errors** (expected for free plans):
+  - Logged as warnings
+  - NOT reported to Sentry
+  - Silent fallback to Google Calendar
+
+- **All other errors** (unexpected - API issues, network problems, etc.):
+  - Logged as errors with full stack trace
+  - **Captured to Sentry** with rich context:
+    - User ID, event type details
+    - Calendly URI, start time, source
+    - Error message
+    - Tags: `calendly_error=booking_creation_failed`, `fallback=google_calendar`
+  - Fallback to Google Calendar
+  - Allows proactive bug detection and fixes
 
 ## Database Changes
 
@@ -88,9 +142,9 @@ Calendly API client with:
 ### 2. app/routes/calendly_auth.py
 OAuth routes:
 - `GET /auth/calendly` - Redirect to Calendly OAuth
-- `GET /auth/calendly/callback` - Handle OAuth callback, sync plan and event types
-- `POST /auth/calendly/sync` - Manual sync of event types and plan
-- `POST /auth/calendly/disconnect` - Disconnect Calendly
+- `GET /auth/calendly/callback` - Handle OAuth callback, sync timezone, plan, and event types
+- `POST /auth/calendly/sync` - Manual sync of timezone, plan, and event types
+- `POST /auth/calendly/disconnect` - Disconnect Calendly and clear all related data (tokens, URIs, timezone, plan)
 
 ### 3. app/services/sync_calendly.py
 Event type syncing service:
@@ -304,8 +358,9 @@ OWNER_ALERT_MESSAGES = {
 - Graceful degradation for all Calendly API failures
 
 ### 5. Manual Sync
-- `POST /auth/calendly/sync` endpoint
-- Updates both event types AND plan
+- `POST /auth/calendly/sync` endpoint ([calendly_auth.py:176-236](app/routes/calendly_auth.py#L176-L236))
+- Updates **timezone, plan, AND event types**
+- Syncs all three independently with individual error handling
 - Handles API failures gracefully
 - Shows user-friendly success/error messages
 
