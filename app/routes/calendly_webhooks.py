@@ -118,7 +118,7 @@ def handle_invitee_created(payload: dict):
         event = Event(
             user_id=user.id,
             event_name=name,
-            event_description=f"Booked via Calendly",
+            event_description=f"Managed via Calendly",
             start_date=start_dt.date(),
             start_time=start_dt.time(),
             end_date=end_dt.date(),

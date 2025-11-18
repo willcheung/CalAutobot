@@ -104,7 +104,7 @@ def _create_calendly_booking(
     event = Event(
         user_id=user.id,
         event_name=sanitize_text_for_db(event_name),
-        event_description=f"Booked via Calendly",
+        event_description=f"Managed via Calendly",
         start_date=start_dt_parsed.date(),
         start_time=start_dt_parsed.time(),
         end_date=end_dt_parsed.date(),
