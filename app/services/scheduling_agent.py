@@ -842,22 +842,40 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             user, slot_reference, meeting_request_id=meeting_request.id
         )
         if event_to_cancel:
-            try:
-                cancel_booking_event(user, event_to_cancel)
-            except Exception as exc:  # noqa: BLE001
+            if not event_to_cancel.google_event_id and not event_to_cancel.calendly_invitee_uri:
                 logger.warning(
-                    "Failed to cancel event %s for meeting_request %s: %s",
+                    "Found event %s for meeting_request %s but it has no calendly_invitee_uri or google_event_id",
                     event_to_cancel.id,
                     meeting_request.id,
-                    exc,
+                )
+                sentry_sdk.capture_message(
+                    "Meeting cancellation missing identifiers",
+                    level="warning",
+                    extras={
+                        "user_id": user.id,
+                        "meeting_request_id": meeting_request.id,
+                        "event_id": event_to_cancel.id,
+                    },
+                    tags={"cancellation_issue": "no_event_identifiers"},
                 )
                 cancellation_failed = True
             else:
-                logger.info(
-                    "Cancelled event %s for meeting_request %s",
-                    event_to_cancel.id,
-                    meeting_request.id,
-                )
+                try:
+                    cancel_booking_event(user, event_to_cancel)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to cancel event %s for meeting_request %s: %s",
+                        event_to_cancel.id,
+                        meeting_request.id,
+                        exc,
+                    )
+                    cancellation_failed = True
+                else:
+                    logger.info(
+                        "Cancelled event %s for meeting_request %s",
+                        event_to_cancel.id,
+                        meeting_request.id,
+                    )
         else:
             cancellation_failed = bool(slot_reference)
             if slot_reference:
@@ -1078,6 +1096,17 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             if cancellation_failed:
                 # Notify owner to cancel manually
                 notify_owner_calendar_issue(user, "booking_cancellation_error")
+                sentry_sdk.capture_message(
+                    "Meeting cancellation failed before emailing participants",
+                    level="warning",
+                    extras={
+                        "user_id": user.id,
+                        "meeting_request_id": meeting_request.id,
+                        "action": action,
+                        "rescheduled_from": rescheduled_from,
+                    },
+                    tags={"cancellation_issue": "agent_reply_blocked"},
+                )
         else:
             # Note: Video conference link is included in the Google Calendar invitation,
             # so no need to add it to the email body
