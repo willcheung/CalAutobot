@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from typing import Dict, List, Optional, Tuple
 
+import sentry_sdk
 from sqlalchemy.exc import IntegrityError
 
 from app import db
@@ -842,7 +843,52 @@ def handle_scheduling_email(email_data: Dict, owner_user: User) -> Optional[Dict
             user, slot_reference, meeting_request_id=meeting_request.id
         )
         if event_to_cancel:
-            if not event_to_cancel.google_event_id and not event_to_cancel.calendly_invitee_uri:
+            match_ok = True
+            expected_start = None
+            if isinstance(slot_reference, dict):
+                expected_start = slot_reference.get("start")
+
+            def _parse_iso(value: Optional[str]) -> Optional[datetime]:
+                if not value:
+                    return None
+                try:
+                    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+                except ValueError:
+                    return None
+
+            if expected_start:
+                slot_dt = _parse_iso(expected_start)
+                event_dt = _parse_iso(event_to_cancel.start_datetime)
+                if slot_dt and event_dt:
+                    if abs((slot_dt - event_dt).total_seconds()) > 60:
+                        match_ok = False
+                elif event_to_cancel.start_datetime != expected_start:
+                    match_ok = False
+                if not event_dt:
+                    match_ok = False
+
+            if not match_ok:
+                logger.warning(
+                    "Event %s for meeting_request %s has start mismatch (expected=%s, actual=%s)",
+                    event_to_cancel.id,
+                    meeting_request.id,
+                    expected_start,
+                    event_to_cancel.start_datetime,
+                )
+                sentry_sdk.capture_message(
+                    "Meeting cancellation event start mismatch",
+                    level="warning",
+                    extras={
+                        "user_id": user.id,
+                        "meeting_request_id": meeting_request.id,
+                        "event_id": event_to_cancel.id,
+                        "expected_start": expected_start,
+                        "event_start": event_to_cancel.start_datetime,
+                    },
+                    tags={"cancellation_issue": "start_mismatch"},
+                )
+                cancellation_failed = True
+            elif not event_to_cancel.google_event_id and not event_to_cancel.calendly_invitee_uri:
                 logger.warning(
                     "Found event %s for meeting_request %s but it has no calendly_invitee_uri or google_event_id",
                     event_to_cancel.id,
