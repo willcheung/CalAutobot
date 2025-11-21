@@ -1,10 +1,15 @@
-"""
-Extension support routes for Chrome extension integration
-"""
+"""Extension support routes for Chrome extension integration."""
 
-from flask import jsonify, session, request
-from flask_login import current_user, login_required
+from datetime import datetime, timedelta
+from typing import Optional
+
+from flask import jsonify, session, request, url_for
+from flask_login import current_user
+
 from app import app, db
+from app.models import EventType, User, Contact
+from app.services import availability as availability_service, contacts as contact_service
+from app.services.availability import AvailabilityError
 
 def add_cors_headers_for_extension(response):
     """Add proper CORS headers for Chrome extension requests"""
@@ -13,6 +18,58 @@ def add_cors_headers_for_extension(response):
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
+
+
+def _resolve_extension_user() -> Optional[User]:
+    """Return the authenticated user via session or Authorization header."""
+    if current_user.is_authenticated:
+        return current_user
+
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        email = request.args.get('user_email')
+        if not email and request.is_json:
+            payload = request.get_json(silent=True) or {}
+            email = payload.get('user_email')
+        if not email and request.form:
+            email = request.form.get('user_email')
+        if not email:
+            email = request.headers.get('X-User-Email')
+        if email:
+            return User.query.filter_by(email=email.strip().lower()).first()
+    return None
+
+
+def _select_default_event_type(user: User) -> Optional[EventType]:
+    """Select the default event type, preferring Calendly-managed ones."""
+    base_query = EventType.query.filter_by(user_id=user.id, is_active=True)
+    if user.calendly_access_token:
+        calendly_event_type = (
+            base_query.filter(EventType.calendly_event_type_uri.isnot(None))
+            .order_by(EventType.duration_minutes.asc(), EventType.id.asc())
+            .first()
+        )
+        if calendly_event_type:
+            return calendly_event_type
+
+    return base_query.order_by(EventType.duration_minutes.asc(), EventType.id.asc()).first()
+
+
+def _format_slot_display(slot, tz) -> str:
+    start_local = slot.start.astimezone(tz)
+    end_local = slot.end.astimezone(tz)
+    start_str = start_local.strftime("%a %b %d, %I:%M %p").lstrip("0")
+    end_str = end_local.strftime("%I:%M %p %Z").lstrip("0")
+    return f"{start_str} - {end_str}"
+
+
+def _flatten_slots(batch):
+    ordered_dates = sorted(batch.slots_by_date.keys())
+    slots = []
+    for day in ordered_dates:
+        daily = sorted(batch.slots_by_date[day], key=lambda s: s.start)
+        slots.extend(daily)
+    return slots
 
 @app.route('/api/user/info', methods=['GET', 'OPTIONS'])
 def get_user_info():
@@ -50,6 +107,208 @@ def get_user_info():
         response = jsonify({'error': 'Failed to get user info', 'authenticated': False})
         add_cors_headers_for_extension(response)
         return response, 500
+
+
+@app.route('/api/extension/availability_text', methods=['GET', 'OPTIONS'])
+def extension_availability_text():
+    """Return formatted availability text for the Chrome extension."""
+
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        return response
+
+    user = _resolve_extension_user()
+    if not user:
+        response = jsonify({'error': 'Authentication required'})
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    event_type = _select_default_event_type(user)
+    if not event_type:
+        response = jsonify({'error': 'No active event types found'})
+        add_cors_headers_for_extension(response)
+        return response, 400
+
+    tz = availability_service.get_timezone(user, event_type)
+    start_date = datetime.now(tz).date()
+    end_date = start_date + timedelta(days=13)
+
+    try:
+        availability_batch = availability_service.get_availability_for_range(
+            user, event_type, start_date, end_date
+        )
+    except AvailabilityError as exc:
+        response = jsonify({'error': str(exc) or 'Unable to fetch availability'})
+        add_cors_headers_for_extension(response)
+        return response, 500
+
+    all_slots = _flatten_slots(availability_batch)
+    count_param = request.args.get('count', 3)
+    try:
+        requested = max(1, min(10, int(count_param)))
+    except (TypeError, ValueError):
+        requested = 3
+    visible_slots = all_slots[:requested]
+
+    slots_payload = []
+    lines = []
+    for slot in visible_slots:
+        display = _format_slot_display(slot, tz)
+        slots_payload.append(
+            {
+                'start': slot.start.isoformat(),
+                'end': slot.end.isoformat(),
+                'display': display,
+            }
+        )
+        lines.append(f"- {display}")
+
+    if not visible_slots:
+        response = jsonify(
+            {
+                'success': False,
+                'slots': [],
+                'text': 'No availability found in the next two weeks.',
+            }
+        )
+        add_cors_headers_for_extension(response)
+        return response, 200
+
+    text_header = f"Here are some options for {event_type.title}:"
+    text_body = "\n".join(lines)
+    response = jsonify(
+        {
+            'success': True,
+            'event_type': {
+                'id': event_type.id,
+                'title': event_type.title,
+                'duration_minutes': event_type.duration_minutes,
+            },
+            'slots': slots_payload,
+            'text': f"{text_header}\n{text_body}",
+        }
+    )
+    add_cors_headers_for_extension(response)
+    return response, 200
+
+
+@app.route('/api/extension/booking_link', methods=['GET', 'OPTIONS'])
+def extension_booking_link():
+    """Return the user's booking link for the Chrome extension."""
+
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        return response
+
+    user = _resolve_extension_user()
+    if not user:
+        response = jsonify({'error': 'Authentication required'})
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    if not user.handle:
+        response = jsonify({'error': 'No public handle configured'})
+        add_cors_headers_for_extension(response)
+        return response, 400
+
+    event_type = _select_default_event_type(user)
+    if not event_type or not event_type.slug:
+        response = jsonify({'error': 'No public event type available'})
+        add_cors_headers_for_extension(response)
+        return response, 400
+
+    booking_link = url_for(
+        'public_booking.event_type_page',
+        handle=user.handle,
+        slug=event_type.slug,
+        _external=True,
+    )
+
+    response = jsonify(
+        {
+            'success': True,
+            'booking_link': booking_link,
+            'event_type': {
+                'id': event_type.id,
+                'slug': event_type.slug,
+                'title': event_type.title,
+            },
+        }
+    )
+    add_cors_headers_for_extension(response)
+    return response, 200
+
+
+@app.route('/api/extension/contacts', methods=['POST', 'OPTIONS'])
+def extension_save_contacts():
+    """Accept contacts from the extension and store them in the CRM."""
+
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        return response
+
+    user = _resolve_extension_user()
+    if not user:
+        response = jsonify({'error': 'Authentication required'})
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    payload = request.get_json(silent=True) or {}
+    raw_contacts = payload.get('contacts') or payload.get('emails') or []
+    if isinstance(raw_contacts, dict):
+        raw_contacts = [raw_contacts]
+    if isinstance(raw_contacts, str):
+        raw_contacts = [raw_contacts]
+
+    processed = []
+    created_count = 0
+    for entry in raw_contacts:
+        if isinstance(entry, str):
+            email = entry
+            name = None
+        else:
+            email = entry.get('email') if entry else None
+            name = entry.get('name') if isinstance(entry, dict) else None
+        if not email:
+            continue
+        normalized = email.strip().lower()
+        if not normalized:
+            continue
+        existing = Contact.query.filter_by(user_id=user.id, email=normalized).first()
+        contact = contact_service.ensure_contact(
+            user,
+            normalized,
+            display_name=name,
+            first_seen_source='chrome_extension',
+            first_seen_at=datetime.utcnow(),
+        )
+        created = existing is None and contact is not None
+        if created:
+            created_count += 1
+        processed.append({'email': normalized, 'name': name, 'created': created})
+
+    response = jsonify(
+        {
+            'success': True,
+            'processed': len(processed),
+            'created': created_count,
+            'contacts': processed,
+        }
+    )
+    add_cors_headers_for_extension(response)
+    return response, 200
 
 @app.route('/api/user/timezone', methods=['POST', 'OPTIONS'])
 def update_user_timezone():
