@@ -294,6 +294,14 @@ def extension_save_contacts():
             first_seen_source='chrome_extension',
             first_seen_at=datetime.utcnow(),
         )
+        
+        if contact:
+            contact_service.record_interaction(
+                contact,
+                outgoing=True,
+                occurred_at=datetime.utcnow()
+            )
+
         created = existing is None and contact is not None
         if created:
             created_count += 1

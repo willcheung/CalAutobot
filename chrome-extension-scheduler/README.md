@@ -7,10 +7,10 @@ A lightweight Chrome extension that injects "Insert availability" and "Insert bo
 - Inserts the user’s public booking link.
 - Automatically syncs email recipients as contacts before each send.
 - Works entirely inside Gmail—no extra pop-ups.
-- Requires only two host permissions: `https://mail.google.com/*` and `https://calautobot.com/*`.
+- Minimal host permissions: Gmail plus both `https://calautobot.com/*` and `https://www.calautobot.com/*`.
 
 ## Prerequisites
-1. You must already be logged into https://calautobot.com in the same Chrome profile so the extension can reuse the session cookie.
+1. You must already be logged into calautobot.com (either the root or `www` domain) in the same Chrome profile.
 2. Your CalAutobot account must have at least one public event type (slug + handle) for booking links.
 
 ## Local Installation
@@ -22,7 +22,7 @@ A lightweight Chrome extension that injects "Insert availability" and "Insert bo
 
 ## How it works
 - A content script (`content.js`) watches for Gmail compose editors and injects the button panel.
-- When clicked, the panel calls CalAutobot’s extension APIs with `credentials: 'include'`, so the user must be logged into CalAutobot.
+- When clicked, the panel calls CalAutobot’s extension APIs using the same Bearer token workflow as the existing extension. The script auto-detects your Gmail account email and passes it along so the backend can resolve your CalAutobot user.
 - The API responses contain formatted text/links, which are inserted into Gmail via `document.execCommand('insertText', …)`.
 
 ## Development notes

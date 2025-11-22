@@ -6,7 +6,8 @@
   "permissions": [],
   "host_permissions": [
     "https://mail.google.com/*",
-    "https://calautobot.com/*"
+    "https://calautobot.com/*",
+    "https://www.calautobot.com/*"
   ],
   "content_scripts": [
     {
@@ -15,5 +16,8 @@
       "css": ["styles.css"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }

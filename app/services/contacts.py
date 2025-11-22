@@ -64,6 +64,26 @@ def ensure_contact(
             contact.first_seen_at = timestamp
         if not contact.first_seen_source and first_seen_source:
             contact.first_seen_source = first_seen_source
+            
+        # Update fields if provided and currently empty or if we want to overwrite
+        # For now, we'll update if the new value is truthy
+        if display_name:
+            contact.display_name = display_name
+        if phone_number:
+            contact.phone_number = phone_number
+        if timezone:
+            contact.timezone = timezone
+        if company:
+            contact.company = company
+        if job_title:
+            contact.job_title = job_title
+        if address:
+            contact.address = address
+        if notes:
+            contact.notes = notes
+        if linkedin_url:
+            contact.linkedin_url = linkedin_url
+            
         return contact
 
     contact = Contact(

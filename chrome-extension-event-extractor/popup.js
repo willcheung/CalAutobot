@@ -25,13 +25,14 @@ const SessionManager = {
     try {
       const response = await fetch(`${apiBaseUrl}/api/extension/auth/verify`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer session-token' // Simple token for existing endpoint
         },
         body: JSON.stringify({ email: session.email })
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return data.authenticated;
@@ -65,17 +66,17 @@ class CalendarAIPopup {
   async checkAuthStatus() {
     try {
       console.log('🔍 Checking authentication status...');
-      
+
       // Get stored session
       const session = await SessionManager.get();
       console.log('📦 Stored session:', session);
-      
+
       if (session) {
         console.log('🔐 Verifying session with server for:', session.email);
         // Verify session is still valid with server
         const isValid = await SessionManager.verify(session, this.apiBaseUrl);
         console.log('✅ Session verification result:', isValid);
-        
+
         if (isValid) {
           // Session is valid, set user data
           this.user = {
@@ -93,7 +94,7 @@ class CalendarAIPopup {
         }
       } else {
         console.log('📭 No stored session found - checking web app authentication');
-        
+
         // No stored session, but user might be logged in to web app
         // Check if user is authenticated on web app
         try {
@@ -101,16 +102,16 @@ class CalendarAIPopup {
             credentials: 'include',
             mode: 'cors'
           });
-          
+
           if (response.ok) {
             const userData = await response.json();
             console.log('🌐 Web app auth response:', userData);
-            
+
             if (userData.authenticated && userData.email) {
               console.log('🎉 Found existing web app authentication, creating session');
               // User is authenticated on web app, create extension session
               await SessionManager.save(userData);
-              
+
               this.user = userData;
               this.authToken = 'session-token';
               console.log('✅ Session created from web app auth for:', userData.email);
@@ -121,12 +122,12 @@ class CalendarAIPopup {
           console.log('🌐 Web app auth check failed:', error.message);
         }
       }
-      
+
       // No valid session found
       this.user = null;
       this.authToken = null;
       console.log('🔓 No valid session - showing login screen');
-      
+
     } catch (error) {
       console.log('Session check error:', error);
       this.user = null;
@@ -137,16 +138,16 @@ class CalendarAIPopup {
   setupEventListeners() {
     // Authentication
     document.getElementById('authBtn').addEventListener('click', () => this.handleAuth());
-    
+
     // Text processing
     document.getElementById('processTextBtn').addEventListener('click', () => this.processText());
-    
+
     // Screenshot
     document.getElementById('screenshotBtn').addEventListener('click', () => this.takeScreenshot());
-    
+
     // Quick actions
     document.getElementById('bookingsBtn').addEventListener('click', () => this.openBookings());
-    
+
     // Copy email button
     document.getElementById('copyEmailBtn').addEventListener('click', () => this.copyEmail());
   }
@@ -194,7 +195,7 @@ class CalendarAIPopup {
   async signIn() {
     try {
       this.showStatus('Signing in...', 'processing');
-      
+
       // Detect user timezone
       let timezone = 'UTC';
       try {
@@ -202,14 +203,14 @@ class CalendarAIPopup {
       } catch (error) {
         console.log('Timezone detection failed, using UTC');
       }
-      
+
       // Open Calendar AI web app for proper Google OAuth with timezone
       const authUrl = `${this.apiBaseUrl}/google_login?timezone=${encodeURIComponent(timezone)}`;
-      
+
       // Open auth in new tab and wait for user to complete
       chrome.tabs.create({ url: authUrl }, async (tab) => {
         this.showStatus('Complete sign-in in the new tab, then click extension again', 'processing');
-        
+
         // Check for successful auth every 3 seconds using simple session check
         const authCheckInterval = setInterval(async () => {
           try {
@@ -218,17 +219,17 @@ class CalendarAIPopup {
               credentials: 'include',
               mode: 'cors'
             });
-            
+
             if (response.ok) {
               const userData = await response.json();
               if (userData.authenticated) {
                 // Save session using SessionManager
                 await SessionManager.save(userData);
-                
+
                 // Update local state
                 this.user = userData;
                 this.authToken = 'session-token';
-                
+
                 clearInterval(authCheckInterval);
                 this.updateUI();
                 this.showStatus('Successfully signed in!', 'success');
@@ -240,7 +241,7 @@ class CalendarAIPopup {
             // Continue checking - network issues are normal during auth flow
           }
         }, 3000);
-        
+
         // Stop checking after 60 seconds
         setTimeout(() => {
           clearInterval(authCheckInterval);
@@ -249,7 +250,7 @@ class CalendarAIPopup {
           }
         }, 60000);
       });
-      
+
     } catch (error) {
       console.error('Authentication error:', error);
       this.showStatus('Sign in failed. Please try again.', 'error');
@@ -276,6 +277,7 @@ class CalendarAIPopup {
       // Send to Chrome extension API endpoint
       const response = await fetch(`${this.apiBaseUrl}/api/extension/process`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.authToken}`
@@ -292,10 +294,10 @@ class CalendarAIPopup {
       if (response.ok) {
         const totalEvents = result.total_events_extracted || 0;
         const syncedEvents = result.total_events_synced || 0;
-        
+
         // Show success toast
         this.showToast(`Success! Extracted ${totalEvents} events, ${syncedEvents} synced to calendar`);
-        
+
         textInput.value = ''; // Clear input
       } else {
         console.error('Text processing failed:', result.error);
@@ -331,6 +333,7 @@ class CalendarAIPopup {
 
       const apiResponse = await fetch(`${this.apiBaseUrl}/api/extension/process`, {
         method: 'POST',
+        credentials: 'include',
         body: formData,
         headers: {
           'Authorization': `Bearer ${this.authToken}`
@@ -342,7 +345,7 @@ class CalendarAIPopup {
       if (apiResponse.ok) {
         const totalEvents = result.total_events_extracted || 0;
         const syncedEvents = result.total_events_synced || 0;
-        
+
         // Show success toast
         this.showToast(`Success! Extracted ${totalEvents} events from screenshot, ${syncedEvents} synced to calendar`);
       } else {
@@ -368,7 +371,7 @@ class CalendarAIPopup {
           try {
             // Calculate new dimensions maintaining aspect ratio
             let { width, height } = img;
-            
+
             if (width <= maxWidth) {
               // Image is already small enough, convert to JPEG for better compression
               const canvas = document.createElement('canvas');
@@ -376,40 +379,40 @@ class CalendarAIPopup {
               canvas.width = width;
               canvas.height = height;
               ctx.drawImage(img, 0, 0);
-              
+
               canvas.toBlob(resolve, 'image/jpeg', 0.85);
               return;
             }
-            
+
             // Resize maintaining aspect ratio
             const ratio = maxWidth / width;
             const newWidth = maxWidth;
             const newHeight = Math.round(height * ratio);
-            
+
             // Create canvas and resize
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = newWidth;
             canvas.height = newHeight;
-            
+
             // Use high-quality image rendering
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            
+
             // Draw resized image
             ctx.drawImage(img, 0, 0, newWidth, newHeight);
-            
+
             // Convert to JPEG blob with good quality
             canvas.toBlob(resolve, 'image/jpeg', 0.85);
-            
+
           } catch (error) {
             reject(error);
           }
         };
-        
+
         img.onerror = () => reject(new Error('Failed to load image'));
         img.src = dataUrl;
-        
+
       } catch (error) {
         reject(error);
       }
@@ -426,21 +429,21 @@ class CalendarAIPopup {
   async copyEmail() {
     const emailAddress = 'go@CalAutobot.com';
     const copyBtn = document.getElementById('copyEmailBtn');
-    
+
     try {
       await navigator.clipboard.writeText(emailAddress);
-      
+
       // Update button to show success
       const originalText = copyBtn.textContent;
       copyBtn.textContent = 'Copied!';
       copyBtn.classList.add('copied');
-      
+
       // Reset button after 2 seconds
       setTimeout(() => {
         copyBtn.textContent = originalText;
         copyBtn.classList.remove('copied');
       }, 2000);
-      
+
       this.showStatus('Email address copied to clipboard!', 'success');
     } catch (error) {
       console.error('Failed to copy email:', error);
@@ -451,7 +454,7 @@ class CalendarAIPopup {
   setButtonLoading(buttonId, loading) {
     const button = document.getElementById(buttonId);
     const buttonText = button.querySelector('.button-text');
-    
+
     if (loading) {
       button.disabled = true;
       buttonText.innerHTML = '<span class="loading"></span>Processing...';
@@ -484,7 +487,7 @@ class CalendarAIPopup {
     toast.textContent = message;
     toast.classList.remove('hidden');
     toast.classList.add('show');
-    
+
     // Auto-hide after 4 seconds
     setTimeout(() => {
       toast.classList.remove('show');

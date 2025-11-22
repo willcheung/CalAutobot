@@ -36,17 +36,17 @@ class CalendarAIBackground {
           const screenshot = await this.captureScreenshot();
           sendResponse({ success: true, screenshot });
           break;
-          
+
         case 'get_selected_text':
           const selectedText = await this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
-          
+
         case 'check_auth':
           const authStatus = await this.checkAuthStatus();
           sendResponse({ success: true, authStatus });
           break;
-          
+
         default:
           sendResponse({ success: false, error: 'Unknown action' });
       }
@@ -73,7 +73,7 @@ class CalendarAIBackground {
   async getSelectedText() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
+
       const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         function: () => {
@@ -81,7 +81,7 @@ class CalendarAIBackground {
           return selection.toString().trim();
         }
       });
-      
+
       return results[0]?.result || '';
     } catch (error) {
       console.error('Get selected text error:', error);
@@ -94,7 +94,7 @@ class CalendarAIBackground {
       // Use same SessionManager logic as popup
       const result = await chrome.storage.local.get(['session']);
       const session = result.session;
-      
+
       if (session && session.isLoggedIn) {
         return {
           isAuthenticated: true,
@@ -104,7 +104,7 @@ class CalendarAIBackground {
           }
         };
       }
-      
+
       return { isAuthenticated: false, user: null };
     } catch (error) {
       console.error('Auth status check error:', error);
@@ -135,7 +135,7 @@ class CalendarAIBackground {
     try {
       // Check if user is authenticated
       const authStatus = await this.checkAuthStatus();
-      
+
       if (!authStatus.isAuthenticated) {
         // Show notification to sign in - use console instead to avoid permission issues
         console.log('Calendar AI: Please sign in first by clicking the extension icon');
@@ -145,7 +145,7 @@ class CalendarAIBackground {
       // Process the selected text
       const selectedText = info.selectionText;
       await this.processTextInBackground(selectedText, authStatus.user);
-      
+
     } catch (error) {
       console.error('Context menu error:', error);
     }
@@ -166,6 +166,7 @@ class CalendarAIBackground {
       // Send to API endpoint with correct format
       const response = await fetch(`${apiBaseUrl}/api/extension/process`, {
         method: 'POST',
+        credentials: 'include', // Use cookies for auth
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
@@ -182,7 +183,7 @@ class CalendarAIBackground {
       if (response.ok) {
         const totalEvents = responseData.total_events_extracted || 0;
         const syncedEvents = responseData.total_events_synced || 0;
-        
+
         console.log(`Calendar AI - Success! Extracted ${totalEvents} events, ${syncedEvents} synced to calendar`);
       } else {
         console.log('Calendar AI - Error: Failed to process text. Please try again.');
