@@ -27,34 +27,39 @@ def _resolve_extension_user() -> Optional[User]:
         return current_user
 
     auth_header = request.headers.get('Authorization')
-    if auth_header and auth_header.startswith('Bearer '):
-        token = auth_header.split(' ')[1]
-        
-        # Verify token with Google
-        try:
-            # Call Google's tokeninfo endpoint with properly encoded token
-            print(f"Verifying token (length: {len(token)})")
-            resp = requests.get(
-                'https://www.googleapis.com/oauth2/v3/tokeninfo',
-                params={'access_token': token}
-            )
+    if auth_header:
+        # Robustly parse Bearer token (handle multiple spaces, case insensitivity)
+        parts = auth_header.split()
+        if len(parts) == 2 and parts[0].lower() == 'bearer':
+            token = parts[1]
             
-            print(f"Token verification response status: {resp.status_code}")
-            if resp.status_code == 200:
-                token_info = resp.json()
-                email = token_info.get('email')
-                print(f"Token verified successfully for email: {email}")
+            # Verify token with Google
+            try:
+                # Call Google's tokeninfo endpoint with properly encoded token
+                print(f"Verifying token (length: {len(token)})")
+                print(f"Token start: {token[:5]}... end: ...{token[-5:]}")
                 
-                # Verify audience matches our client ID (optional but recommended security)
-                # For now, just verifying email is a huge step up from "trust me bro"
+                resp = requests.get(
+                    'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                    params={'access_token': token}
+                )
+            
+                print(f"Token verification response status: {resp.status_code}")
+                if resp.status_code == 200:
+                    token_info = resp.json()
+                    email = token_info.get('email')
+                    print(f"Token verified successfully for email: {email}")
+                    
+                    # Verify audience matches our client ID (optional but recommended security)
+                    # For now, just verifying email is a huge step up from "trust me bro"
+                    
+                    if email:
+                        return User.query.filter_by(email=email.strip().lower()).first()
+                else:
+                    print(f"Token verification failed: {resp.text}")
                 
-                if email:
-                    return User.query.filter_by(email=email.strip().lower()).first()
-            else:
-                print(f"Token verification failed: {resp.text}")
-                
-        except Exception as e:
-            print(f"Token verification error: {e}")
+            except Exception as e:
+                print(f"Token verification error: {e}")
 
         # Fallback to old method (trusted email param) ONLY if token verification failed
         # This allows for a transition period or local dev testing if needed
