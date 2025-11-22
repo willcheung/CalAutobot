@@ -27,17 +27,17 @@ class CalendarAIContent {
           const selectedText = this.getSelectedText();
           sendResponse({ success: true, text: selectedText });
           break;
-          
+
         case 'get_page_text':
           const pageText = this.getPageText();
           sendResponse({ success: true, text: pageText });
           break;
-          
+
         case 'highlight_extracted_events':
           // Future feature: highlight text that was converted to events
           sendResponse({ success: true });
           break;
-          
+
         default:
           sendResponse({ success: false, error: 'Unknown action' });
       }
@@ -56,7 +56,7 @@ class CalendarAIContent {
     // Get visible text content from the page
     const textElements = document.querySelectorAll('p, div, span, h1, h2, h3, h4, h5, h6, li, td, th');
     let pageText = '';
-    
+
     textElements.forEach(element => {
       // Skip hidden elements and scripts
       const style = window.getComputedStyle(element);
@@ -67,14 +67,14 @@ class CalendarAIContent {
         }
       }
     });
-    
+
     return pageText.trim();
   }
 
   async handleKeyboardShortcut() {
     try {
       const selectedText = this.getSelectedText();
-      
+
       if (!selectedText) {
         this.showToast('No text selected. Please select some text first.');
         return;
@@ -82,7 +82,7 @@ class CalendarAIContent {
 
       // Check authentication status
       const authResponse = await chrome.runtime.sendMessage({ action: 'check_auth' });
-      
+
       if (!authResponse.success || !authResponse.authStatus.isAuthenticated) {
         this.showToast('Please sign in first by clicking the Calendar AI extension icon.');
         return;
@@ -151,7 +151,7 @@ class CalendarAIContent {
         }
       }
     `;
-    
+
     if (!document.querySelector('#calendar-ai-toast-styles')) {
       style.id = 'calendar-ai-toast-styles';
       document.head.appendChild(style);

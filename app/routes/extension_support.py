@@ -374,3 +374,139 @@ def update_user_timezone():
         response = jsonify({'error': 'Failed to update timezone'})
         add_cors_headers_for_extension(response)
         return response, 500
+
+@app.route('/api/extension/process', methods=['POST', 'OPTIONS'])
+def extension_process_events():
+    """
+    Process text and/or attachments from Chrome extension.
+    Reuses existing processing pipeline with cleaner API interface.
+    """
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        add_cors_headers_for_extension(response)
+        # Also allow headers needed for file upload
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-User-Email'
+        return response
+
+    try:
+        # Resolve user using shared helper
+        user = _resolve_extension_user()
+        if not user:
+            response = jsonify({'error': 'Authentication required', 'code': 'AUTH_REQUIRED'})
+            add_cors_headers_for_extension(response)
+            return response, 401
+
+        # Extract text input
+        text_input = ''
+        source_info = 'Chrome Extension'
+        
+        if request.content_type and request.content_type.startswith('application/json'):
+            data = request.get_json() or {}
+            text_input = data.get('text', '')
+            source_info = data.get('source', 'Chrome Extension')
+        else:
+            text_input = request.form.get('stripped-text', '')
+            source_info = request.form.get('Subject', 'Chrome Extension Text Input')
+
+        if not text_input.strip():
+            response = jsonify({'error': 'No text provided to process', 'code': 'NO_TEXT'})
+            add_cors_headers_for_extension(response)
+            return response, 400
+
+        # Format text for processing (similar to email format)
+        formatted_text = f"From: {user.email}\nSource: {source_info}\n\n{text_input}"
+
+        # Process attachments if present (screenshots)
+        attachments_data = []
+        if request.files:
+            for field_name, file_obj in request.files.items():
+                if file_obj and file_obj.filename:
+                    file_content = file_obj.read()
+                    attachment_info = {
+                        'name': file_obj.filename,
+                        'content-type': file_obj.content_type or 'image/png',
+                        'size': len(file_content),
+                        'content': file_content
+                    }
+                    attachments_data.append(attachment_info)
+
+        # Auto-sync if user has Google authentication
+        auto_sync = user.google_id is not None
+        
+        # Import here to avoid circular imports
+        from app.services.event_processing import process_text_to_events
+
+        # Process using existing pipeline
+        result = process_text_to_events(
+            formatted_text,
+            user,
+            source_type="chrome_extension",
+            auto_sync=auto_sync
+        )
+
+        # Process attachments if present
+        total_attachment_events = 0
+        total_attachment_synced = 0
+        
+        if attachments_data:
+            from app.services.attachment_processor import attachment_processor
+            
+            text_input_record = result.get('text_input')
+            if text_input_record:
+                processed_attachments = attachment_processor.process_email_attachments(
+                    text_input_record, attachments_data, auto_sync=True
+                )
+                
+                # Count attachment events
+                for attachment in processed_attachments:
+                    if attachment and hasattr(attachment, 'extracted_events_count'):
+                        attachment_events = attachment.extracted_events_count or 0
+                        total_attachment_events += attachment_events
+                        
+                        # Count synced events from this attachment
+                        from app.models import Event
+                        attachment_synced_events = Event.query.filter_by(
+                            user_id=user.id,
+                            text_input_id=text_input_record.id,
+                            is_synced=True
+                        ).filter(
+                            Event.extracted_at >= attachment.created_at
+                        ).count()
+                        total_attachment_synced += attachment_synced_events
+
+        # Calculate totals
+        text_events = len(result.get('events', []))
+        text_synced = result.get('synced_count', 0)
+        
+        total_events = text_events + total_attachment_events
+        total_synced = text_synced + total_attachment_synced
+
+        # Return structured response
+        response_data = {
+            'status': 'success',
+            'text_events_extracted': text_events,
+            'attachment_events_extracted': total_attachment_events,
+            'total_events_extracted': total_events,
+            'total_events_synced': total_synced,
+            'auto_sync_enabled': auto_sync,
+            'attachments_processed': len(attachments_data),
+            'user_id': user.id,
+            'message': f'Successfully extracted {total_events} events' + 
+                      (f', {total_synced} synced to calendar' if auto_sync else '')
+        }
+
+        response = jsonify(response_data)
+        add_cors_headers_for_extension(response)
+        return response, 200
+
+    except Exception as e:
+        # Log error but don't crash
+        print(f"Chrome extension API error: {str(e)}")
+        response = jsonify({
+            'error': 'Processing failed',
+            'code': 'PROCESSING_ERROR',
+            'message': str(e)
+        })
+        add_cors_headers_for_extension(response)
+        return response, 500

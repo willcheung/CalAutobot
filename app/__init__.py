@@ -269,9 +269,7 @@ with app.app_context():
     app.register_blueprint(public_booking)
     app.register_blueprint(onboarding_routes)
 
-    # Setup Chrome extension API routes
-    from app.routes.chrome_extension_api import setup_chrome_extension_routes
-    setup_chrome_extension_routes(app)
+
 
     # Import extension support routes
     from app.routes import extension_support  # noqa: F401

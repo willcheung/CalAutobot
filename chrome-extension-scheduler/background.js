@@ -72,15 +72,27 @@ async function handleMessage(request) {
 
 async function handleCheckAuth(userEmail) {
     try {
-        const resp = await fetchFromApi(buildApiUrl('/api/extension/auth/verify', {}, userEmail), {
-            method: 'POST',
-            body: { email: userEmail }
+        // Use the standard user info endpoint (same as event extractor)
+        const resp = await fetchFromApi(buildApiUrl('/api/user/info'), {
+            method: 'GET'
         });
+
         if (!resp.ok) {
-            throw new Error('auth verify failed');
+            throw new Error('auth check failed');
         }
+
         const data = await resp.json();
-        return { success: true, authenticated: Boolean(data && data.authenticated) };
+
+        // Check if authenticated AND email matches
+        const isAuthenticated = Boolean(
+            data &&
+            data.authenticated &&
+            data.email &&
+            userEmail &&
+            data.email.toLowerCase() === userEmail.toLowerCase()
+        );
+
+        return { success: true, authenticated: isAuthenticated };
     } catch (err) {
         console.error('CalAutobot auth check failed', err);
         return { success: false, error: err.message };

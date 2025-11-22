@@ -14,6 +14,10 @@
     "identity",
     "contextMenus"
   ],
+  "host_permissions": [
+    "https://calautobot.com/*",
+    "https://www.calautobot.com/*"
+  ],
   "oauth2": {
     "client_id": "609660480116-tnd7the9ooj8sd6rt4grjj7hcpt5frjf.apps.googleusercontent.com",
     "scopes": [
