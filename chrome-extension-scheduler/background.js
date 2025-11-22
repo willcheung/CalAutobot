@@ -198,21 +198,34 @@ async function handleFetchAvailability(userEmail, count) {
     const { token, error } = await getAuthToken(false);
     if (!token) throw new Error(error || 'Not authenticated');
 
-    const url = buildApiUrl('/api/extension/availability_text', { count: count || '3' });
-    const resp = await fetchFromApi(url, {}, token);
+    const url = buildApiUrl('/api/extension/availability_text', { count: count || '8' });
 
-    if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
+    try {
+        const resp = await fetchFromApi(url, {}, token);
 
-        if (resp.status === 403 && err.error === 'SETUP_REQUIRED' && err.setup_url) {
-            chrome.tabs.create({ url: err.setup_url });
-            throw new Error('Please complete setup in the new tab.');
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+
+            if (resp.status === 403 && err.error === 'SETUP_REQUIRED' && err.setup_url) {
+                chrome.tabs.create({ url: err.setup_url });
+                throw new Error('Please complete setup in the new tab.');
+            }
+
+            throw new Error(err.error || 'Unable to fetch availability');
         }
-
-        throw new Error(err.error || 'Unable to fetch availability');
+        const data = await resp.json();
+        return { success: true, data };
+    } catch (err) {
+        // If error is "unauthorized", trigger re-login
+        if (err.message === 'unauthorized') {
+            const loginResult = await handleLogin();
+            if (loginResult.success) {
+                // Retry the request with new token
+                return handleFetchAvailability(userEmail, count);
+            }
+        }
+        throw err;
     }
-    const data = await resp.json();
-    return { success: true, data };
 }
 
 async function handleFetchBookingLink(userEmail) {

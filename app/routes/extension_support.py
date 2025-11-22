@@ -32,12 +32,18 @@ def _resolve_extension_user() -> Optional[User]:
         
         # Verify token with Google
         try:
-            # Call Google's tokeninfo endpoint
-            resp = requests.get(f'https://www.googleapis.com/oauth2/v3/tokeninfo?access_token={token}')
+            # Call Google's tokeninfo endpoint with properly encoded token
+            print(f"Verifying token (length: {len(token)})")
+            resp = requests.get(
+                'https://www.googleapis.com/oauth2/v3/tokeninfo',
+                params={'access_token': token}
+            )
             
+            print(f"Token verification response status: {resp.status_code}")
             if resp.status_code == 200:
                 token_info = resp.json()
                 email = token_info.get('email')
+                print(f"Token verified successfully for email: {email}")
                 
                 # Verify audience matches our client ID (optional but recommended security)
                 # For now, just verifying email is a huge step up from "trust me bro"
