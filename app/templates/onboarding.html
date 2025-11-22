@@ -250,5 +250,24 @@ current_user.calendly_plan|lower == 'basic' %}
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
+
+    // Auto-detect and select timezone
+    document.addEventListener('DOMContentLoaded', function () {
+        const timezoneSelect = document.getElementById('timezone');
+        if (timezoneSelect && window.detectUserTimezone) {
+            const detectedTimezone = window.detectUserTimezone();
+
+            // Only change if the current selection is default (UTC) or empty
+            // This prevents overwriting if the user has already manually selected something (though unlikely on fresh load)
+            // But more importantly, we want to set it if the server-side default was just 'UTC'
+            if (timezoneSelect.value === 'UTC' && detectedTimezone) {
+                // Check if the detected timezone exists in the options
+                const optionExists = Array.from(timezoneSelect.options).some(option => option.value === detectedTimezone);
+                if (optionExists) {
+                    timezoneSelect.value = detectedTimezone;
+                }
+            }
+        }
+    });
 </script>
 {% endblock %}

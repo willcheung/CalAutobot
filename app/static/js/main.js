@@ -1,44 +1,44 @@
 // Main JavaScript file for Calendar AI application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize Feather icons
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
-    
+
     // Initialize mobile menus
     initializeMobileMenu();
     initializeLandingMenu();
-    
+
     // Initialize email management
     initializeEmailManagement();
-    
+
     // Auto-resize textarea
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
         textarea.addEventListener('input', autoResize);
         autoResize.call(textarea); // Initial resize
     });
-    
+
     // Add fade-in animation to cards
     const cards = document.querySelectorAll('.event-card, .feature-card, .input-card');
     cards.forEach((card, index) => {
         card.style.animationDelay = `${index * 0.1}s`;
         card.classList.add('fade-in');
     });
-    
+
     // Form validation (skip async forms)
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
         if (form.dataset.globalHandlers === 'off') {
             return;
         }
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             if (!validateForm(this)) {
                 e.preventDefault();
             }
         });
     });
-    
+
     // Auto-dismiss alerts after 5 seconds (except calendar permission banner)
     const alerts = document.querySelectorAll('.alert:not(.alert-permanent):not([data-calendar-banner])');
     alerts.forEach(alert => {
@@ -48,18 +48,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 5000);
     });
-    
+
     // Confirm delete actions
     const deleteForms = document.querySelectorAll('.delete-form');
     deleteForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             if (!confirm('Are you sure you want to delete this event?')) {
                 e.preventDefault();
                 return false;
             }
         });
     });
-    
+
     // Loading states for forms
     const submitButtons = document.querySelectorAll('button[type="submit"]');
     submitButtons.forEach(button => {
@@ -67,10 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!parentForm || parentForm.dataset.globalHandlers === 'off') {
             return;
         }
-        parentForm.addEventListener('submit', function() {
+        parentForm.addEventListener('submit', function () {
             button.disabled = true;
             const originalContent = Array.from(button.childNodes).map(node => node.cloneNode(true));
-            
+
             // Clear and add spinner safely
             button.textContent = '';
             const spinner = document.createElement('span');
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
             spinner.setAttribute('role', 'status');
             button.appendChild(spinner);
             button.appendChild(document.createTextNode('Processing...'));
-            
+
             // Re-enable after 30 seconds as failsafe
             setTimeout(() => {
                 button.disabled = false;
@@ -87,14 +87,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 30000);
         });
     });
-    
+
     // Smooth scrolling for anchor links
     const anchorLinks = document.querySelectorAll('a[href^="#"]');
     anchorLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href').substring(1);
             const targetElement = document.getElementById(targetId);
-            
+
             if (targetElement) {
                 e.preventDefault();
                 targetElement.scrollIntoView({
@@ -104,11 +104,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
+
     // Copy to clipboard functionality (for future use)
     const copyButtons = document.querySelectorAll('[data-copy]');
     copyButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const textToCopy = this.dataset.copy;
             navigator.clipboard.writeText(textToCopy).then(() => {
                 showToast('Copied to clipboard!', 'success');
@@ -117,18 +117,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-    
+
     // Auto-save draft functionality for text input (future enhancement)
     const textInput = document.getElementById('text');
     if (textInput) {
         let saveTimeout;
-        textInput.addEventListener('input', function() {
+        textInput.addEventListener('input', function () {
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(() => {
                 saveDraft(this.value);
             }, 2000); // Save after 2 seconds of inactivity
         });
-        
+
         // Load draft on page load
         loadDraft();
     }
@@ -178,7 +178,7 @@ function autoResize() {
 function validateForm(form) {
     let isValid = true;
     const requiredFields = form.querySelectorAll('[required]');
-    
+
     requiredFields.forEach(field => {
         if (!field.value.trim()) {
             field.classList.add('is-invalid');
@@ -187,11 +187,11 @@ function validateForm(form) {
             field.classList.remove('is-invalid');
         }
     });
-    
+
     // Date validation
     const startDate = form.querySelector('[name="start_date"]');
     const endDate = form.querySelector('[name="end_date"]');
-    
+
     if (startDate && endDate && startDate.value && endDate.value) {
         if (new Date(startDate.value) > new Date(endDate.value)) {
             endDate.classList.add('is-invalid');
@@ -201,12 +201,12 @@ function validateForm(form) {
             endDate.classList.remove('is-invalid');
         }
     }
-    
+
     // Time validation
     const startTime = form.querySelector('[name="start_time"]');
     const endTime = form.querySelector('[name="end_time"]');
-    
-    if (startTime && endTime && startTime.value && endTime.value && 
+
+    if (startTime && endTime && startTime.value && endTime.value &&
         startDate && endDate && startDate.value === endDate.value) {
         if (startTime.value >= endTime.value) {
             endTime.classList.add('is-invalid');
@@ -216,29 +216,29 @@ function validateForm(form) {
             endTime.classList.remove('is-invalid');
         }
     }
-    
+
     return isValid;
 }
 
 // Toast notification function
 function showToast(message, type = 'info') {
     const toastContainer = getOrCreateToastContainer();
-    
+
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} alert-dismissible fade show`;
-    
+
     // Safely add message as text content
     toast.textContent = message;
-    
+
     // Add close button
     const closeButton = document.createElement('button');
     closeButton.type = 'button';
     closeButton.className = 'btn-close';
     closeButton.setAttribute('data-bs-dismiss', 'alert');
     toast.appendChild(closeButton);
-    
+
     toastContainer.appendChild(toast);
-    
+
     // Auto-remove after 5 seconds
     setTimeout(() => {
         if (toast.parentNode) {
@@ -638,11 +638,11 @@ function saveDraft(content) {
 function loadDraft() {
     const textInput = document.getElementById('text');
     const draft = localStorage.getItem('calendar-ai-draft');
-    
+
     if (textInput && draft && !textInput.value.trim()) {
         textInput.value = draft;
         autoResize.call(textInput);
-        
+
         // Show notification about loaded draft
         showToast('Draft loaded from previous session', 'info');
     }
@@ -667,7 +667,7 @@ function formatTime(timeString) {
     const [hours, minutes] = timeString.split(':');
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
-    
+
     return date.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
@@ -676,14 +676,14 @@ function formatTime(timeString) {
 }
 
 // Event listener for real-time form field updates
-document.addEventListener('input', function(e) {
+document.addEventListener('input', function (e) {
     if (e.target.classList.contains('is-invalid')) {
         e.target.classList.remove('is-invalid');
     }
 });
 
 // Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     // Ctrl/Cmd + Enter to submit forms
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         const activeForm = document.activeElement.closest('form');
@@ -694,7 +694,7 @@ document.addEventListener('keydown', function(e) {
             }
         }
     }
-    
+
     // Escape to close modals or go back
     if (e.key === 'Escape') {
         const backButton = document.querySelector('.btn[href*="bookings"]');
@@ -704,16 +704,26 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// Function to detect user's timezone
+window.detectUserTimezone = function () {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (error) {
+        console.error('Error detecting timezone:', error);
+        return 'UTC';
+    }
+};
+
 // Function to start Google login with timezone detection
-window.startGoogleLogin = function() {
+window.startGoogleLogin = function () {
     try {
         // Get timezone name
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        
+
         // Create the login URL with timezone parameter
         const loginUrl = '/google_login';
         const redirectUrl = `${loginUrl}?timezone=${encodeURIComponent(timezone)}`;
-        
+
         window.location.href = redirectUrl;
     } catch (error) {
         console.error('Error detecting timezone:', error);
@@ -722,7 +732,7 @@ window.startGoogleLogin = function() {
     }
 }
 
-window.connectGoogleCalendar = function() {
+window.connectGoogleCalendar = function () {
     try {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const connectUrl = '/google_login/calendar';
@@ -735,7 +745,7 @@ window.connectGoogleCalendar = function() {
 }
 
 // Function to copy email address
-window.copyEmailAddress = function(email, button) {
+window.copyEmailAddress = function (email, button) {
     const emailToCopy = (email || 'go@CalAutobot.com').trim();
     return navigator.clipboard.writeText(emailToCopy).then(() => {
         showToast('Email copied to clipboard!', 'success');
@@ -743,7 +753,7 @@ window.copyEmailAddress = function(email, button) {
         const targetButton = button instanceof Element
             ? button
             : document.querySelector(`.copy-email-btn[data-email="${emailToCopy.toLowerCase()}"]`) ||
-              (!email ? document.querySelector('.copy-email-btn[data-email="go@calautobot.com"]') : null);
+            (!email ? document.querySelector('.copy-email-btn[data-email="go@calautobot.com"]') : null);
 
         if (targetButton && typeof feather !== 'undefined') {
             const swapIcon = (iconName) => {
@@ -763,7 +773,7 @@ window.copyEmailAddress = function(email, button) {
 };
 
 // Legacy function for backwards compatibility
-window.copyEmail = function(email, button) {
+window.copyEmail = function (email, button) {
     return window.copyEmailAddress(email, button);
 };
 
@@ -776,12 +786,12 @@ function initializeTooltips() {
 }
 
 // Performance: Lazy load non-critical features
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     // Initialize tooltips after page load
     if (typeof bootstrap !== 'undefined') {
         initializeTooltips();
     }
-    
+
     // Refresh Feather icons in case any were added dynamically
     if (typeof feather !== 'undefined') {
         feather.replace();
@@ -789,14 +799,14 @@ window.addEventListener('load', function() {
 });
 
 // Error handling for failed AJAX requests (future use)
-window.addEventListener('unhandledrejection', function(e) {
+window.addEventListener('unhandledrejection', function (e) {
     console.error('Unhandled promise rejection:', e.reason);
     showToast('An unexpected error occurred. Please try again.', 'error');
 });
 
 // Service worker registration (future PWA enhancement)
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
+    window.addEventListener('load', function () {
         // Service worker code would go here for offline functionality
     });
 }
@@ -804,13 +814,13 @@ if ('serviceWorker' in navigator) {
 // Email management functions
 function initializeEmailManagement() {
     const addEmailForm = document.getElementById('add-email-form');
-    
+
     if (addEmailForm) {
         addEmailForm.addEventListener('submit', handleAddEmail);
     }
-    
+
     // Use event delegation for remove buttons (including dynamically added ones)
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.remove-email-ajax')) {
             handleRemoveEmail(e);
         }
@@ -819,13 +829,13 @@ function initializeEmailManagement() {
 
 function handleAddEmail(e) {
     e.preventDefault();
-    
+
     const form = e.target;
     const formData = new FormData(form);
     const emailInput = document.getElementById('email-input');
     const addButton = document.getElementById('add-email-btn');
     const messageDiv = document.getElementById('email-form-message');
-    
+
     // Disable form elements
     emailInput.disabled = true;
     addButton.disabled = true;
@@ -834,11 +844,11 @@ function handleAddEmail(e) {
     spinner.className = 'spinner-border spinner-border-sm';
     spinner.setAttribute('role', 'status');
     addButton.appendChild(spinner);
-    
+
     // Clear previous messages
     messageDiv.style.display = 'none';
     messageDiv.className = 'mt-2';
-    
+
     fetch(form.action, {
         method: 'POST',
         headers: {
@@ -846,95 +856,95 @@ function handleAddEmail(e) {
         },
         body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Clear the input
-            emailInput.value = '';
-            
-            // Show success message
-            showEmailMessage(data.message, 'success');
-            
-            // Add the new email to the list
-            addEmailToList(data.email);
-            
-        } else {
-            showEmailMessage(data.error, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showEmailMessage('An error occurred. Please try again.', 'danger');
-    })
-    .finally(() => {
-        // Re-enable form elements
-        emailInput.disabled = false;
-        addButton.disabled = false;
-        addButton.textContent = '';
-        const icon = document.createElement('i');
-        icon.setAttribute('data-feather', 'plus');
-        addButton.appendChild(icon);
-        feather.replace();
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear the input
+                emailInput.value = '';
+
+                // Show success message
+                showEmailMessage(data.message, 'success');
+
+                // Add the new email to the list
+                addEmailToList(data.email);
+
+            } else {
+                showEmailMessage(data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showEmailMessage('An error occurred. Please try again.', 'danger');
+        })
+        .finally(() => {
+            // Re-enable form elements
+            emailInput.disabled = false;
+            addButton.disabled = false;
+            addButton.textContent = '';
+            const icon = document.createElement('i');
+            icon.setAttribute('data-feather', 'plus');
+            addButton.appendChild(icon);
+            feather.replace();
+        });
 }
 
 function handleRemoveEmail(e) {
     e.preventDefault();
-    
+
     // Find the actual button that was clicked
     const button = e.target.closest('.remove-email-ajax');
     if (!button) return;
-    
+
     const emailId = button.dataset.emailId;
     const emailItem = button.closest('[data-email-id]');
     const emailTextElement = emailItem.querySelector('.email-text');
     const emailText = emailTextElement ? emailTextElement.textContent : 'this email';
-    
+
     if (!confirm(`Are you sure you want to remove ${emailText}?`)) {
         return;
     }
-    
+
     // Disable button
     button.disabled = true;
     const originalContent = Array.from(button.childNodes).map(node => node.cloneNode(true));
-    
+
     // Clear and add spinner safely
     button.textContent = '';
     const spinner = document.createElement('div');
     spinner.className = 'spinner-border spinner-border-sm';
     spinner.setAttribute('role', 'status');
     button.appendChild(spinner);
-    
+
     fetch(`/remove_email/${emailId}`, {
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the email item from the list
-            removeEmailFromList(emailId);
-            showEmailMessage(data.message, 'success');
-        } else {
-            showEmailMessage(data.error, 'danger');
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the email item from the list
+                removeEmailFromList(emailId);
+                showEmailMessage(data.message, 'success');
+            } else {
+                showEmailMessage(data.error, 'danger');
+                // Re-enable button on error
+                button.disabled = false;
+                button.textContent = '';
+                originalContent.forEach(node => button.appendChild(node));
+                feather.replace();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showEmailMessage('An error occurred. Please try again.', 'danger');
             // Re-enable button on error
             button.disabled = false;
             button.textContent = '';
             originalContent.forEach(node => button.appendChild(node));
             feather.replace();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showEmailMessage('An error occurred. Please try again.', 'danger');
-        // Re-enable button on error
-        button.disabled = false;
-        button.textContent = '';
-        originalContent.forEach(node => button.appendChild(node));
-        feather.replace();
-    });
+        });
 }
 
 function showEmailMessage(message, type) {
@@ -942,7 +952,7 @@ function showEmailMessage(message, type) {
     messageDiv.className = `mt-2 alert alert-${type} alert-sm`;
     messageDiv.textContent = message;
     messageDiv.style.display = 'block';
-    
+
     // Auto-hide after 5 seconds
     setTimeout(() => {
         messageDiv.style.display = 'none';
@@ -952,12 +962,12 @@ function showEmailMessage(message, type) {
 function addEmailToList(emailData) {
     const container = document.getElementById('additional-emails-container');
     const noEmailsMessage = document.getElementById('no-emails-message');
-    
+
     // Hide "no emails" message if it exists
     if (noEmailsMessage) {
         noEmailsMessage.style.display = 'none';
     }
-    
+
     // Add "Additional:" label if this is the first additional email
     let additionalLabel = container.querySelector('small.text-muted');
     if (!additionalLabel) {
@@ -966,39 +976,39 @@ function addEmailToList(emailData) {
         additionalLabel.textContent = 'Additional:';
         container.insertBefore(additionalLabel, container.firstChild);
     }
-    
+
     // Create new email item safely using DOM methods
     const emailItem = document.createElement('div');
     emailItem.className = 'email-item mb-2';
     emailItem.setAttribute('data-email-id', emailData.id);
-    
+
     // Create email text span
     const emailSpan = document.createElement('span');
     emailSpan.className = 'email-text';
     emailSpan.textContent = emailData.email; // Safe: uses textContent instead of innerHTML
-    
+
     // Create remove button
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
     removeButton.className = 'btn btn-sm btn-outline-danger email-remove-btn remove-email-ajax';
     removeButton.setAttribute('data-email-id', emailData.id);
     removeButton.setAttribute('title', 'Remove email');
-    
+
     // Create icon for button
     const icon = document.createElement('i');
     icon.setAttribute('data-feather', 'x');
     removeButton.appendChild(icon);
-    
+
     // Assemble email item
     emailItem.appendChild(emailSpan);
     emailItem.appendChild(document.createTextNode(' '));
     emailItem.appendChild(removeButton);
-    
+
     // Event listener will be handled by event delegation
-    
+
     // Append to container
     container.appendChild(emailItem);
-    
+
     // Refresh feather icons
     feather.replace();
 }
@@ -1008,18 +1018,18 @@ function removeEmailFromList(emailId) {
     if (emailItem) {
         emailItem.remove();
     }
-    
+
     // Check if there are any additional emails left
     const container = document.getElementById('additional-emails-container');
     const remainingEmails = container.querySelectorAll('.email-item[data-email-id]');
-    
+
     if (remainingEmails.length === 0) {
         // Remove the "Additional:" label
         const additionalLabel = container.querySelector('small.text-muted');
         if (additionalLabel) {
             additionalLabel.remove();
         }
-        
+
         // Show "no emails" message
         const noEmailsMessage = document.createElement('small');
         noEmailsMessage.className = 'text-muted';
@@ -1033,43 +1043,43 @@ function initializeMobileMenu() {
     const menuToggle = document.getElementById('mobileMenuToggle');
     const sidebar = document.getElementById('sidebar');
     const backdrop = document.getElementById('sidebarBackdrop');
-    
+
     if (!menuToggle || !sidebar || !backdrop) {
         return; // Elements don't exist on this page
     }
-    
+
     // Toggle sidebar on hamburger click
-    menuToggle.addEventListener('click', function() {
+    menuToggle.addEventListener('click', function () {
         toggleSidebar();
     });
-    
+
     // Close sidebar when backdrop is clicked
-    backdrop.addEventListener('click', function() {
+    backdrop.addEventListener('click', function () {
         closeSidebar();
     });
-    
+
     // Close sidebar when a link is clicked (for navigation)
     const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
     sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
+        link.addEventListener('click', function () {
             // Don't close for external links
             if (!this.hasAttribute('target')) {
                 closeSidebar();
             }
         });
     });
-    
+
     // Close sidebar on ESC key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && sidebar.classList.contains('sidebar-open')) {
             closeSidebar();
         }
     });
-    
+
     function toggleSidebar() {
         sidebar.classList.toggle('sidebar-open');
         backdrop.classList.toggle('backdrop-visible');
-        
+
         // Prevent body scroll when sidebar is open
         if (sidebar.classList.contains('sidebar-open')) {
             document.body.style.overflow = 'hidden';
@@ -1077,7 +1087,7 @@ function initializeMobileMenu() {
             document.body.style.overflow = '';
         }
     }
-    
+
     function closeSidebar() {
         sidebar.classList.remove('sidebar-open');
         backdrop.classList.remove('backdrop-visible');
