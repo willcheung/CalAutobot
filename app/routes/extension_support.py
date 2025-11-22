@@ -159,6 +159,12 @@ def extension_availability_text():
         add_cors_headers_for_extension(response)
         return response, 401
 
+    # Extract access token from Authorization header for calendar operations
+    extension_token = None
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        extension_token = auth_header.split(' ')[1]
+
     event_type = _select_default_event_type(user)
     if not event_type:
         response = jsonify({'error': 'No active event types found'})
@@ -171,7 +177,7 @@ def extension_availability_text():
 
     try:
         availability_batch = availability_service.get_availability_for_range(
-            user, event_type, start_date, end_date
+            user, event_type, start_date, end_date, extension_token=extension_token
         )
     except AvailabilityError as exc:
         if exc.code == 'google_unavailable':
@@ -189,11 +195,11 @@ def extension_availability_text():
         return response, 500
 
     all_slots = _flatten_slots(availability_batch)
-    count_param = request.args.get('count', 3)
+    count_param = request.args.get('count', 8)
     try:
         requested = max(1, min(10, int(count_param)))
     except (TypeError, ValueError):
-        requested = 3
+        requested = 8
     visible_slots = all_slots[:requested]
 
     slots_payload = []

@@ -185,7 +185,10 @@ function buildDropdownControls(editor, composeRoot) {
         insertTextIntoEditor(editor, data.text);
       } catch (err) {
         console.error(err);
-        alert(err.message || 'Unable to fetch availability.');
+        // Don't show alert if it's a calendar reconnection message (tab already opened)
+        if (!err.message || !err.message.includes('reconnect your calendar')) {
+          alert(err.message || 'Unable to fetch availability.');
+        }
       }
     }
   ));

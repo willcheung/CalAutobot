@@ -121,16 +121,25 @@ def fetch_user_calendar_list(user, min_access_role="reader"):
     return calendars
 
 
-def fetch_freebusy(user, calendar_ids, time_min: datetime, time_max: datetime):
+def fetch_freebusy(user, calendar_ids, time_min: datetime, time_max: datetime, access_token=None):
     """
     Fetch busy periods for the given calendars between time_min and time_max.
+    
+    Args:
+        user: User object
+        calendar_ids: List of calendar IDs to check
+        time_min: Start time
+        time_max: End time
+        access_token: Optional access token (e.g., from extension). If not provided, uses user's refresh token.
 
     Returns a mapping of calendar_id -> {'busy': [{'start': iso, 'end': iso}, ...]}
     """
     if not calendar_ids:
         return {}
 
-    access_token = refresh_google_token(user)
+    # Use provided token or refresh user's token
+    if not access_token:
+        access_token = refresh_google_token(user)
 
     headers = {
         'Authorization': f'Bearer {access_token}',

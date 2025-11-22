@@ -219,7 +219,7 @@ def _collect_local_busy_slots(
 
 
 def _collect_google_busy_slots(
-    user: User, range_start: datetime, range_end: datetime, tz
+    user: User, range_start: datetime, range_end: datetime, tz, extension_token=None
 ) -> List[Slot]:
     conflict_calendar_ids = [
         calendar.calendar_id
@@ -231,7 +231,7 @@ def _collect_google_busy_slots(
 
     try:
         calendars_busy = google_calendar.fetch_freebusy(
-            user, conflict_calendar_ids, range_start, range_end
+            user, conflict_calendar_ids, range_start, range_end, access_token=extension_token
         )
     except Exception as exc:
         logger.warning("Failed to fetch Google free/busy data: %s", exc)
@@ -372,6 +372,7 @@ def get_availability_for_range(
     event_type: EventType,
     start_date: date,
     end_date: date,
+    extension_token=None,
 ) -> AvailabilityBatch:
     if end_date < start_date:
         raise ValueError("end_date must be on or after start_date")
@@ -406,7 +407,7 @@ def get_availability_for_range(
     range_end_dt = tz.localize(datetime.combine(end_date, time.max))
 
     local_busy = _collect_local_busy_slots(user, range_start_dt, range_end_dt, tz)
-    google_busy = _collect_google_busy_slots(user, range_start_dt, range_end_dt, tz)
+    google_busy = _collect_google_busy_slots(user, range_start_dt, range_end_dt, tz, extension_token)
     all_busy = local_busy + google_busy
     busy_by_date = _group_busy_slots_by_date(all_busy, tz)
 

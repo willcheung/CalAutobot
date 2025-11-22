@@ -198,7 +198,7 @@ async function handleFetchAvailability(userEmail, count) {
     const { token, error } = await getAuthToken(false);
     if (!token) throw new Error(error || 'Not authenticated');
 
-    const url = buildApiUrl('/api/extension/availability_text', { count: count || '8' });
+    const url = buildApiUrl('/api/extension/availability_text');
 
     try {
         const resp = await fetchFromApi(url, {}, token);
@@ -226,7 +226,7 @@ async function handleFetchAvailability(userEmail, count) {
             const freshResult = await getAuthToken(false);
             if (freshResult.token && freshResult.token !== token) {
                 // Retry with fresh token
-                const url = buildApiUrl('/api/extension/availability_text', { count: count || '8' });
+                const url = buildApiUrl('/api/extension/availability_text');
                 const resp = await fetchFromApi(url, {}, freshResult.token);
 
                 if (resp.ok) {
