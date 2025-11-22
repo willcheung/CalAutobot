@@ -3,17 +3,30 @@
   "name": "CalAutobot Scheduler Helper",
   "description": "Insert CalAutobot availability or booking links directly into Gmail compose windows.",
   "version": "0.1.0",
-  "permissions": [],
-  "host_permissions": [
-    "https://mail.google.com/*",
-    "https://calautobot.com/*",
-    "https://www.calautobot.com/*"
+  "permissions": [
+    "identity"
   ],
+  "host_permissions": [
+    "https://mail.google.com/*"
+  ],
+  "oauth2": {
+    "client_id": "609660480116-tnd7the9ooj8sd6rt4grjj7hcpt5frjf.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/calendar.app.created"
+    ]
+  },
   "content_scripts": [
     {
-      "matches": ["https://mail.google.com/*"],
-      "js": ["content.js"],
-      "css": ["styles.css"],
+      "matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
       "run_at": "document_idle"
     }
   ],

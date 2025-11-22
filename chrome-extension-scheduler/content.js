@@ -60,17 +60,18 @@ async function ensureAuthenticated() {
       'Click OK to open the sign-in page in a new tab.'
     );
     if (result) {
-      // Detect timezone for better UX
-      let timezone = 'UTC';
       try {
-        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      } catch (e) {
-        // Fallback to UTC if detection fails
+        const loginResp = await sendMessageToBackground('LOGIN');
+        if (loginResp && loginResp.authenticated) {
+          authStatus = { checked: true, authenticated: true };
+          alert('Successfully signed in!');
+        } else {
+          alert('Sign in failed. Please try again.');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('Sign in failed: ' + err.message);
       }
-      window.open(
-        `https://calautobot.com/google_login?timezone=${encodeURIComponent(timezone)}`,
-        '_blank'
-      );
     }
   }
   return authStatus.authenticated;

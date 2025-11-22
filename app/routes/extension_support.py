@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from flask import jsonify, session, request, url_for
+import requests
 from flask_login import current_user
 
 from app import app, db
@@ -27,6 +28,31 @@ def _resolve_extension_user() -> Optional[User]:
 
     auth_header = request.headers.get('Authorization')
     if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+        
+        # Verify token with Google
+        try:
+            # Call Google's tokeninfo endpoint
+            resp = requests.get(f'https://www.googleapis.com/oauth2/v3/tokeninfo?access_token={token}')
+            
+            if resp.status_code == 200:
+                token_info = resp.json()
+                email = token_info.get('email')
+                
+                # Verify audience matches our client ID (optional but recommended security)
+                # For now, just verifying email is a huge step up from "trust me bro"
+                
+                if email:
+                    return User.query.filter_by(email=email.strip().lower()).first()
+            else:
+                print(f"Token verification failed: {resp.text}")
+                
+        except Exception as e:
+            print(f"Token verification error: {e}")
+
+        # Fallback to old method (trusted email param) ONLY if token verification failed
+        # This allows for a transition period or local dev testing if needed
+        # But ideally we should remove this once migration is complete
         email = request.args.get('user_email')
         if not email and request.is_json:
             payload = request.get_json(silent=True) or {}

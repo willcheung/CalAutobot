@@ -1,59 +1,10 @@
 // Calendar AI Chrome Extension - Popup Script
 
-// Simple Session Manager - leverages existing Flask endpoints
-const SessionManager = {
-  // Save session when user logs in
-  async save(userData) {
-    await chrome.storage.local.set({
-      session: {
-        email: userData.email,
-        username: userData.username || userData.email,
-        isLoggedIn: true,
-        timestamp: Date.now()
-      }
-    });
-  },
-
-  // Get stored session
-  async get() {
-    const result = await chrome.storage.local.get(['session']);
-    return result.session || null;
-  },
-
-  // Verify session is still valid with backend
-  async verify(session, apiBaseUrl) {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/extension/auth/verify`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer session-token' // Simple token for existing endpoint
-        },
-        body: JSON.stringify({ email: session.email })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.authenticated;
-      }
-      return false;
-    } catch (error) {
-      console.log('Session verification failed (network/server error)');
-      return false;
-    }
-  },
-
-  // Clear session
-  async clear() {
-    await chrome.storage.local.remove(['session']);
-  }
-};
-
 class CalendarAIPopup {
   constructor() {
     this.apiBaseUrl = 'https://calautobot.com';
     this.user = null;
+    this.authToken = null;
     this.init();
   }
 
@@ -67,71 +18,60 @@ class CalendarAIPopup {
     try {
       console.log('🔍 Checking authentication status...');
 
-      // Get stored session
-      const session = await SessionManager.get();
-      console.log('📦 Stored session:', session);
-
-      if (session) {
-        console.log('🔐 Verifying session with server for:', session.email);
-        // Verify session is still valid with server
-        const isValid = await SessionManager.verify(session, this.apiBaseUrl);
-        console.log('✅ Session verification result:', isValid);
-
-        if (isValid) {
-          // Session is valid, set user data
-          this.user = {
-            email: session.email,
-            username: session.username,
-            authenticated: true
-          };
-          this.authToken = 'session-token';
-          console.log('✅ Valid session found for:', session.email);
+      // Try to get token non-interactively
+      chrome.identity.getAuthToken({ interactive: false }, async (token) => {
+        if (chrome.runtime.lastError || !token) {
+          console.log('🔓 No token found or error:', chrome.runtime.lastError);
+          this.user = null;
+          this.authToken = null;
+          this.updateUI();
           return;
-        } else {
-          // Session expired or invalid, clear it
-          console.log('❌ Session expired, clearing storage');
-          await SessionManager.clear();
         }
-      } else {
-        console.log('📭 No stored session found - checking web app authentication');
 
-        // No stored session, but user might be logged in to web app
-        // Check if user is authenticated on web app
-        try {
-          const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
-            credentials: 'include',
-            mode: 'cors'
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            console.log('🌐 Web app auth response:', userData);
-
-            if (userData.authenticated && userData.email) {
-              console.log('🎉 Found existing web app authentication, creating session');
-              // User is authenticated on web app, create extension session
-              await SessionManager.save(userData);
-
-              this.user = userData;
-              this.authToken = 'session-token';
-              console.log('✅ Session created from web app auth for:', userData.email);
-              return;
-            }
-          }
-        } catch (error) {
-          console.log('🌐 Web app auth check failed:', error.message);
-        }
-      }
-
-      // No valid session found
-      this.user = null;
-      this.authToken = null;
-      console.log('🔓 No valid session - showing login screen');
+        console.log('🔐 Token found, fetching user info...');
+        this.authToken = token;
+        await this.fetchUserInfo(token);
+      });
 
     } catch (error) {
       console.log('Session check error:', error);
       this.user = null;
       this.authToken = null;
+      this.updateUI();
+    }
+  }
+
+  async fetchUserInfo(token) {
+    try {
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        this.user = {
+          email: userData.email,
+          username: userData.name || userData.email,
+          picture: userData.picture,
+          authenticated: true
+        };
+        console.log('✅ User info fetched:', this.user.email);
+        this.updateUI();
+      } else {
+        console.log('❌ Failed to fetch user info, invalidating token');
+        this.user = null;
+        this.authToken = null;
+        // Token might be invalid, remove it
+        chrome.identity.removeCachedAuthToken({ token: token });
+        this.updateUI();
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      this.user = null;
+      this.authToken = null;
+      this.updateUI();
     }
   }
 
@@ -163,13 +103,16 @@ class CalendarAIPopup {
     if (this.user) {
       authStatus.textContent = `Signed in as ${this.user.email}`;
       authStatus.className = 'auth-status authenticated';
-      authBtn.style.display = 'none';
+      authBtn.textContent = 'Sign Out'; // Change button text
+      authBtn.style.display = 'flex'; // Keep visible for sign out
       mainSection.classList.add('show');
       processTextBtn.disabled = false;
       screenshotBtn.disabled = false;
       textInput.disabled = false;
     } else {
       authStatus.className = 'auth-status unauthenticated';
+      authStatus.textContent = 'Not signed in';
+      authBtn.textContent = 'Sign in with Google';
       authBtn.style.display = 'flex';
       mainSection.classList.remove('show');
       processTextBtn.disabled = true;
@@ -181,86 +124,40 @@ class CalendarAIPopup {
   async handleAuth() {
     if (this.user) {
       // Sign out
-      await SessionManager.clear();
-      this.user = null;
-      this.authToken = null;
-      this.updateUI();
-      this.showStatus('Signed out successfully', 'success');
+      this.signOut();
     } else {
       // Sign in
-      await this.signIn();
+      this.signIn();
     }
   }
 
-  async signIn() {
-    try {
-      this.showStatus('Signing in...', 'processing');
-
-      // Detect user timezone
-      let timezone = 'UTC';
-      try {
-        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      } catch (error) {
-        console.log('Timezone detection failed, using UTC');
+  signIn() {
+    this.showStatus('Signing in...', 'processing');
+    chrome.identity.getAuthToken({ interactive: true }, async (token) => {
+      if (chrome.runtime.lastError) {
+        console.error('Sign in failed:', chrome.runtime.lastError);
+        this.showStatus('Sign in failed. Please try again.', 'error');
+        return;
       }
 
-      // Open Calendar AI web app for proper Google OAuth with timezone
-      const authUrl = `${this.apiBaseUrl}/google_login?timezone=${encodeURIComponent(timezone)}`;
-
-      // Open auth in new tab and wait for user to complete
-      chrome.tabs.create({ url: authUrl }, async (tab) => {
-        this.showStatus('Complete sign-in in the new tab, then click extension again', 'processing');
-
-        // Check for successful auth every 3 seconds using simple session check
-        const authCheckInterval = setInterval(async () => {
-          try {
-            // Try to get user info from Calendar AI backend
-            const response = await fetch(`${this.apiBaseUrl}/api/user/info`, {
-              credentials: 'include',
-              mode: 'cors'
-            });
-
-            if (response.ok) {
-              const userData = await response.json();
-              if (userData.authenticated) {
-                // Save session using SessionManager
-                await SessionManager.save(userData);
-
-                // Update local state
-                this.user = userData;
-                this.authToken = 'session-token';
-
-                clearInterval(authCheckInterval);
-                this.updateUI();
-                this.showStatus('Successfully signed in!', 'success');
-                console.log('✅ Signed in successfully:', userData.email);
-                return;
-              }
-            }
-          } catch (error) {
-            // Continue checking - network issues are normal during auth flow
-          }
-        }, 3000);
-
-        // Stop checking after 60 seconds
-        setTimeout(() => {
-          clearInterval(authCheckInterval);
-          if (!this.user) {
-            this.showStatus('Sign in timeout. Please try again.', 'error');
-          }
-        }, 60000);
-      });
-
-    } catch (error) {
-      console.error('Authentication error:', error);
-      this.showStatus('Sign in failed. Please try again.', 'error');
-    }
+      this.authToken = token;
+      await this.fetchUserInfo(token);
+      this.showStatus('Successfully signed in!', 'success');
+    });
   }
 
-  async getGoogleClientId() {
-    // In production, this would be your actual Google Client ID
-    // For now, return a placeholder that should be configured
-    return 'YOUR_GOOGLE_CLIENT_ID';
+  signOut() {
+    if (this.authToken) {
+      chrome.identity.removeCachedAuthToken({ token: this.authToken }, () => {
+        this.user = null;
+        this.authToken = null;
+        this.updateUI();
+        this.showStatus('Signed out successfully', 'success');
+      });
+    } else {
+      this.user = null;
+      this.updateUI();
+    }
   }
 
   async processText() {
@@ -277,13 +174,14 @@ class CalendarAIPopup {
       // Send to Chrome extension API endpoint
       const response = await fetch(`${this.apiBaseUrl}/api/extension/process`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.authToken}`
         },
         body: JSON.stringify({
           text: text,
+          // We don't strictly need user_email anymore as the token has it, 
+          // but keeping it for compatibility if backend needs it for logging
           user_email: this.user.email,
           source: 'Chrome Extension Text Input'
         })
@@ -301,9 +199,11 @@ class CalendarAIPopup {
         textInput.value = ''; // Clear input
       } else {
         console.error('Text processing failed:', result.error);
+        this.showStatus(`Error: ${result.error || 'Processing failed'}`, 'error');
       }
     } catch (error) {
       console.error('Text processing error:', error);
+      this.showStatus('Network error. Please try again.', 'error');
     } finally {
       this.setButtonLoading('processTextBtn', false);
     }
@@ -333,7 +233,6 @@ class CalendarAIPopup {
 
       const apiResponse = await fetch(`${this.apiBaseUrl}/api/extension/process`, {
         method: 'POST',
-        credentials: 'include',
         body: formData,
         headers: {
           'Authorization': `Bearer ${this.authToken}`
@@ -350,9 +249,11 @@ class CalendarAIPopup {
         this.showToast(`Success! Extracted ${totalEvents} events from screenshot, ${syncedEvents} synced to calendar`);
       } else {
         console.error('Screenshot processing failed:', result.error);
+        this.showStatus(`Error: ${result.error || 'Processing failed'}`, 'error');
       }
     } catch (error) {
       console.error('Screenshot error:', error);
+      this.showStatus('Screenshot failed. Please try again.', 'error');
     } finally {
       this.setButtonLoading('screenshotBtn', false);
     }
@@ -418,8 +319,6 @@ class CalendarAIPopup {
       }
     });
   }
-
-  // Removed showForwardEmailInfo - now displayed directly in UI
 
   openBookings() {
     // Always open bookings directly without checking authentication
