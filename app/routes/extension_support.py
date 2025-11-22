@@ -3,6 +3,23 @@
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
+from flask import jsonify, session, request, url_for
+import requests
+from flask_login import current_user
+
+from app import app, db
+from app.models import EventType, User, Contact
+from app.services import availability as availability_service, contacts as contact_service
+from app.services.availability import AvailabilityError
+
+def add_cors_headers_for_extension(response):
+    """Add proper CORS headers for Chrome extension requests"""
+    origin = request.headers.get('Origin')
+    if origin and origin.startswith('chrome-extension://'):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
 def _resolve_extension_user() -> Tuple[Optional[User], Optional[str]]:
     """
     Return the authenticated user via session or Authorization header.
