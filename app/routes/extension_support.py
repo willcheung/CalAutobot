@@ -173,7 +173,7 @@ def extension_availability_text():
             response = jsonify({
                 'error': 'SETUP_REQUIRED',
                 'message': 'Please connect your Google Calendar to continue.',
-                'setup_url': url_for('onboarding.onboarding_step1', _external=True)
+                'setup_url': url_for('onboarding_routes.onboarding', _external=True)
             })
             add_cors_headers_for_extension(response)
             return response, 403

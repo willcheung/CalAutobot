@@ -1,4 +1,4 @@
-const API_BASES = ['https://calautobot.com', 'https://www.calautobot.com'];
+const API_BASES = ['https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
 
 let activeApiBase = API_BASES[0];
 
