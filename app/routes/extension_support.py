@@ -1,31 +1,18 @@
 """Extension support routes for Chrome extension integration."""
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 
-from flask import jsonify, session, request, url_for
-import requests
-from flask_login import current_user
-
-from app import app, db
-from app.models import EventType, User, Contact
-from app.services import availability as availability_service, contacts as contact_service
-from app.services.availability import AvailabilityError
-
-def add_cors_headers_for_extension(response):
-    """Add proper CORS headers for Chrome extension requests"""
-    origin = request.headers.get('Origin')
-    if origin and origin.startswith('chrome-extension://'):
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-    return response
-
-
-def _resolve_extension_user() -> Optional[User]:
-    """Return the authenticated user via session or Authorization header."""
-    if current_user.is_authenticated:
-        return current_user
-
+def _resolve_extension_user() -> Tuple[Optional[User], Optional[str]]:
+    """
+    Return the authenticated user via session or Authorization header.
+    Returns: (user, email)
+    - user: User object if found
+    - email: Email address if token is valid (even if user not found)
+    """
+    # Prioritize Authorization header (extension token) over session cookie
+    # This prevents account mismatch if user is logged into web app with Account A
+    # but using extension with Account B.
     auth_header = request.headers.get('Authorization')
     if auth_header:
         # Robustly parse Bearer token (handle multiple spaces, case insensitivity)
@@ -35,46 +22,42 @@ def _resolve_extension_user() -> Optional[User]:
             
             # Verify token with Google
             try:
-                # Call Google's tokeninfo endpoint with properly encoded token
-                print(f"Verifying token (length: {len(token)})")
-                print(f"Token start: {token[:5]}... end: ...{token[-5:]}")
-                
                 resp = requests.get(
                     'https://www.googleapis.com/oauth2/v3/tokeninfo',
                     params={'access_token': token}
                 )
             
-                print(f"Token verification response status: {resp.status_code}")
                 if resp.status_code == 200:
                     token_info = resp.json()
                     email = token_info.get('email')
-                    print(f"Token verified successfully for email: {email}")
-                    
-                    # Verify audience matches our client ID (optional but recommended security)
-                    # For now, just verifying email is a huge step up from "trust me bro"
                     
                     if email:
-                        return User.query.filter_by(email=email.strip().lower()).first()
-                else:
-                    print(f"Token verification failed: {resp.text}")
+                        user = User.query.filter_by(email=email.strip().lower()).first()
+                        return user, email
                 
             except Exception as e:
                 print(f"Token verification error: {e}")
 
-        # Fallback to old method (trusted email param) ONLY if token verification failed
-        # This allows for a transition period or local dev testing if needed
-        # But ideally we should remove this once migration is complete
-        email = request.args.get('user_email')
-        if not email and request.is_json:
-            payload = request.get_json(silent=True) or {}
-            email = payload.get('user_email')
-        if not email and request.form:
-            email = request.form.get('user_email')
-        if not email:
-            email = request.headers.get('X-User-Email')
-        if email:
-            return User.query.filter_by(email=email.strip().lower()).first()
-    return None
+    # Fallback to session user if no valid Authorization header found
+    if current_user.is_authenticated:
+        return current_user, current_user.email
+
+    # Fallback to old method (trusted email param) ONLY if token verification failed
+    # This allows for a transition period or local dev testing if needed
+    # But ideally we should remove this once migration is complete
+    email = request.args.get('user_email')
+    if not email and request.is_json:
+        payload = request.get_json(silent=True) or {}
+        email = payload.get('user_email')
+    if not email and request.form:
+        email = request.form.get('user_email')
+    if not email:
+        email = request.headers.get('X-User-Email')
+    if email:
+        user = User.query.filter_by(email=email.strip().lower()).first()
+        return user, email
+            
+    return None, None
 
 
 def _select_default_event_type(user: User) -> Optional[EventType]:
@@ -135,6 +118,28 @@ def get_user_info():
                 'timezone': current_user.timezone,
                 'authenticated': True
             }
+        else:
+            # Check if we have a valid token but no user (new user case)
+            user, email = _resolve_extension_user()
+            if user:
+                response_data = {
+                    'id': user.id,
+                    'email': user.email,
+                    'username': user.username,
+                    'timezone': user.timezone,
+                    'authenticated': True
+                }
+            elif email:
+                # Valid token, but user not in DB -> Needs onboarding
+                # We return authenticated=True so the extension proceeds to try fetching data
+                # which will then trigger the SETUP_REQUIRED error and redirect
+                response_data = {
+                    'id': None,
+                    'email': email,
+                    'username': None,
+                    'timezone': 'UTC',
+                    'authenticated': True
+                }
         
         response = jsonify(response_data)
         add_cors_headers_for_extension(response)
@@ -158,8 +163,18 @@ def extension_availability_text():
         response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
 
-    user = _resolve_extension_user()
+    user, email = _resolve_extension_user()
     if not user:
+        if email:
+            # Valid token but user not found -> Redirect to onboarding
+            response = jsonify({
+                'error': 'SETUP_REQUIRED',
+                'message': 'Welcome! Please complete your setup to use the extension.',
+                'setup_url': url_for('onboarding_routes.onboarding', _external=True)
+            })
+            add_cors_headers_for_extension(response)
+            return response, 403
+
         response = jsonify({'error': 'Authentication required'})
         add_cors_headers_for_extension(response)
         return response, 401
@@ -261,8 +276,17 @@ def extension_booking_link():
         response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         return response
 
-    user = _resolve_extension_user()
+    user, email = _resolve_extension_user()
     if not user:
+        if email:
+            response = jsonify({
+                'error': 'SETUP_REQUIRED',
+                'message': 'Welcome! Please complete your setup.',
+                'setup_url': url_for('onboarding_routes.onboarding', _external=True)
+            })
+            add_cors_headers_for_extension(response)
+            return response, 403
+
         response = jsonify({'error': 'Authentication required'})
         add_cors_headers_for_extension(response)
         return response, 401
@@ -312,8 +336,14 @@ def extension_save_contacts():
         response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
         return response
 
-    user = _resolve_extension_user()
+    user, email = _resolve_extension_user()
     if not user:
+        if email:
+            # For background contact sync, just fail silently/gracefully if not onboarded
+            response = jsonify({'error': 'SETUP_REQUIRED'})
+            add_cors_headers_for_extension(response)
+            return response, 403
+
         response = jsonify({'error': 'Authentication required'})
         add_cors_headers_for_extension(response)
         return response, 401
@@ -387,7 +417,18 @@ def update_user_timezone():
         return response
     
     # Check authentication explicitly for API endpoint
-    if not current_user.is_authenticated:
+    user, email = _resolve_extension_user()
+    if not user:
+        if email:
+             # Valid token but user not found -> Redirect to onboarding
+            response = jsonify({
+                'error': 'SETUP_REQUIRED',
+                'message': 'Welcome! Please complete your setup.',
+                'setup_url': url_for('onboarding_routes.onboarding', _external=True)
+            })
+            add_cors_headers_for_extension(response)
+            return response, 403
+
         response = jsonify({'error': 'Authentication required'})
         add_cors_headers_for_extension(response)
         return response, 401
@@ -403,8 +444,8 @@ def update_user_timezone():
             return response, 400
         
         # Only update if timezone is different (optimization)
-        if current_user.timezone != new_timezone:
-            current_user.timezone = new_timezone
+        if user.timezone != new_timezone:
+            user.timezone = new_timezone
             db.session.commit()
             
             response_data = {
@@ -415,7 +456,7 @@ def update_user_timezone():
         else:
             response_data = {
                 'success': True,
-                'timezone': current_user.timezone,
+                'timezone': user.timezone,
                 'message': 'Timezone unchanged (already current)'
             }
         
@@ -444,8 +485,18 @@ def extension_process_events():
 
     try:
         # Resolve user using shared helper
-        user = _resolve_extension_user()
+        user, email = _resolve_extension_user()
         if not user:
+            if email:
+                response = jsonify({
+                    'error': 'SETUP_REQUIRED',
+                    'code': 'SETUP_REQUIRED',
+                    'message': 'Please complete setup',
+                    'setup_url': url_for('onboarding_routes.onboarding', _external=True)
+                })
+                add_cors_headers_for_extension(response)
+                return response, 403
+
             response = jsonify({'error': 'Authentication required', 'code': 'AUTH_REQUIRED'})
             add_cors_headers_for_extension(response)
             return response, 401
