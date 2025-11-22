@@ -13,8 +13,7 @@
     "client_id": "609660480116-gn5g0smq5nih4n0km73kac8l6b7vlpii.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/calendar"
+      "https://www.googleapis.com/auth/userinfo.profile"
     ]
   },
   "content_scripts": [
