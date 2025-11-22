@@ -206,9 +206,9 @@ async function handleFetchAvailability(userEmail, count) {
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));
 
-            if (resp.status === 403 && err.error === 'SETUP_REQUIRED' && err.setup_url) {
+            if (resp.status === 403 && (err.error === 'SETUP_REQUIRED' || err.error === 'CALENDAR_RECONNECT_REQUIRED') && err.setup_url) {
                 chrome.tabs.create({ url: err.setup_url });
-                throw new Error('Please complete setup in the new tab.');
+                throw new Error('Please reconnect your calendar in the new tab.');
             }
 
             throw new Error(err.error || 'Unable to fetch availability');
@@ -216,13 +216,27 @@ async function handleFetchAvailability(userEmail, count) {
         const data = await resp.json();
         return { success: true, data };
     } catch (err) {
-        // If error is "unauthorized", trigger re-login
-        if (err.message === 'unauthorized') {
-            const loginResult = await handleLogin();
-            if (loginResult.success) {
-                // Retry the request with new token
-                return handleFetchAvailability(userEmail, count);
+        // If error is "unauthorized", the token might be stale
+        // Remove it from cache and try ONE more time with a fresh token
+        if (err.message === 'unauthorized' && token) {
+            console.log('Token unauthorized, getting fresh token...');
+            await chrome.identity.removeCachedAuthToken({ token });
+
+            // Get a fresh token (non-interactive)
+            const freshResult = await getAuthToken(false);
+            if (freshResult.token && freshResult.token !== token) {
+                // Retry with fresh token
+                const url = buildApiUrl('/api/extension/availability_text', { count: count || '8' });
+                const resp = await fetchFromApi(url, {}, freshResult.token);
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    return { success: true, data };
+                }
             }
+
+            // If fresh token didn't work, fail silently
+            return { success: false, error: 'Please try again.' };
         }
         throw err;
     }
