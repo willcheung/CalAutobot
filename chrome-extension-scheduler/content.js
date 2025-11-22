@@ -114,6 +114,22 @@ function collectRecipients(composeRoot) {
   return recipients;
 }
 
+function attachSendInterceptor(composeRoot) {
+  const sendButton = composeRoot.querySelector('div[role="button"][data-tooltip*="Send"]');
+  if (!sendButton) {
+    return;
+  }
+  if (sendButton.getAttribute(SEND_HOOK_ATTR)) return;
+
+  sendButton.setAttribute(SEND_HOOK_ATTR, 'true');
+  sendButton.addEventListener('click', () => {
+    ensureAuthenticated().then((authed) => {
+      if (!authed) return;
+      const contacts = collectRecipients(composeRoot);
+      sendContactsToAPI(contacts);
+    });
+  });
+}
 function buildDropdownControls(editor, composeRoot) {
   const container = document.createElement('div');
   container.className = 'calautobot-container';
@@ -263,19 +279,33 @@ function waitForElement(root, selector, timeout = 2000) {
   });
 }
 
+function findComposeRoot(editor) {
+  // 1. Try standard dialog (popup)
+  const dialog = editor.closest('div[role="dialog"]');
+  if (dialog) return dialog;
+
+  // 2. Try finding a container that includes recipient fields
+  // Walk up the tree until we find a node that contains 'span[email]' or 'div.aoD' (recipient row)
+  let current = editor.parentElement;
+  let steps = 0;
+  while (current && current !== document.body && steps < 20) {
+    if (current.querySelector('span[email]') || current.querySelector('div.aoD')) {
+      return current;
+    }
+    current = current.parentElement;
+    steps++;
+  }
+
+  // 3. Fallback: standard Gmail inline containers
+  return editor.closest('table[role="presentation"]') ||
+    editor.closest('table') ||
+    editor.parentElement.parentElement.parentElement.parentElement;
+}
+
 function injectControlsForEditor(editor) {
   if (!editor) return;
 
-  // Traverse up to find the main compose container.
-  let composeRoot = editor.closest('div[role="dialog"]') ||
-    editor.closest('table[role="presentation"]') ||
-    editor.closest('table');
-
-  if (!composeRoot) {
-    // Fallback: go up 4-5 levels
-    composeRoot = editor.parentElement.parentElement.parentElement.parentElement;
-  }
-
+  const composeRoot = findComposeRoot(editor);
   if (!composeRoot) return;
 
   attachSendInterceptor(composeRoot);
@@ -291,7 +321,7 @@ function injectControlsForEditor(editor) {
   }
 
   if (sendButton) {
-    console.log('CalAutobot: Found Send button', sendButton);
+    // console.log('CalAutobot: Found Send button', sendButton);
 
     // The footer is a table row (tr). The Send button is in a td.
     // We should insert a new td after the Send button's td.
@@ -320,7 +350,7 @@ function injectControlsForEditor(editor) {
       }
     }
   } else {
-    console.log('CalAutobot: Send button not found in root', composeRoot);
+    // console.log('CalAutobot: Send button not found in root', composeRoot);
     // Fallback to toolbar
     const toolbar = composeRoot.querySelector('div[aria-label="Formatting options"]') ||
       composeRoot.querySelector('tr.btC');

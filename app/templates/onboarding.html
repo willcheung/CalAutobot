@@ -49,7 +49,7 @@ current_user.calendly_plan|lower == 'basic' %}
                             <div style="flex-grow: 1;">
                                 <h5 class="mb-2" style="font-weight: 600; color: #0f172a;">Connect your calendar</h5>
                                 <p class="text-muted mb-3" style="font-size: 0.95rem;">Google Calendar is required for
-                                    bookings and availability.</p>
+                                    to check availability and book meetings.</p>
 
                                 <!-- Google Calendar Connection (REQUIRED) -->
                                 <div class="calendar-connection-status mb-3">
@@ -86,9 +86,9 @@ current_user.calendly_plan|lower == 'basic' %}
                                     {% endif %}
                                 </div>
 
-                                <p class="text-muted mb-3" style="font-size: 0.95rem;">(Optional) Connect to Calendly if
-                                    you want to use it as primary source to check availability and book meeting (instead
-                                    of directly via Google Calendar). You have to be on Calendly's paid plan.</p>
+                                <p class="text-muted mb-3" style="font-size: 0.95rem;">(Optional) If you're Calendly
+                                    user, connect to use it to check availability and book meeting. You have to be on
+                                    Calendly's paid plan.</p>
                                 <!-- Calendly Connection (OPTIONAL) -->
                                 <div class="calendar-connection-status">
                                     {% if current_user.calendly_access_token %}

@@ -404,6 +404,15 @@ def extension_save_contacts():
             created_count += 1
         processed.append({'email': normalized, 'name': name, 'created': created})
 
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving contacts: {e}")
+        response = jsonify({'error': 'Database error'})
+        add_cors_headers_for_extension(response)
+        return response, 500
+
     response = jsonify(
         {
             'success': True,

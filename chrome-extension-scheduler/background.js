@@ -16,7 +16,13 @@ async function getAuthToken(interactive = false) {
     return new Promise((resolve) => {
         chrome.identity.getAuthToken({ interactive }, (token) => {
             if (chrome.runtime.lastError) {
-                console.error('getAuthToken error:', chrome.runtime.lastError);
+                // Only log error if we were expecting interaction or it's a serious error
+                if (interactive) {
+                    console.error('getAuthToken error:', chrome.runtime.lastError);
+                } else {
+                    // Debug log for non-interactive check (benign failure)
+                    console.debug('getAuthToken (non-interactive) failed:', chrome.runtime.lastError.message);
+                }
                 // If the error is "OAuth2 not granted or revoked", we might need to clear cache or force interactive
                 resolve({ error: chrome.runtime.lastError.message });
             } else if (!token) {
@@ -68,33 +74,38 @@ async function fetchFromApi(urlObj, options = {}, token = null) {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    handleMessage(request).then(sendResponse).catch((err) => {
-        sendResponse({ success: false, error: err.message });
-    });
-    return true; // Keep channel open for async response
+    (async () => {
+        try {
+            const { action, payload } = request;
+            switch (action) {
+                case 'CHECK_AUTH':
+                    sendResponse(await handleCheckAuth(payload.userEmail));
+                    break;
+                case 'LOGIN':
+                    sendResponse(await handleLogin());
+                    break;
+                case 'FETCH_AVAILABILITY':
+                    sendResponse(await handleFetchAvailability(payload.userEmail, payload.count));
+                    break;
+                case 'FETCH_BOOKING_LINK':
+                    sendResponse(await handleFetchBookingLink(payload.userEmail));
+                    break;
+                case 'SEND_CONTACTS':
+                    sendResponse(await handleSendContacts(payload.userEmail, payload.contacts));
+                    break;
+                case 'LOG_ERROR':
+                    sendResponse(handleLogError(payload));
+                    break;
+                default:
+                    throw new Error(`Unknown action: ${action}`);
+            }
+        } catch (err) {
+            console.error('Background error:', err);
+            sendResponse({ success: false, error: err.message });
+        }
+    })();
+    return true; // Keep channel open
 });
-
-async function handleMessage(request) {
-    const { action, payload } = request;
-    const { userEmail } = payload || {};
-
-    switch (action) {
-        case 'CHECK_AUTH':
-            return handleCheckAuth(userEmail);
-        case 'LOGIN':
-            return handleLogin();
-        case 'LOG_ERROR':
-            return handleLogError(payload);
-        case 'FETCH_AVAILABILITY':
-            return handleFetchAvailability(userEmail, payload.count);
-        case 'FETCH_BOOKING_LINK':
-            return handleFetchBookingLink(userEmail);
-        case 'SEND_CONTACTS':
-            return handleSendContacts(userEmail, payload.contacts);
-        default:
-            throw new Error(`Unknown action: ${action}`);
-    }
-}
 
 function handleLogError(payload) {
     const { error, context } = payload || {};
