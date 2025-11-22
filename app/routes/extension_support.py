@@ -168,6 +168,16 @@ def extension_availability_text():
             user, event_type, start_date, end_date
         )
     except AvailabilityError as exc:
+        if exc.code == 'google_unavailable':
+            # This means the user hasn't connected their calendar or token is invalid
+            response = jsonify({
+                'error': 'SETUP_REQUIRED',
+                'message': 'Please connect your Google Calendar to continue.',
+                'setup_url': url_for('onboarding.onboarding_step1', _external=True)
+            })
+            add_cors_headers_for_extension(response)
+            return response, 403
+            
         response = jsonify({'error': str(exc) or 'Unable to fetch availability'})
         add_cors_headers_for_extension(response)
         return response, 500

@@ -55,23 +55,14 @@ async function ensureAuthenticated() {
     authStatus = { checked: true, authenticated: false };
   }
   if (!authStatus.authenticated) {
-    const result = confirm(
-      'CalAutobot: Please sign in first.\n\n' +
-      'Click OK to open the sign-in page in a new tab.'
-    );
-    if (result) {
-      try {
-        const loginResp = await sendMessageToBackground('LOGIN');
-        if (loginResp && loginResp.authenticated) {
-          authStatus = { checked: true, authenticated: true };
-          alert('Successfully signed in!');
-        } else {
-          alert('Sign in failed. Please try again.');
-        }
-      } catch (err) {
-        console.error('Login error:', err);
-        alert('Sign in failed: ' + err.message);
+    try {
+      const loginResp = await sendMessageToBackground('LOGIN');
+      if (loginResp && loginResp.authenticated) {
+        authStatus = { checked: true, authenticated: true };
       }
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('Unable to sign in. Please try again later.');
     }
   }
   return authStatus.authenticated;
