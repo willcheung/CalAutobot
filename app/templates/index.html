@@ -4,8 +4,10 @@
 
 {% block head %}
 <!-- SEO Meta Tags -->
-<meta name="description" content="Qualify leads and book meetings automatically with Cal, your AI scheduling assistant. Works via email CC—auto follow-ups, 24/7 availability, Google Calendar sync. Free for individuals. Save 5+ hours/week. No credit card required.">
-<meta name="keywords" content="AI scheduling assistant, lead qualification, email scheduling, AI meeting scheduler, sales automation, Calendly add-on, Google Calendar scheduling, email assistant, appointment booking, AI lead closer, solopreneur tools, small business scheduling">
+<meta name="description"
+    content="Qualify leads and book meetings automatically with Cal, your AI scheduling assistant. Works via email CC—auto follow-ups, 24/7 availability, Google Calendar sync. Free for individuals. Save 5+ hours/week. No credit card required.">
+<meta name="keywords"
+    content="AI scheduling assistant, lead qualification, email scheduling, AI meeting scheduler, sales automation, Calendly add-on, Google Calendar scheduling, email assistant, appointment booking, AI lead closer, solopreneur tools, small business scheduling">
 <meta name="author" content="Cal Autobot">
 <meta name="robots" content="index, follow">
 
@@ -13,7 +15,8 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://CalAutobot.com/">
 <meta property="og:title" content="Cal Autobot | AI That Qualifies Leads & Books Meetings Automatically">
-<meta property="og:description" content="Keep leads warm with AI that works 24/7 via email. Auto follow-ups, meeting scheduling, and Google Calendar sync. Free for solopreneurs. Just CC Cal—no new workflow needed.">
+<meta property="og:description"
+    content="Keep leads warm with AI that works 24/7 via email. Auto follow-ups, meeting scheduling, and Google Calendar sync. Free for solopreneurs. Just CC Cal—no new workflow needed.">
 <meta property="og:image" content="{{ url_for('static', filename='images/logo.png') }}">
 <meta property="og:site_name" content="Cal Autobot">
 <meta property="og:locale" content="en_US">
@@ -22,7 +25,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:url" content="https://CalAutobot.com/">
 <meta name="twitter:title" content="Cal Autobot | AI Lead Qualifier & Meeting Scheduler">
-<meta name="twitter:description" content="Your AI assistant that qualifies leads and books meetings via email. Auto follow-ups, reminders, 24/7 availability. Free for individuals. Save 5+ hours per week.">
+<meta name="twitter:description"
+    content="Your AI assistant that qualifies leads and books meetings via email. Auto follow-ups, reminders, 24/7 availability. Free for individuals. Save 5+ hours per week.">
 <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png') }}">
 <meta name="twitter:creator" content="@CalAutobot">
 <meta name="twitter:site" content="@CalAutobot">
@@ -234,6 +238,7 @@
         padding: 80px 0;
         background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
         color: white;
+        margin-top: 0;
     }
 
     .stats-grid {
@@ -508,7 +513,7 @@
 
     .ai-agents-section {
         padding: clamp(2.5rem, 8vw, 5rem) 0;
-        background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
         position: relative;
         overflow: hidden;
     }
@@ -520,7 +525,7 @@
         right: -15%;
         width: 600px;
         height: 600px;
-        background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
         border-radius: 50%;
     }
 
@@ -840,17 +845,17 @@
         .comparison-table {
             overflow: visible;
         }
-        
+
         /* Hide table headers */
         .comparison-table thead {
             display: none;
         }
-        
+
         /* Stack table rows as cards */
         .comparison-table tbody {
             display: block;
         }
-        
+
         .comparison-table tr {
             display: block;
             margin-bottom: 1.5rem;
@@ -859,34 +864,34 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
-        
+
         .comparison-table td {
             display: block;
             padding: 1rem;
             border-bottom: 1px solid #f3f4f6;
             text-align: left;
         }
-        
+
         .comparison-table td:last-child {
             border-bottom: none;
         }
-        
+
         /* Add feature label before each cell */
         .comparison-table td:first-child {
             background: #f8f9fa;
             font-weight: 600;
             color: #1a1f36;
         }
-        
+
         .use-cases-section {
             padding: clamp(2.5rem, 8vw, 5rem) 0;
         }
-        
+
         .use-case-card {
             padding: clamp(1.5rem, 4vw, 2rem);
             margin-bottom: 1rem;
         }
-        
+
         .faq-section {
             padding: clamp(2.5rem, 8vw, 5rem) 0;
         }
@@ -926,42 +931,48 @@
 
                 <p class="waitlist-subtitle">
                     Meet Cal, your AI lead-warmer and scheduling assistant.
-                    Keep leads warm with a personal touch, no new workflow needed.<br/>
+                    Keep leads warm with a personal touch, no new workflow needed.<br />
                     CC Cal and get back to real work.
                 </p>
 
                 {% if not current_user.is_authenticated %}
-                    <div class="hero-actions mt-4">
-                        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Sign up free with Google
-                        </a>
-                        <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
-                            No credit card required. Zero setup.
-                        </p>
-                    </div>
+                <div class="hero-actions mt-4">
+                    <a href="#" class="google-signin-btn google-signin-btn-large"
+                        onclick="startGoogleLogin(); return false;">
+                        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"
+                            focusable="false">
+                            <path fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        Sign up free with Google
+                    </a>
+                    <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
+                        No credit card required. Zero setup.
+                    </p>
+                </div>
                 {% else %}
-                    <div class="hero-actions mt-4">
-                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
-                            Go to Bookings
-                        </a>
-                    </div>
+                <div class="hero-actions mt-4">
+                    <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+                        Go to Bookings
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
-    <section class="works-with-section">
-        <span class="works-with-text">Works with</span>
-        <div class="works-with-logo">
-            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
-        </div>
-    </section>
+<section class="works-with-section">
+    <span class="works-with-text">Works with</span>
+    <div class="works-with-logo">
+        <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
+    </div>
+</section>
 <!-- <section class="email-stack" id="how-it-works">
     <div class="container">
         <div class="row justify-content-center">
@@ -1015,7 +1026,8 @@
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
                 <h2 class="mb-3">AI that helps manage your business 24/7</h2>
-                <p class="text-muted">Cal is your AI assistant that understands your business and automates repetetiveness without sleeping</p>
+                <p class="text-muted">Cal is your AI assistant that understands your business and automates
+                    repetetiveness without sleeping</p>
             </div>
         </div>
 
@@ -1027,7 +1039,8 @@
                     </div>
                     <h3>AI Scheduler</h3>
                 </div>
-                <p>Schedules meetings over email with a human touch. Perfect when a cold Calendly link kills the vibe and you want a smoother, more personal back-and-forth.</p>
+                <p>Schedules meetings over email with a human touch. Perfect when a cold Calendly link kills the vibe
+                    and you want a smoother, more personal back-and-forth.</p>
                 <a href="#" class="ai-agent-link" data-bs-toggle="modal" data-bs-target="#aiSchedulerModal">
                     Learn more <i data-feather="arrow-right"></i>
                 </a>
@@ -1040,8 +1053,10 @@
                     </div>
                     <h3>AI Leads Closer</h3>
                 </div>
-                <p>Qualifies leads automatically and moves them toward a meeting. Cal uses form data, enrichment, and email context so you spend zero time chasing cold prospects.</p>
-                <p class="mb-0"><em class="coming-soon-badge">Coming Soon</em><br/><em class="coming-soon-badge">Get $150 off when you sign up for free today.</em></p>
+                <p>Qualifies leads automatically and moves them toward a meeting. Cal uses form data, enrichment, and
+                    email context so you spend zero time chasing cold prospects.</p>
+                <p class="mb-0"><em class="coming-soon-badge">Coming Soon</em><br /><em class="coming-soon-badge">Get
+                        $150 off when you sign up for free today.</em></p>
             </div>
 
             <div class="ai-agent-card">
@@ -1051,8 +1066,10 @@
                     </div>
                     <h3>AI CRM Tracker</h3>
                 </div>
-                <p>Updates your CRM with context from emails and meetings. No more manual notes or missing data. You focus on the relationship, Cal handles the busywork.</p>
-                <p class="mb-0"><em class="coming-soon-badge">Coming Soon</em><br/><em class="coming-soon-badge">Get $150 off when you sign up for free today.</em></p>
+                <p>Updates your CRM with context from emails and meetings. No more manual notes or missing data. You
+                    focus on the relationship, Cal handles the busywork.</p>
+                <p class="mb-0"><em class="coming-soon-badge">Coming Soon</em><br /><em class="coming-soon-badge">Get
+                        $150 off when you sign up for free today.</em></p>
             </div>
 
             <div class="ai-agent-card">
@@ -1062,7 +1079,8 @@
                     </div>
                     <h3>AI Event Manager</h3>
                 </div>
-                <p>Finds events in emails, PDFs, images, and itineraries, then adds them to Google Calendar automatically. Saves hours of tedious manual entry.</p>
+                <p>Finds events in emails, PDFs, images, and itineraries, then adds them to Google Calendar
+                    automatically. Saves hours of tedious manual entry.</p>
                 <a href="#" class="ai-agent-link" data-bs-toggle="modal" data-bs-target="#eventOrganizerModal">
                     Learn more <i data-feather="arrow-right"></i>
                 </a>
@@ -1071,12 +1089,16 @@
     </div>
 
     <div class="hero-actions mt-5 text-center">
-        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
+        <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
             <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                <path fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             Sign up free with Google
         </a>
@@ -1092,82 +1114,96 @@
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
                 <h2 class="mb-3">Your AI assistant and scheduling app</h2>
-                <p class="text-muted">Discover a variety of our advanced features. Unlimited and free for individuals.</p>
+                <p class="text-muted">Discover a variety of our advanced features. Unlimited and free for individuals.
+                </p>
             </div>
         </div>
 
         <div class="product-intro-grid">
             <div class="intro-card">
                 <h3>Auto follow-ups, reminders, 24/7 </h3>
-                <p>Keep your leads warm. Cal reads the full email context, propose times, follows up, and send reminders. Just like a human assistant working 24/7.</p>
+                <p>Keep your leads warm. Cal reads the full email context, propose times, follows up, and send
+                    reminders. Just like a human assistant working 24/7.</p>
                 <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-cc-cal.jpg') }}" alt="Product shot showing Cal cc'd on an email thread" loading="lazy">
+                    <img src="{{ url_for('static', filename='images/product-cc-cal.jpg') }}"
+                        alt="Product shot showing Cal cc'd on an email thread" loading="lazy">
                 </div>
             </div>
 
             <div class="intro-card">
                 <h3>Watch multiple calendars for conflicts</h3>
-                <p>Cal keeps an eye on multiple calendars so you never double-book. Pick the source of truth and we orchestrate the rest.</p>
+                <p>Cal keeps an eye on multiple calendars so you never double-book. Pick the source of truth and we
+                    orchestrate the rest.</p>
                 <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-calendar-conflicts.jpg') }}" alt="Calendar view highlighting conflict detection across schedules" loading="lazy">
+                    <img src="{{ url_for('static', filename='images/product-calendar-conflicts.jpg') }}"
+                        alt="Calendar view highlighting conflict detection across schedules" loading="lazy">
                 </div>
             </div>
 
             <div class="intro-card">
                 <h3>Contacts with intelligent columns</h3>
-                <p>Your every contact in one place. Cal keeps track of follow-ups and last interaction date so you don't have to.</p>
+                <p>Your every contact in one place. Cal keeps track of follow-ups and last interaction date so you don't
+                    have to.</p>
                 <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-contacts.jpg') }}" alt="Availability comparison across global timezones" loading="lazy">
+                    <img src="{{ url_for('static', filename='images/product-contacts.jpg') }}"
+                        alt="Availability comparison across global timezones" loading="lazy">
                 </div>
             </div>
 
             <div class="intro-card">
                 <h3>Public booking page? We have that too</h3>
-                <p>Need something sharable for your inbound leads? Toggle on your branded booking page and let Cal keep it in sync with your email bookings.</p>
+                <p>Need something sharable for your inbound leads? Toggle on your branded booking page and let Cal keep
+                    it in sync with your email bookings.</p>
                 <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-public-page.jpg') }}" alt="Preview of a public booking page powered by Cal" loading="lazy">
+                    <img src="{{ url_for('static', filename='images/product-public-page.jpg') }}"
+                        alt="Preview of a public booking page powered by Cal" loading="lazy">
                 </div>
             </div>
         </div>
     </div>
     <div class="stats-grid">
-            <div class="stat-item">
-                <span class="stat-number">5+ hrs</span>
-                <div class="stat-label">Saved per week</div>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">Zero</span>
-                <div class="stat-label">Learning curve</div>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">30 sec</span>
-                <div class="stat-label">Setup time</div>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number">100%</span>
-                <div class="stat-label">Personal touch</div>
-            </div>
+        <div class="stat-item">
+            <span class="stat-number">5+ hrs</span>
+            <div class="stat-label">Saved per week</div>
         </div>
+        <div class="stat-item">
+            <span class="stat-number">Zero</span>
+            <div class="stat-label">Learning curve</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">30 sec</span>
+            <div class="stat-label">Setup time</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">100%</span>
+            <div class="stat-label">Personal touch</div>
+        </div>
+    </div>
 </section>
 
 <div class="section-cta text-center">
     {% if not current_user.is_authenticated %}
-        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Sign up free with Google
-        </a>
-         <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
-            No credit card required. Zero setup.
-        </p>
+    <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large"
+        onclick="startGoogleLogin(); return false;">
+        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+            <path fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+            <path fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+        </svg>
+        Sign up free with Google
+    </a>
+    <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
+        No credit card required. Zero setup.
+    </p>
     {% else %}
-        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
-            Go to Bookings
-        </a>
+    <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+        Go to Bookings
+    </a>
     {% endif %}
 </div>
 
@@ -1179,54 +1215,71 @@
                 <p class="text-muted">Solopreneurs and service professionals are already using Cal</p>
             </div>
         </div>
-        
+
         <div class="row g-4">
             <div class="col-md-4">
                 <div class="use-case-card">
-                    <h4><i data-feather="trending-up" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Sales Teams and Recruiters</h4>
+                    <h4><i data-feather="trending-up"
+                            style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Sales
+                        Teams and Recruiters</h4>
                     <p class="scenario">"Can we schedule a demo to discuss your needs?"</p>
-                    <p class="text-muted mb-0">Sales and talent professionals schedule 10-20 calls per week. Cal eliminates the back-and-forth, letting teams focus on building relationships instead of calendar coordination. Faster scheduling = faster pipeline velocity.</p>
+                    <p class="text-muted mb-0">Sales and talent professionals schedule 10-20 calls per week. Cal
+                        eliminates the back-and-forth, letting teams focus on building relationships instead of calendar
+                        coordination. Faster scheduling = faster pipeline velocity.</p>
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="use-case-card">
-                    <h4><i data-feather="briefcase" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Solopreneurs &amp; Small Businesses</h4>
+                    <h4><i data-feather="briefcase"
+                            style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i>
+                        Solopreneurs &amp; Small Businesses</h4>
                     <p class="scenario">"Can I line up consultations with a personal touch?"</p>
-                    <p class="text-muted mb-0">Owners juggling fulfillment, sales, and support let Cal capture meeting requests straight from email. No manual scheduling. Just cc Cal so you can keep serving clients.</p>
+                    <p class="text-muted mb-0">Owners juggling fulfillment, sales, and support let Cal capture meeting
+                        requests straight from email. No manual scheduling. Just cc Cal so you can keep serving clients.
+                    </p>
                 </div>
             </div>
-            
+
             <div class="col-md-4">
                 <div class="use-case-card">
-                    <h4><i data-feather="users" style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Home & Physical Services</h4>
+                    <h4><i data-feather="users"
+                            style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Home &
+                        Physical Services</h4>
                     <p class="scenario">"What service do you provide? What time are you available?"</p>
-                    <p class="text-muted mb-0">Coordinating clients with for services is time-consuming. Cal handles availability checks and calendar invites automatically, reducing unnecessary missed calls and improving customer experience.</p>
+                    <p class="text-muted mb-0">Coordinating clients with for services is time-consuming. Cal handles
+                        availability checks and calendar invites automatically, reducing unnecessary missed calls and
+                        improving customer experience.</p>
                 </div>
             </div>
-            
+
         </div>
     </div>
 </div>
 
 <div class="section-cta text-center">
     {% if not current_user.is_authenticated %}
-        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Sign up free with Google
-        </a>
-         <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
-            No credit card required. Zero setup.
-        </p>
+    <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large"
+        onclick="startGoogleLogin(); return false;">
+        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+            <path fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+            <path fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+        </svg>
+        Sign up free with Google
+    </a>
+    <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
+        No credit card required. Zero setup.
+    </p>
     {% else %}
-        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
-            Go to Bookings
-        </a>
+    <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+        Go to Bookings
+    </a>
     {% endif %}
 </div>
 
@@ -1235,7 +1288,8 @@
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
                 <h2 class="mb-3">Free for solopreneurs and hustlers</h2>
-                <p class="text-muted">Start for free with unlimited bookings and event types, then upgrade when you need more customizations and branding.</p>
+                <p class="text-muted">Start for free with unlimited bookings and event types, then upgrade when you need
+                    more customizations and branding.</p>
             </div>
         </div>
 
@@ -1248,16 +1302,22 @@
                     <span class="plan-price-current">$0</span>
                     <span class="plan-price-unit">/ forever</span>
                 </div>
-                <a href="#" class="pricing-cta pricing-cta-primary google-signin-btn google-signin-btn-dark" onclick="startGoogleLogin(); return false;">
-                    <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                <a href="#" class="pricing-cta pricing-cta-primary google-signin-btn google-signin-btn-dark"
+                    onclick="startGoogleLogin(); return false;">
+                    <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"
+                        focusable="false">
+                        <path fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     Sign up free with Google
                 </a>
-                 <p class="text-center" style="font-size: 0.9rem; font-weight: 300;">
+                <p class="text-center" style="font-size: 0.9rem; font-weight: 300;">
                     No credit card required
                 </p>
                 <p class="fw-semibold mb-2">Includes:</p>
@@ -1267,10 +1327,12 @@
                     <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Follow up email 🤖</li>
                     <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Email reminders 🤖</li>
                     <li><i data-feather="check"></i>AI Event Manager 🤖</li>
-                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Unlimited event extraction (images & emails) 🤖</li>
+                    <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Unlimited event extraction (images & emails) 🤖
+                    </li>
                     <li><i data-feather="check"></i>Use our AI Agents on existing Calendly or Cal.com workflows</li>
                     <li><i data-feather="check"></i>Calendly integration</li>
-                    <li><i data-feather="check"></i>Cal.com integration <span class="coming-soon-text">(coming soon)</span></li>
+                    <li><i data-feather="check"></i>Cal.com integration <span class="coming-soon-text">(coming
+                            soon)</span></li>
                     <li><i data-feather="check"></i>Unlimited bookings</li>
                     <li><i data-feather="check"></i>Unlimited calendars</li>
                     <li><i data-feather="check"></i>Unlimited event types</li>
@@ -1319,8 +1381,9 @@
                 </div>
                 <p class="fw-semibold mb-2">Everything in Power, plus:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>See your team's interaction with contacts via shared smart inbox</li>
-                    
+                    <li><i data-feather="check"></i>See your team's interaction with contacts via shared smart inbox
+                    </li>
+
                     <li><i data-feather="check"></i>Customize AI Agent workflow</li>
                 </ul>
             </div>
@@ -1336,110 +1399,153 @@
                 <p class="text-muted">Everything you need to know about Cal</p>
             </div>
         </div>
-        
+
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="accordion" id="faqAccordion">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingOne">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne" aria-expanded="false" aria-controls="faqCollapseOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseOne" aria-expanded="false" aria-controls="faqCollapseOne">
                                 How does Cal compare to Calendly for Google Calendar scheduling?
                             </button>
                         </h2>
-                        <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It works entirely through email by reading conversation threads and coordinating directly with participants. This maintains the personal touch of email while automating the logistics. Calendly forces people to interact with a separate tool, which creates friction and a 40% drop-off rate.
+                                Unlike Calendly, Cal doesn't require recipients to click links or visit websites. It
+                                works entirely through email by reading conversation threads and coordinating directly
+                                with participants. This maintains the personal touch of email while automating the
+                                logistics. Calendly forces people to interact with a separate tool, which creates
+                                friction and a 40% drop-off rate.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingTwo">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo">
                                 Does Cal work with Google Calendar?
                             </button>
                         </h2>
-                        <div id="faqCollapseTwo" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwo" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseTwo" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwo"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Yes, Cal is designed specifically for Google Calendar integration. It automatically checks your availability, proposes meeting times based on your calendar, and creates Google Calendar events for all participants once a time is confirmed. Everything syncs seamlessly without any manual data entry.
+                                Yes, Cal is designed specifically for Google Calendar integration. It automatically
+                                checks your availability, proposes meeting times based on your calendar, and creates
+                                Google Calendar events for all participants once a time is confirmed. Everything syncs
+                                seamlessly without any manual data entry.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingThree">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree" aria-expanded="false" aria-controls="faqCollapseThree">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseThree" aria-expanded="false"
+                                aria-controls="faqCollapseThree">
                                 How much does Cal cost for appointment scheduling?
                             </button>
                         </h2>
-                        <div id="faqCollapseThree" class="accordion-collapse collapse" aria-labelledby="faqHeadingThree" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseThree" class="accordion-collapse collapse" aria-labelledby="faqHeadingThree"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Cal Autobot is free. In the future, we'll have more advance features for a small monthly subscription.
+                                Cal Autobot is free. In the future, we'll have more advance features for a small monthly
+                                subscription.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingFour">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFour" aria-expanded="false" aria-controls="faqCollapseFour">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseFour" aria-expanded="false" aria-controls="faqCollapseFour">
                                 Is Cal better than manual scheduling for online meeting coordination?
                             </button>
                         </h2>
-                        <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It eliminates the back-and-forth email chains ("Does Tuesday at 2pm work?" "How about Wednesday?") while maintaining the personal touch that scheduling links lack. You get the efficiency of automation with the warmth of direct communication.
+                                Cal saves sales teams an average of 5+ hours per week compared to manual scheduling. It
+                                eliminates the back-and-forth email chains ("Does Tuesday at 2pm work?" "How about
+                                Wednesday?") while maintaining the personal touch that scheduling links lack. You get
+                                the efficiency of automation with the warmth of direct communication.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingFive">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFive" aria-expanded="false" aria-controls="faqCollapseFive">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseFive" aria-expanded="false" aria-controls="faqCollapseFive">
                                 How quickly can I start using Cal for appointment scheduling?
                             </button>
                         </h2>
-                        <div id="faqCollapseFive" class="accordion-collapse collapse" aria-labelledby="faqHeadingFive" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseFive" class="accordion-collapse collapse" aria-labelledby="faqHeadingFive"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Setup takes about 30 seconds. Once you have access, you simply CC Cal@CalAutobot.com on any scheduling email thread. Cal reads the conversation context and begins coordinating immediately. No complex configuration, no calendar permissions to manage, no training required.
+                                Setup takes about 30 seconds. Once you have access, you simply CC Cal@CalAutobot.com on
+                                any scheduling email thread. Cal reads the conversation context and begins coordinating
+                                immediately. No complex configuration, no calendar permissions to manage, no training
+                                required.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingSix">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSix" aria-expanded="false" aria-controls="faqCollapseSix">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseSix" aria-expanded="false" aria-controls="faqCollapseSix">
                                 What makes Cal different from other AI scheduling assistants?
                             </button>
                         </h2>
-                        <div id="faqCollapseSix" class="accordion-collapse collapse" aria-labelledby="faqHeadingSix" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseSix" class="accordion-collapse collapse" aria-labelledby="faqHeadingSix"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling links that feel transactional, Cal participates in email threads just like a real executive assistant would. It understands context, handles time zone confusion, and adapts to conversational scheduling requests rather than forcing people into rigid booking flows.
+                                Cal focuses on maintaining natural, human-like email conversations. Unlike scheduling
+                                links that feel transactional, Cal participates in email threads just like a real
+                                executive assistant would. It understands context, handles time zone confusion, and
+                                adapts to conversational scheduling requests rather than forcing people into rigid
+                                booking flows.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingSeven">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSeven" aria-expanded="false" aria-controls="faqCollapseSeven">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseSeven" aria-expanded="false"
+                                aria-controls="faqCollapseSeven">
                                 Do you also have a booking page and public links like Calendly?
                             </button>
                         </h2>
-                        <div id="faqCollapseSeven" class="accordion-collapse collapse" aria-labelledby="faqHeadingSeven" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseSeven" class="accordion-collapse collapse" aria-labelledby="faqHeadingSeven"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Yes. Cal generates a polished public booking page with your event types, availability, and branding so you can share a link in signatures, on websites, or by text. Invitees can still self-book when it makes sense, while you keep Cal running in email threads for high-touch scheduling.
+                                Yes. Cal generates a polished public booking page with your event types, availability,
+                                and branding so you can share a link in signatures, on websites, or by text. Invitees
+                                can still self-book when it makes sense, while you keep Cal running in email threads for
+                                high-touch scheduling.
                             </div>
                         </div>
                     </div>
 
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faqHeadingEight">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseEight" aria-expanded="false" aria-controls="faqCollapseEight">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faqCollapseEight" aria-expanded="false"
+                                aria-controls="faqCollapseEight">
                                 I'm a physical small business. Can I use your booking tool?
                             </button>
                         </h2>
-                        <div id="faqCollapseEight" class="accordion-collapse collapse" aria-labelledby="faqHeadingEight" data-bs-parent="#faqAccordion">
+                        <div id="faqCollapseEight" class="accordion-collapse collapse" aria-labelledby="faqHeadingEight"
+                            data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Absolutely. Service-based shops use Cal to confirm appointments over email, send reminders, and capture walk-in leads via the public booking page. You can define appointment lengths, business hours, multiple calendars so Cal fits everything from salons and clinics to repair services.
+                                Absolutely. Service-based shops use Cal to confirm appointments over email, send
+                                reminders, and capture walk-in leads via the public booking page. You can define
+                                appointment lengths, business hours, multiple calendars so Cal fits everything from
+                                salons and clinics to repair services.
                             </div>
                         </div>
                     </div>
@@ -1455,31 +1561,38 @@
             <div class="col-lg-8 text-center">
                 <h2 class="mb-4">Smart, Simpler Scheduling</h2>
                 <p class="mb-4" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">
-                    Join forward-thinking individuals who are using AI to reclaim their time and focus on what truly matters.
+                    Join forward-thinking individuals who are using AI to reclaim their time and focus on what truly
+                    matters.
                 </p>
-                
-                {% if not current_user.is_authenticated %}
-                    <div class="hero-actions mt-4">
-                        <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-                            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            Sign up free with Google
-                        </a>
 
-                        <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
-                            No credit card required. Zero setup.
-                        </p>
-                    </div>
+                {% if not current_user.is_authenticated %}
+                <div class="hero-actions mt-4">
+                    <a href="#" class="google-signin-btn google-signin-btn-large"
+                        onclick="startGoogleLogin(); return false;">
+                        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"
+                            focusable="false">
+                            <path fill="#4285F4"
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853"
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05"
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335"
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        Sign up free with Google
+                    </a>
+
+                    <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
+                        No credit card required. Zero setup.
+                    </p>
+                </div>
                 {% else %}
-                    <div class="hero-actions mt-4">
-                        <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
-                            Go to Bookings
-                        </a>
-                    </div>
+                <div class="hero-actions mt-4">
+                    <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
+                        Go to Bookings
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -1496,17 +1609,16 @@
             </div>
             <div class="modal-body text-center">
                 <img src="{{ url_for('static', filename='images/learn-more-ai-scheduler.png') }}"
-                     alt="AI Scheduler example"
-                     class="img-fluid"
-                     loading="lazy"
-                     style="max-width: 100%; height: auto; border-radius: 8px;">
+                    alt="AI Scheduler example" class="img-fluid" loading="lazy"
+                    style="max-width: 100%; height: auto; border-radius: 8px;">
             </div>
         </div>
     </div>
 </div>
 
 <!-- AI Event Organizer Modal -->
-<div class="modal fade" id="eventOrganizerModal" tabindex="-1" aria-labelledby="eventOrganizerModalLabel" aria-hidden="true">
+<div class="modal fade" id="eventOrganizerModal" tabindex="-1" aria-labelledby="eventOrganizerModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -1515,7 +1627,8 @@
             </div>
             <div class="modal-body">
                 <div class="text-center mb-4">
-                    <p class="text-muted">Our event extraction turns emails, pictures, and itineraries into calendar events.</p>
+                    <p class="text-muted">Our event extraction turns emails, pictures, and itineraries into calendar
+                        events.</p>
                 </div>
 
                 <div class="other-uses-flow">
@@ -1538,7 +1651,8 @@
                             <i data-feather="mail"></i>
                         </div>
                         <h5>Forward to Cal</h5>
-                        <p>Forward it to <strong>Cal@CalAutobot.com</strong> - no portals, forms, or uploads to manage.</p>
+                        <p>Forward it to <strong>Cal@CalAutobot.com</strong> - no portals, forms, or uploads to manage.
+                        </p>
                     </div>
 
                     <div class="other-uses-arrow">
@@ -1559,7 +1673,9 @@
                     <p class="mb-3 fw-semibold text-dark">Forward your emails or pictures to</p>
                     <div class="email-cta-wrapper other-uses-cta-wrapper">
                         <a href="mailto:Cal@CalAutobot.com" class="email-address-chip">Cal@CalAutobot.com</a>
-                        <button class="copy-email-btn copy-email-btn-light" data-email="cal@calautobot.com" onclick="copyEmailAddress('Cal@CalAutobot.com', this); return false;" title="Copy email address">
+                        <button class="copy-email-btn copy-email-btn-light" data-email="cal@calautobot.com"
+                            onclick="copyEmailAddress('Cal@CalAutobot.com', this); return false;"
+                            title="Copy email address">
                             <i data-feather="copy"></i>
                         </button>
                     </div>

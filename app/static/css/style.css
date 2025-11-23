@@ -14,18 +14,18 @@
     --error-color: #F44336;
     --warning-color: #FF9800;
     --font-scale: 0.9;
-    
+
     /* Mobile breakpoints */
     --breakpoint-sm: 576px;
     --breakpoint-md: 768px;
     --breakpoint-lg: 992px;
     --breakpoint-xl: 1200px;
-    
+
     /* Responsive spacing */
     --section-padding: clamp(2.5rem, 8vw, 5rem);
     --container-padding: clamp(1rem, 3vw, 1.5rem);
     --card-padding: clamp(1.5rem, 4vw, 2rem);
-    
+
     /* Minimum touch target size (44x44px) */
     --min-touch-target: 44px;
 }
@@ -204,9 +204,11 @@
         padding: 14px 0;
         row-gap: 12px;
     }
+
     .landing-menu-toggle {
         display: inline-flex;
     }
+
     .landing-nav {
         width: 100%;
         display: none;
@@ -216,15 +218,18 @@
         padding-top: 10px;
         border-top: 1px solid #e5e9f2;
     }
+
     .landing-nav.is-open {
         display: flex;
     }
+
     .landing-nav-links {
         width: 100%;
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
     }
+
     .landing-nav-links .landing-link {
         width: 100%;
         text-align: center;
@@ -463,8 +468,8 @@
         align-items: center;
         text-align: center;
     }
-    
-.navbar .google-signin-btn {
+
+    .navbar .google-signin-btn {
         width: 100%;
         margin: 0.5rem 0;
         justify-content: center;
@@ -473,19 +478,19 @@
         white-space: nowrap;
         padding: 0.75rem 1rem;
     }
-    
+
     .navbar-nav {
         text-align: center;
         width: 100%;
     }
-    
+
     .navbar-nav .chrome-extension-btn,
     .navbar-nav .google-signin-btn {
         align-self: center;
         flex-direction: row;
         gap: 0.5rem;
     }
-    
+
     .navbar-nav .d-flex.flex-row {
         flex-direction: column !important;
         width: 100%;
@@ -589,15 +594,16 @@
 
 /* Hide navbar buttons on mobile - logo only header */
 @media (max-width: 768px) {
+
     .navbar .google-signin-btn,
     .navbar .chrome-extension-btn {
         display: none !important;
     }
-    
+
     .navbar-nav {
         display: none !important;
     }
-    
+
     /* Hide Chrome extension section on bookings mobile view */
     .chrome-extension-card {
         display: none !important;
@@ -767,7 +773,7 @@ body {
 }
 
 .strikethrough-text {
-  text-decoration: line-through;
+    text-decoration: line-through;
 }
 
 .sidebar {
@@ -992,6 +998,7 @@ body {
 
 /* Mobile Navigation - Only active on screens <992px */
 @media (max-width: 991.98px) {
+
     /* Show mobile header */
     .mobile-header {
         display: flex;
@@ -1004,7 +1011,7 @@ body {
         top: 0;
         z-index: 1000;
     }
-    
+
     .mobile-menu-toggle {
         display: flex;
         align-items: center;
@@ -1018,20 +1025,20 @@ body {
         cursor: pointer;
         transition: all 0.2s ease;
     }
-    
+
     .mobile-menu-toggle:hover {
         background: rgba(255, 255, 255, 0.15);
     }
-    
+
     .mobile-menu-toggle:active {
         transform: scale(0.95);
     }
-    
+
     .mobile-menu-toggle svg {
         width: 24px;
         height: 24px;
     }
-    
+
     .mobile-brand {
         display: flex;
         align-items: center;
@@ -1041,15 +1048,15 @@ body {
         font-weight: 600;
         font-size: 1.1rem;
     }
-    
+
     .mobile-brand:hover {
         color: #ffffff;
     }
-    
+
     .mobile-brand img {
         border-radius: 8px;
     }
-    
+
     /* Convert sidebar to drawer */
     .sidebar {
         position: fixed;
@@ -1061,11 +1068,11 @@ body {
         transition: left 0.3s ease;
         overflow-y: auto;
     }
-    
+
     .sidebar.sidebar-open {
         left: 0;
     }
-    
+
     /* Backdrop overlay */
     .sidebar-backdrop {
         position: fixed;
@@ -1079,17 +1086,17 @@ body {
         transition: opacity 0.3s ease, visibility 0.3s ease;
         z-index: 1040;
     }
-    
+
     .sidebar-backdrop.backdrop-visible {
         opacity: 1;
         visibility: visible;
     }
-    
+
     /* Full-width content on mobile */
     .layout {
         flex-direction: column;
     }
-    
+
     .layout-content {
         width: 100%;
         padding-top: 0;
@@ -1108,7 +1115,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     margin-bottom: 1rem;
@@ -1130,7 +1142,8 @@ h4 {
     font-size: calc(1.25rem * var(--font-scale));
 }
 
-code, pre {
+code,
+pre {
     font-family: 'Source Code Pro', monospace;
 }
 
@@ -1438,18 +1451,18 @@ code, pre {
     .email-stack {
         padding: clamp(2rem, 6vw, 4rem) 0;
     }
-    
+
     .email-stack__title {
         font-size: clamp(1.5rem, 5vw, 2rem);
         padding: 0 1rem;
     }
-    
+
     .email-stack__subtitle {
         font-size: clamp(0.9rem, 2.5vw, 1.1rem);
         padding: 0 1rem;
         margin-bottom: 2rem;
     }
-    
+
     /* Replace vertical scroll with horizontal carousel */
     .email-stack__scroller {
         height: auto;
@@ -1459,15 +1472,17 @@ code, pre {
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE/Edge */
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* IE/Edge */
     }
-    
+
     /* Hide scrollbar */
     .email-stack__scroller::-webkit-scrollbar {
         display: none;
     }
-    
+
     /* Horizontal flex layout */
     .email-stack__stage {
         position: static;
@@ -1480,7 +1495,7 @@ code, pre {
         padding: 0 1rem 2rem 1rem;
         pointer-events: auto;
     }
-    
+
     /* Cards side-by-side */
     .email-stack__card {
         position: static;
@@ -1491,7 +1506,7 @@ code, pre {
         scroll-snap-align: center;
         scroll-snap-stop: always;
     }
-    
+
     .email-stack__card img {
         width: 100%;
         max-width: 100%;
@@ -1499,13 +1514,13 @@ code, pre {
         box-shadow: 0 8px 24px rgba(17, 24, 39, 0.2);
         border: 2px solid #e5e7eb;
     }
-    
+
     .email-stack__card[data-stack-index="4"] img {
         border: none;
         width: 100%;
-        display:block;
+        display: block;
     }
-    
+
     /* Highlight frame adjustment */
     .email-stack__card--highlight .email-stack__highlight-frame {
         padding: 2px;
@@ -1576,14 +1591,14 @@ code, pre {
     padding: 2rem;
     background: var(--card-background);
     border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     height: 100%;
 }
 
 .feature-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
 }
 
 .feature-icon {
@@ -1612,7 +1627,7 @@ code, pre {
     background: var(--card-background);
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     min-height: 500px;
 }
 
@@ -1690,7 +1705,7 @@ code, pre {
 .accordion {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .accordion-item {
@@ -1791,12 +1806,13 @@ code, pre {
 
 /* Mobile carousel controls */
 @media (max-width: 768px) {
+
     .carousel-control-prev,
     .carousel-control-next {
         width: 15%;
         opacity: 0.8;
     }
-    
+
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
         width: 32px;
@@ -1806,11 +1822,12 @@ code, pre {
 }
 
 /* Cards */
-.input-card, .form-card {
+.input-card,
+.form-card {
     background: var(--card-background);
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
 }
 
@@ -1819,13 +1836,13 @@ code, pre {
     border-radius: 12px;
     padding: 1.35rem;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .event-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .event-header {
@@ -2030,7 +2047,7 @@ code, pre {
 
 /* Footer */
 .footer {
-    background-color: #000;
+    background: linear-gradient(135deg, #1a1f36 0%, #2d3748 100%);
     color: #f9fafb;
     padding: 2rem 0;
     margin-top: auto;
@@ -2120,6 +2137,7 @@ code, pre {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2145,7 +2163,8 @@ code, pre {
 
 /* Events container with infinite scroll potential */
 .events-container {
-    max-height: none; /* Ready for infinite scroll implementation */
+    max-height: none;
+    /* Ready for infinite scroll implementation */
 }
 
 /* Focus states for accessibility */
@@ -2297,7 +2316,7 @@ code, pre {
     width: 25px;
     height: 25px;
     flex-shrink: 0;
-    margin-top:8px;
+    margin-top: 8px;
 }
 
 .bookings-cta__copy {
@@ -2533,6 +2552,7 @@ code, pre {
 
 /* Print styles */
 @media print {
+
     .navbar,
     .footer,
     .btn,
@@ -2546,6 +2566,7 @@ code, pre {
         border: 1px solid var(--border-color);
     }
 }
+
 .public-profile-header {
     border: none;
     border-radius: 16px;
@@ -2582,6 +2603,7 @@ code, pre {
     border-radius: 16px;
     background: #f5f7fb;
 }
+
 .form-control-compact {
     height: 35px;
     padding: 6px 8px;
@@ -3131,7 +3153,7 @@ code, pre {
     transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.slot-input:checked + .slot-option {
+.slot-input:checked+.slot-option {
     background: #2563eb;
     border-color: #2563eb;
     color: #fff;
@@ -3145,7 +3167,7 @@ code, pre {
 }
 
 
-.slot-input:checked + .slot-option .slot-dot {
+.slot-input:checked+.slot-option .slot-dot {
     display: none;
 }
 
@@ -3287,6 +3309,7 @@ code, pre {
     .confirm-layout {
         flex-direction: column;
     }
+
     .confirm-summary,
     .confirm-form {
         flex: 1 1 auto;
@@ -3394,6 +3417,7 @@ code, pre {
     .booking-layout {
         flex-direction: column;
     }
+
     .booking-sidebar,
     .booking-calendar,
     .booking-slots {
@@ -3401,11 +3425,13 @@ code, pre {
         border-right: none;
         border-left: none;
     }
+
     .booking-sidebar,
     .booking-calendar,
     .booking-slots {
         padding: 24px;
     }
+
     .booking-calendar {
         min-width: 0;
         border-top: 1px solid #e5e9f2;
