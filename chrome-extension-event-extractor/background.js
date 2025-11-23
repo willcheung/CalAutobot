@@ -161,7 +161,7 @@ class CalendarAIBackground {
       const authToken = 'session-token'; // Use same token as popup
 
       // Use same API base URL logic as popup.js
-      const apiBaseUrl = 'https://calautobot.com';
+      const apiBaseUrl = 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev';
 
       // Send to API endpoint with correct format
       const response = await fetch(`${apiBaseUrl}/api/extension/process`, {

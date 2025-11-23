@@ -15,9 +15,10 @@
     "contextMenus"
   ],
   "oauth2": {
-    "client_id": "609660480116-tnd7the9ooj8sd6rt4grjj7hcpt5frjf.apps.googleusercontent.com",
+    "client_id": "609660480116-2n2tq58oiodg12a6iefbdkdcfo9tj3vi.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/calendar.app.created"
     ]
   },

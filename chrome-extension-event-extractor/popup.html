@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <style>
@@ -11,48 +12,48 @@
       padding: 0;
       background: #f8fafc;
     }
-    
+
     .header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 20px;
       text-align: center;
     }
-    
+
     .header h1 {
       margin: 0;
       font-size: 18px;
       font-weight: 600;
     }
-    
+
     .content {
       padding: 20px;
     }
-    
+
     .auth-section {
       text-align: center;
       margin-bottom: 20px;
     }
-    
+
     .auth-status {
       padding: 10px;
       border-radius: 8px;
       margin-bottom: 15px;
       font-size: 14px;
     }
-    
+
     .auth-status.authenticated {
       background: #d1fae5;
       color: #065f46;
       border: 1px solid #a7f3d0;
     }
-    
+
     .auth-status.unauthenticated {
       background: #fef3c7;
       color: #92400e;
       border: 1px solid #fcd34d;
     }
-    
+
     .google-signin-btn {
       display: flex;
       align-items: center;
@@ -69,40 +70,40 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    
+
     .google-signin-btn:hover {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       background: #f8f9fa;
     }
-    
+
     .main-section {
       display: none;
     }
-    
+
     .main-section.show {
       display: block;
     }
-    
+
     .main-section h2 {
       font-size: 18px;
       color: #374151;
       margin: 0 0 20px 0;
       text-align: center;
     }
-    
+
     .description {
       font-size: 13px;
       color: #6b7280;
       margin: 5px 0 10px 0;
     }
-    
+
     .email-container {
       display: flex;
       gap: 8px;
       align-items: center;
       margin: 10px 0;
     }
-    
+
     .email-address {
       background: #f3f4f6;
       border: 1px solid #d1d5db;
@@ -114,7 +115,7 @@
       user-select: all;
       flex: 1;
     }
-    
+
     .copy-btn {
       background: #667eea;
       border: none;
@@ -126,15 +127,15 @@
       transition: all 0.2s;
       white-space: nowrap;
     }
-    
+
     .copy-btn:hover {
       background: #5a67d8;
     }
-    
+
     .copy-btn.copied {
       background: #10b981;
     }
-    
+
     .section {
       margin-bottom: 20px;
       padding: 15px;
@@ -142,13 +143,13 @@
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    
+
     .section h3 {
       margin: 0 0 10px 0;
       font-size: 16px;
       color: #374151;
     }
-    
+
     textarea {
       width: 100%;
       height: 80px;
@@ -159,7 +160,7 @@
       resize: vertical;
       box-sizing: border-box;
     }
-    
+
     .button {
       width: 100%;
       padding: 12px;
@@ -171,45 +172,45 @@
       transition: all 0.2s;
       margin-bottom: 10px;
     }
-    
+
     .button:last-child {
       margin-bottom: 0;
     }
-    
+
     .button.primary {
       background: #667eea;
       color: white;
     }
-    
+
     .button.primary:hover {
       background: #5a67d8;
     }
-    
+
     .button.secondary {
       background: #6b7280;
       color: white;
     }
-    
+
     .button.secondary:hover {
       background: #4b5563;
     }
-    
+
     .button.outline {
       background: white;
       color: #667eea;
       border: 2px solid #667eea;
     }
-    
+
     .button.outline:hover {
       background: #667eea;
       color: white;
     }
-    
+
     .button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    
+
     .status {
       padding: 8px 12px;
       border-radius: 6px;
@@ -217,22 +218,22 @@
       margin-top: 10px;
       text-align: center;
     }
-    
+
     .status.success {
       background: #d1fae5;
       color: #065f46;
     }
-    
+
     .status.error {
       background: #fee2e2;
       color: #991b1b;
     }
-    
+
     .status.processing {
       background: #dbeafe;
       color: #1e40af;
     }
-    
+
     .toast {
       position: fixed;
       top: 20px;
@@ -248,15 +249,15 @@
       transform: translateX(100%);
       transition: transform 0.3s ease;
     }
-    
+
     .toast.show {
       transform: translateX(0);
     }
-    
+
     .hidden {
       display: none;
     }
-    
+
     .loading {
       display: inline-block;
       width: 12px;
@@ -267,18 +268,24 @@
       animation: spin 1s linear infinite;
       margin-right: 8px;
     }
-    
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="header">
     <h1>CalAutobot: AI Event Creator</h1>
   </div>
-  
+
   <div class="content">
     <!-- Authentication Section -->
     <div class="auth-section">
@@ -287,28 +294,34 @@
       </div>
       <button id="authBtn" class="google-signin-btn" style="display: none;">
         <svg width="18" height="18" viewBox="0 0 18 18">
-          <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-          <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 0 1-7.18-2.53H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-          <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 0 1 0-3.07V5.35H1.83a8 8 0 0 0 0 7.28l2.67-2.14z"/>
-          <path fill="#EA4335" d="M8.98 3.58c1.32 0 2.5.45 3.44 1.35l2.54-2.59a7.81 7.81 0 0 0-5.98-2.26 8 8 0 0 0-7.15 4.42l2.67 2.14c.63-1.89 2.39-3.06 4.48-3.06z"/>
+          <path fill="#4285F4"
+            d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z" />
+          <path fill="#34A853"
+            d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2.04a4.8 4.8 0 0 1-7.18-2.53H1.83v2.07A8 8 0 0 0 8.98 17z" />
+          <path fill="#FBBC05" d="M4.5 10.49a4.8 4.8 0 0 1 0-3.07V5.35H1.83a8 8 0 0 0 0 7.28l2.67-2.14z" />
+          <path fill="#EA4335"
+            d="M8.98 3.58c1.32 0 2.5.45 3.44 1.35l2.54-2.59a7.81 7.81 0 0 0-5.98-2.26 8 8 0 0 0-7.15 4.42l2.67 2.14c.63-1.89 2.39-3.06 4.48-3.06z" />
         </svg>
         <span>Sign in with Google</span>
       </button>
-      <p class="small mt-3 text-muted">We never access your private calendar. All events are organized separately.</p>
+      <p id="privacyDisclaimer" class="small mt-3 text-muted">We never access your private calendar. All events are
+        organized separately.</p>
     </div>
-    
+
     <div class="main-section">
       <h2>Ways to create events in your Google Calendar</h2>
-      
+
       <!-- Copy & Paste Text -->
       <div class="section">
         <h3>📝 Paste Text or Prompt AI</h3>
-        <textarea id="textInput" placeholder="Paste text with event info (emails, schedules, etc.) or simply prompt AI to create your event." disabled></textarea>
+        <textarea id="textInput"
+          placeholder="Paste text with event info (emails, schedules, etc.) or simply prompt AI to create your event."
+          disabled></textarea>
         <button id="processTextBtn" class="button primary" disabled>
           <span class="button-text">Create Events</span>
         </button>
       </div>
-      
+
       <!-- Take Screenshot -->
       <div class="section">
         <h3>📷 Take Screenshot</h3>
@@ -317,33 +330,35 @@
           <span class="button-text">Take Screenshot</span>
         </button>
       </div>
-      
+
       <!-- Forward Email -->
       <div class="section">
         <h3>📧 Forward Email</h3>
         <p class="description">Forward emails and attachments with event information to:</p>
         <p class="description">💡 Pro tip: Take a picture and attach it to an email!</p>
         <div class="email-container">
-          <div class="email-address">go@CalAutobot.com</div>
+          <div class="email-address">Cal@CalAutobot.com</div>
           <button id="copyEmailBtn" class="copy-btn">Copy</button>
         </div>
       </div>
-      
+
       <!-- Bookings Access -->
       <div class="section">
-        <button id="bookingsBtn" class="button outline">
-          Events and Settings
+        <button id="bookingsBtn" class="button secondary">
+          Advanced Settings
         </button>
+        <button id="signOutBtn" class="button outline" style="display: none;">Sign Out</button>
       </div>
     </div>
-    
+
     <!-- Status Display -->
     <div id="statusMessage" class="status hidden"></div>
   </div>
-  
+
   <!-- Toast Notification -->
   <div id="toast" class="toast hidden"></div>
-  
+
   <script src="popup.js"></script>
 </body>
+
 </html>
