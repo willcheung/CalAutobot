@@ -219,9 +219,9 @@ def extension_availability_text():
         if exc.code == 'google_unavailable':
             # This means the user's calendar refresh token is expired/invalid
             response = jsonify({
-                'error': 'CALENDAR_RECONNECT_REQUIRED',
+                'error': 'SETUP_REQUIRED',
                 'message': 'Your calendar connection has expired. Please reconnect your Google Calendar.',
-                'setup_url': url_for('google_auth.login', full='1', _external=True)
+                'setup_url': url_for('onboarding_routes.onboarding', _external=True)
             })
             add_cors_headers_for_extension(response)
             return response, 403
