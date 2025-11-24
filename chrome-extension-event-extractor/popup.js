@@ -2,7 +2,7 @@
 
 class CalendarAIPopup {
   constructor() {
-    this.apiBaseUrl = 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev';
+    this.apiBaseUrl = 'https://calautobot.com';
     this.user = null;
     this.authToken = null;
     this.isLoading = true; // Start in loading state
@@ -64,22 +64,23 @@ class CalendarAIPopup {
         };
         console.log('✅ User info fetched:', this.user.email);
 
-        // Check backend status for calendar connection
+        // Check if user granted calendar scope by trying to verify token with Google
         try {
-          const statusResp = await fetch(`${this.apiBaseUrl}/api/extension/availability_text`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const tokenInfoResp = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${token}`);
+          if (tokenInfoResp.ok) {
+            const tokenInfo = await tokenInfoResp.json();
+            const scopes = tokenInfo.scope ? tokenInfo.scope.split(' ') : [];
+            const hasCalendarScope = scopes.some(scope =>
+              scope.includes('calendar') || scope.includes('https://www.googleapis.com/auth/calendar.app.created')
+            );
 
-          if (statusResp.status === 403) {
-            const statusData = await statusResp.json();
-            if (statusData.error === 'SETUP_REQUIRED') {
-              console.log('⚠️ User needs setup/calendar connection');
-              this.user.setupRequired = true;
-              this.user.setupUrl = statusData.setup_url;
+            if (!hasCalendarScope) {
+              console.log('⚠️ Calendar permission not granted');
+              this.user.needsCalendarPermission = true;
             }
           }
         } catch (err) {
-          console.warn('Failed to check backend status:', err);
+          console.warn('Failed to verify token scopes:', err);
         }
 
         this.isLoading = false;
@@ -146,16 +147,17 @@ class CalendarAIPopup {
 
     if (this.user) {
       privacyDisclaimer.style.display = 'none'; // Hide disclaimer when signed in
-      if (this.user.setupRequired) {
-        // Authenticated but needs calendar connection
-        authStatus.textContent = 'Almost there! Connect your calendar.';
+
+      if (this.user.needsCalendarPermission) {
+        // Authenticated but needs calendar permission
+        authStatus.textContent = 'Almost there! Grant calendar access.';
         authStatus.className = 'auth-status unauthenticated';
-        authBtn.innerHTML = '<span>Connect your calendar to get started</span>';
+        authBtn.innerHTML = '<span>Grant calendar access</span>';
         authBtn.style.display = 'flex';
-        signOutBtn.style.display = 'block'; // Allow sign out during setup
+        signOutBtn.style.display = 'block'; // Allow sign out
         mainSection.classList.remove('show');
       } else {
-        // Fully authenticated
+        // Fully authenticated with calendar scope
         authStatus.textContent = `Signed in as ${this.user.email}`;
         authStatus.className = 'auth-status authenticated';
         authBtn.style.display = 'none'; // Hide main auth button
@@ -188,16 +190,22 @@ class CalendarAIPopup {
   }
 
   async handleAuth() {
-    if (this.user) {
-      if (this.user.setupRequired && this.user.setupUrl) {
-        // Redirect to setup
-        chrome.tabs.create({ url: this.user.setupUrl });
+    if (this.user && this.user.needsCalendarPermission) {
+      // Re-authenticate to get calendar permission
+      this.showStatus('Requesting calendar access...', 'processing');
+      // Clear the old token first
+      if (this.authToken) {
+        chrome.identity.removeCachedAuthToken({ token: this.authToken }, () => {
+          this.signIn(); // Trigger sign-in again to get new permissions
+        });
+      } else {
+        this.signIn();
       }
-      // No else needed for sign out as it's handled by signOutBtn
-    } else {
-      // Sign in
+    } else if (!this.user) {
+      // Initial sign in
       this.signIn();
     }
+    // If already fully authenticated, button should be hidden anyway
   }
 
   signIn() {

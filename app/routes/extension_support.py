@@ -213,7 +213,7 @@ def extension_availability_text():
 
     try:
         availability_batch = availability_service.get_availability_for_range(
-            user, event_type, start_date, end_date, extension_token=extension_token
+            user, event_type, start_date, end_date
         )
     except AvailabilityError as exc:
         if exc.code == 'google_unavailable':
