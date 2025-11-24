@@ -276,7 +276,7 @@ def extension_availability_text():
     try:
         days_to_show = max(1, min(14, int(days_param)))
     except (TypeError, ValueError):
-        days_to_show = 5
+        days_to_show = 8
     
     # Filter slots to only those within the next N days
     cutoff_date = start_date + timedelta(days=days_to_show)
