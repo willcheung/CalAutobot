@@ -100,6 +100,45 @@ def _format_slot_display(slot, tz) -> str:
     return f"{start_str} - {end_str}"
 
 
+def _consolidate_consecutive_slots(slots):
+    """
+    Consolidate consecutive 30-minute slots into continuous time ranges.
+    
+    For example, if we have:
+    - 12:00 PM - 12:30 PM
+    - 12:30 PM - 1:00 PM
+    - 1:00 PM - 1:30 PM
+    
+    This will return:
+    - 12:00 PM - 1:30 PM
+    """
+    if not slots:
+        return []
+    
+    consolidated = []
+    current_start = slots[0].start
+    current_end = slots[0].end
+    
+    for i in range(1, len(slots)):
+        slot = slots[i]
+        # Check if this slot is consecutive (starts when previous ends)
+        if slot.start == current_end:
+            # Extend the current range
+            current_end = slot.end
+        else:
+            # Gap found, save current range and start new one
+            from app.services.availability import Slot
+            consolidated.append(Slot(start=current_start, end=current_end))
+            current_start = slot.start
+            current_end = slot.end
+    
+    # Don't forget the last range
+    from app.services.availability import Slot
+    consolidated.append(Slot(start=current_start, end=current_end))
+    
+    return consolidated
+
+
 def _flatten_slots(batch):
     ordered_dates = sorted(batch.slots_by_date.keys())
     slots = []
@@ -238,9 +277,12 @@ def extension_availability_text():
         requested = 8
     visible_slots = all_slots[:requested]
 
+    # Consolidate consecutive slots for better readability
+    consolidated_slots = _consolidate_consecutive_slots(visible_slots)
+
     slots_payload = []
     lines = []
-    for slot in visible_slots:
+    for slot in consolidated_slots:
         display = _format_slot_display(slot, tz)
         slots_payload.append(
             {
@@ -251,7 +293,7 @@ def extension_availability_text():
         )
         lines.append(f"- {display}")
 
-    if not visible_slots:
+    if not consolidated_slots:
         response = jsonify(
             {
                 'success': False,
