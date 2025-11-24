@@ -194,27 +194,34 @@ def process_single_email(email_data: Dict) -> bool:
                         break
 
         if authenticated_owner:
-            # Route to scheduling flow with authenticated owner, skip provisional user limits
-            logger.info(
-                f"Found authenticated user {authenticated_owner.email} in recipients. "
-                f"Routing to scheduling flow for owner, bypassing provisional user limits for sender {sender_email}"
-            )
-            scheduling_payload = {
-                "sender": email_data.get("sender"),
-                "sender_name": email_data.get("sender_name"),
-                "subject": subject,
-                "body_text": body_text,
-                "body_html": email_data.get("body_html"),
-                "to": email_data.get("to") or [],
-                "cc": email_data.get("cc") or [],
-                "thread_id": thread_id,
-                "message_id": email_data.get("message_id"),
-                "received_at": email_data.get("received_at"),
-                "raw_headers": email_data.get("raw_headers"),
-                "attachments": attachments_info,
-            }
-            result = handle_scheduling_email(scheduling_payload, owner_user=authenticated_owner)
-            return result is not None
+            # Only route to scheduling if it's NOT an event extraction task
+            if task_type == "extract_event":
+                logger.info(
+                    f"Authenticated user {authenticated_owner.email} found, but task is 'extract_event'. "
+                    "Skipping scheduling flow to proceed with event extraction."
+                )
+            else:
+                # Route to scheduling flow with authenticated owner, skip provisional user limits
+                logger.info(
+                    f"Found authenticated user {authenticated_owner.email} in recipients. "
+                    f"Routing to scheduling flow for owner, bypassing provisional user limits for sender {sender_email}"
+                )
+                scheduling_payload = {
+                    "sender": email_data.get("sender"),
+                    "sender_name": email_data.get("sender_name"),
+                    "subject": subject,
+                    "body_text": body_text,
+                    "body_html": email_data.get("body_html"),
+                    "to": email_data.get("to") or [],
+                    "cc": email_data.get("cc") or [],
+                    "thread_id": thread_id,
+                    "message_id": email_data.get("message_id"),
+                    "received_at": email_data.get("received_at"),
+                    "raw_headers": email_data.get("raw_headers"),
+                    "attachments": attachments_info,
+                }
+                result = handle_scheduling_email(scheduling_payload, owner_user=authenticated_owner)
+                return result is not None
 
         if task_type == "schedule_meeting" or (task_type == "no_action" and (not user or user.google_id is None)):
             if not user:
