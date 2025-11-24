@@ -1,125 +1,40 @@
-.calautobot-container {
-  position: relative;
-  display: inline-block;
-  margin-left: 8px;
-  font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
-}
-
-.calautobot-btn {
-  background-color: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 18px;
-  /* More rounded */
-  padding: 0 12px;
-  /* Smaller padding */
-  height: 32px;
-  /* Smaller height */
-  font-weight: 500;
-  font-size: 13px;
-  /* Smaller font */
-  cursor: pointer;
-  display: flex;
+/* Target the InboxSDK button container for hover effect and spacing */
+.inboxsdk__button:has(.calautobot-icon) {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  margin: 0 4px !important;
+  border-radius: 50%;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s, box-shadow 0.2s;
-}
-
-.calautobot-btn:hover {
-  background-color: #1557b0;
-  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-}
-
-.calautobot-btn:active {
-  background-color: #174ea6;
-}
-
-.calautobot-btn svg {
-  margin-left: 4px;
-  fill: currentColor;
-}
-
-.calautobot-dropdown {
-  display: none;
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  background-color: white;
-  min-width: 200px;
-  box-shadow: 0 2px 6px 2px rgba(60, 64, 67, 0.15);
-  border-radius: 4px;
-  padding: 6px 0;
-  z-index: 1000;
-  margin-bottom: 4px;
-}
-
-.calautobot-dropdown.show {
-  display: block;
-}
-
-.calautobot-item {
-  padding: 8px 16px;
-  font-size: 14px;
-  color: #3c4043;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
+  transition: background-color 0.15s;
 }
 
-.calautobot-item:hover {
-  background-color: #f1f3f4;
+.inboxsdk__button:has(.calautobot-icon):hover {
+  background-color: rgba(32, 33, 36, 0.059) !important;
+  /* Gmail standard hover circle */
 }
 
-.calautobot-item svg {
-  margin-right: 12px;
-  width: 20px;
-  height: 20px;
-  fill: #5f6368;
+/* Icon styling */
+.calautobot-icon {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  flex-shrink: 0 !important;
+  /* background-image set dynamically in content.js */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 1 !important;
+  /* Ensure solid, not faded */
+  filter: none !important;
 }
 
-.calautobot-info-item {
-  padding: 8px 16px;
-  font-size: 12px;
-  color: #5f6368;
-  cursor: default;
-  display: flex;
-  align-items: center;
-  white-space: normal;
-  line-height: 1.4;
-}
-
-.calautobot-email-highlight {
-  color: #1a73e8;
-  font-weight: 500;
-  margin: 0 2px;
-}
-
-.calautobot-info-item svg {
-  margin-right: 12px;
-  width: 16px;
-  height: 16px;
-  fill: #fbbc04;
-  /* Google Yellow for lightbulb */
-  flex-shrink: 0;
-}
-
-.calautobot-divider {
-  height: 1px;
-  background-color: #dadce0;
-  margin: 4px 0;
-}
-
-.calautobot-spinner {
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top: 2px solid #ffffff;
-  width: 14px;
-  height: 14px;
-  animation: calautobot-spin 1s linear infinite;
-  margin-right: 8px;
-}
-
+/* Loading Animation */
 @keyframes calautobot-spin {
   0% {
     transform: rotate(0deg);
@@ -128,4 +43,80 @@
   100% {
     transform: rotate(360deg);
   }
+}
+
+.calautobot-icon.calautobot-loading {
+  animation: calautobot-spin 1s linear infinite;
+  background-image: none !important;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top: 3px solid #1a73e8;
+  /* Google Blue */
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+/* Dropdown Styling */
+.calautobot-dropdown {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 8px 0;
+  min-width: 250px;
+  font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #202124;
+  z-index: 10000;
+}
+
+.calautobot-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.calautobot-item:hover {
+  background-color: #f1f3f4;
+}
+
+.calautobot-item svg {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  fill: #5f6368;
+}
+
+.calautobot-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 4px 0;
+}
+
+.calautobot-info-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  color: #5f6368;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.calautobot-info-item:hover {
+  background-color: #f1f3f4;
+}
+
+.calautobot-info-item svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 12px;
+  fill: #fbbc04;
+  /* Yellow for lightbulb */
+  flex-shrink: 0;
+}
+
+.calautobot-email-highlight {
+  color: #1a73e8;
+  font-weight: 500;
 }

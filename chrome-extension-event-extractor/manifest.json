@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pictures to Google Calendar by CalAutobot",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "AI that automatically creates Google Calendar events from screenshots, emails, text and PDFs.",
   "icons": {
     "16": "icons/icon16.png",

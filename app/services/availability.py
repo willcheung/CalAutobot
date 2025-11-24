@@ -227,7 +227,12 @@ def _collect_google_busy_slots(
         if calendar.is_selected_for_conflicts
     ]
     if not conflict_calendar_ids:
-        return []
+        # User has no calendars selected for conflict checking
+        # This means they haven't configured their calendar settings properly
+        raise AvailabilityError(
+            "Please configure your calendar settings. Go to Settings → Calendars in the web app.",
+            code="google_unavailable",
+        )
 
     try:
         calendars_busy = google_calendar.fetch_freebusy(
@@ -407,6 +412,7 @@ def get_availability_for_range(
     range_end_dt = tz.localize(datetime.combine(end_date, time.max))
 
     local_busy = _collect_local_busy_slots(user, range_start_dt, range_end_dt, tz)
+    # This will raise AvailabilityError if Google Calendar fails
     google_busy = _collect_google_busy_slots(user, range_start_dt, range_end_dt, tz, extension_token)
     all_busy = local_busy + google_busy
     busy_by_date = _group_busy_slots_by_date(all_busy, tz)

@@ -1,3 +1,27 @@
+// InboxSDK background script handler
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'inboxsdk__injectPageWorld' && sender.tab) {
+        if (chrome.scripting) {
+            // MV3
+            let documentIds;
+            let frameIds;
+            if (sender.documentId) {
+                documentIds = [sender.documentId];
+            } else {
+                frameIds = [sender.frameId];
+            }
+            chrome.scripting.executeScript({
+                target: { tabId: sender.tab.id, documentIds, frameIds },
+                world: 'MAIN',
+                files: ['pageWorld.js'],
+            });
+            sendResponse(true);
+        } else {
+            sendResponse(false);
+        }
+    }
+});
+
 const API_BASES = ['https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
 
 let activeApiBase = API_BASES[0];
@@ -74,6 +98,11 @@ async function fetchFromApi(urlObj, options = {}, token = null) {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Ignore messages that don't look like ours (e.g. InboxSDK internal messages)
+    if (!request || !request.action) {
+        return false;
+    }
+
     (async () => {
         try {
             const { action, payload } = request;
@@ -97,14 +126,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     sendResponse(handleLogError(payload));
                     break;
                 default:
-                    throw new Error(`Unknown action: ${action}`);
+                    // If it has an action but we don't recognize it, it might be for another part of our app
+                    // or we should just log a warning and not throw
+                    console.warn(`Unknown action received: ${action}`);
+                    sendResponse({ success: false, error: `Unknown action: ${action}` });
             }
         } catch (err) {
             console.error('Background error:', err);
             sendResponse({ success: false, error: err.message });
         }
     })();
-    return true; // Keep channel open
+    return true; // Keep channel open for async response
 });
 
 function handleLogError(payload) {
@@ -172,8 +204,10 @@ async function handleLogin() {
 }
 
 async function handleCheckAuth(userEmail) {
+    let currentToken = null;
     try {
         const { token } = await getAuthToken(false);
+        currentToken = token;
 
         if (!token) {
             return { success: true, authenticated: false };
@@ -200,15 +234,56 @@ async function handleCheckAuth(userEmail) {
 
         return { success: true, authenticated: isAuthenticated };
     } catch (err) {
+        // Retry logic for stale tokens
+        if (err.message === 'unauthorized' && currentToken) {
+            console.log('Auth check unauthorized, retrying with fresh token...');
+            // Token is already removed from cache by fetchFromApi if 401
+
+            const freshResult = await getAuthToken(false);
+            if (freshResult.token && freshResult.token !== currentToken) {
+                try {
+                    const resp = await fetchFromApi(buildApiUrl('/api/user/info'), {
+                        method: 'GET'
+                    }, freshResult.token);
+
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        let isAuthenticated = Boolean(data && data.authenticated);
+                        if (isAuthenticated && userEmail && data.email) {
+                            isAuthenticated = data.email.toLowerCase() === userEmail.toLowerCase();
+                        }
+                        return { success: true, authenticated: isAuthenticated };
+                    }
+                } catch (retryErr) {
+                    console.warn('Retry auth check failed', retryErr);
+                }
+            }
+            // If retry fails, we are definitely not authenticated
+            return { success: true, authenticated: false };
+        }
+
         console.error('CalAutobot auth check failed', err);
         return { success: false, error: err.message };
     }
 }
 
 async function handleFetchAvailability(userEmail, count) {
-    const { token, error } = await getAuthToken(false);
-    if (!token) throw new Error(error || 'Not authenticated');
+    let result = await getAuthToken(false);
 
+    // Handle OAuth2 revoked error
+    if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
+        console.log('OAuth2 revoked in fetch availability, user needs to re-authenticate');
+        return {
+            success: false,
+            error: 'Please sign in again. Click the CalAutobot button and try again.'
+        };
+    }
+
+    if (!result.token) {
+        throw new Error(result.error || 'Not authenticated');
+    }
+
+    const token = result.token;
     const url = buildApiUrl('/api/extension/availability_text');
 
     try {
@@ -254,8 +329,22 @@ async function handleFetchAvailability(userEmail, count) {
 }
 
 async function handleFetchBookingLink(userEmail) {
-    const { token, error } = await getAuthToken(false);
-    if (!token) throw new Error(error || 'Not authenticated');
+    let result = await getAuthToken(false);
+
+    // Handle OAuth2 revoked error
+    if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
+        console.log('OAuth2 revoked in fetch booking link, user needs to re-authenticate');
+        return {
+            success: false,
+            error: 'Please sign in again. Click the CalAutobot button and try again.'
+        };
+    }
+
+    if (!result.token) {
+        throw new Error(result.error || 'Not authenticated');
+    }
+
+    const token = result.token;
 
     const url = buildApiUrl('/api/extension/booking_link', {});
     const resp = await fetchFromApi(url, {}, token);
@@ -273,8 +362,19 @@ async function handleSendContacts(userEmail, contacts) {
         return { success: true };
     }
 
-    const { token, error } = await getAuthToken(false);
-    if (!token) return { success: false, error: error || 'Not authenticated' };
+    let result = await getAuthToken(false);
+
+    // Handle OAuth2 revoked error - fail silently for contacts sync
+    if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
+        console.log('OAuth2 revoked in send contacts, skipping sync');
+        return { success: false, error: 'Authentication required' };
+    }
+
+    if (!result.token) {
+        return { success: false, error: result.error || 'Not authenticated' };
+    }
+
+    const token = result.token;
 
     try {
         await fetchFromApi(buildApiUrl('/api/extension/contacts', {}), {

@@ -38,6 +38,41 @@ def onboarding():
     from app.routes.main_routes import calendar_needs_connection
     has_calendar = not calendar_needs_connection()
     
+    # If calendar is connected, sync calendars to ensure primary is selected for conflicts
+    if has_calendar:
+        try:
+            from app.services.google_calendar import fetch_user_calendar_list
+            from app.models import UserCalendar
+            
+            calendar_items = fetch_user_calendar_list(current_user)
+            calendars_by_id = {cal.calendar_id: cal for cal in current_user.calendars}
+            
+            for item in calendar_items:
+                calendar_id = item.get("id")
+                if not calendar_id:
+                    continue
+                
+                existing = calendars_by_id.get(calendar_id)
+                is_primary = bool(item.get("primary"))
+                
+                if not existing:
+                    # Create new calendar entry with primary selected for conflicts
+                    existing = UserCalendar(
+                        user=current_user,
+                        calendar_id=calendar_id,
+                        calendar_name=item.get("summary") or calendar_id,
+                        calendar_email=item.get("id"),
+                        access_role=item.get("accessRole"),
+                        is_primary=is_primary,
+                        is_selected_for_conflicts=is_primary,
+                    )
+                    db.session.add(existing)
+            
+            db.session.commit()
+        except Exception as exc:
+            # Don't fail onboarding if calendar sync fails
+            print(f"Failed to sync calendars during onboarding: {exc}")
+    
     # Get list of timezones
     timezones = pytz.common_timezones
     
