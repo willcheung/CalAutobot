@@ -270,12 +270,20 @@ def extension_availability_text():
         return response, 500
 
     all_slots = _flatten_slots(availability_batch)
-    count_param = request.args.get('count', 8)
+    
+    # Get number of days to show (default 5)
+    days_param = request.args.get('days', 5)
     try:
-        requested = max(1, min(10, int(count_param)))
+        days_to_show = max(1, min(14, int(days_param)))
     except (TypeError, ValueError):
-        requested = 8
-    visible_slots = all_slots[:requested]
+        days_to_show = 5
+    
+    # Filter slots to only those within the next N days
+    cutoff_date = start_date + timedelta(days=days_to_show)
+    visible_slots = [
+        slot for slot in all_slots 
+        if slot.start.astimezone(tz).date() < cutoff_date
+    ]
 
     # Consolidate consecutive slots for better readability
     consolidated_slots = _consolidate_consecutive_slots(visible_slots)
