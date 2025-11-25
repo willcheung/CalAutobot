@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalAutobot Email Tracking</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <div class="popup-header">
+      <h1>Email Tracking</h1>
+      <button id="refreshBtn" class="header-btn" title="Refresh">
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="content" class="popup-content">
+      <!-- Loading state -->
+      <div id="loading" class="state-message">
+        <div class="spinner"></div>
+        <div>Loading tracking data...</div>
+      </div>
+
+      <!-- Error state -->
+      <div id="error" class="state-message error" style="display: none;">
+        <div>Failed to load tracking data</div>
+        <button id="retryBtn" class="retry-btn">Try Again</button>
+      </div>
+
+      <!-- Empty state -->
+      <div id="empty" class="state-message" style="display: none;">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="#9aa0a6">
+          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+        </svg>
+        <div style="margin-top: 12px;">No tracked emails yet</div>
+        <div class="empty-hint">Send an email with tracking enabled to see it here</div>
+      </div>
+
+      <!-- Tracking list -->
+      <div id="trackingList" class="tracking-list" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
