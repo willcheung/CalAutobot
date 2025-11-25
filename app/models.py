@@ -307,12 +307,26 @@ class Contact(db.Model):
     last_incoming_email_at = db.Column(db.DateTime, nullable=True)
     last_outgoing_email_at = db.Column(db.DateTime, nullable=True)
     follow_up_count = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+
+    # Email tracking engagement metrics
+    emails_received = db.Column(db.Integer, default=0, nullable=False, server_default="0")
+    emails_opened = db.Column(db.Integer, default=0, nullable=False, server_default="0")
+    last_email_opened_at = db.Column(db.DateTime, nullable=True)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     participants = db.relationship('MeetingParticipant', back_populates='contact', lazy=True)
     label_links = db.relationship('ContactLabelLink', back_populates='contact', cascade='all, delete-orphan', lazy=True, overlaps="labels")
     labels = db.relationship('ContactLabel', secondary='contact_label_link', back_populates='contacts', lazy='selectin', overlaps="label_links")
+    tracking_recipients = db.relationship('TrackingRecipient', back_populates='contact', lazy=True)
+
+    @property
+    def email_open_rate(self):
+        """Calculate engagement rate"""
+        if self.emails_received == 0:
+            return 0.0
+        return round(self.emails_opened / self.emails_received, 3)
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'email', name='uq_contact_user_email'),
@@ -449,3 +463,144 @@ class AvailabilityWindow(db.Model):
     __table_args__ = (
         db.CheckConstraint('weekday >= 0 AND weekday <= 6', name='ck_availability_weekday_range'),
     )
+
+
+# ==============================================================================
+# Email Tracking Models
+# ==============================================================================
+
+class TrackingRequest(db.Model):
+    """Represents a tracked email send"""
+    __tablename__ = 'tracking_request'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    tracking_id = db.Column(db.String(64), unique=True, nullable=False, index=True)
+
+    # Email metadata
+    subject = db.Column(db.String(500), nullable=True)
+    # NOTE: Recipients linked via TrackingRecipient junction table (not JSON)
+
+    # Tracking configuration
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    tracking_enabled_at_send = db.Column(db.Boolean, default=True, nullable=False)
+
+    # Metadata
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    first_opened_at = db.Column(db.DateTime, nullable=True)
+    last_opened_at = db.Column(db.DateTime, nullable=True)
+    open_count = db.Column(db.Integer, default=0, nullable=False)
+    unique_open_count = db.Column(db.Integer, default=0, nullable=False)  # Distinct IPs
+
+    # Gmail context
+    gmail_message_id = db.Column(db.String(255), nullable=True)
+    gmail_thread_id = db.Column(db.String(255), nullable=True, index=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    events = db.relationship('TrackingEvent', back_populates='tracking_request',
+                            lazy='dynamic', cascade='all, delete-orphan',
+                            order_by='TrackingEvent.opened_at.desc()')
+    recipients = db.relationship('TrackingRecipient', back_populates='tracking_request',
+                                lazy='dynamic', cascade='all, delete-orphan')
+    user = db.relationship('User', backref=db.backref('tracking_requests', lazy='dynamic'))
+
+    def to_dict(self, include_events=False):
+        data = {
+            'id': self.id,
+            'tracking_id': self.tracking_id,
+            'subject': self.subject,
+            'recipients': [
+                {
+                    'email': tr.contact.email,
+                    'name': tr.contact.display_name,
+                    'type': tr.recipient_type,
+                    'opened': tr.has_opened
+                }
+                for tr in self.recipients.all()
+            ],
+            'is_active': self.is_active,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'first_opened_at': self.first_opened_at.isoformat() if self.first_opened_at else None,
+            'last_opened_at': self.last_opened_at.isoformat() if self.last_opened_at else None,
+            'open_count': self.open_count,
+            'unique_open_count': self.unique_open_count,
+            'gmail_thread_id': self.gmail_thread_id,
+        }
+        if include_events:
+            data['events'] = [event.to_dict() for event in self.events.limit(50).all()]
+        return data
+
+
+class TrackingRecipient(db.Model):
+    """Junction table linking tracking requests to contacts"""
+    __tablename__ = 'tracking_recipient'
+
+    id = db.Column(db.Integer, primary_key=True)
+    tracking_request_id = db.Column(db.Integer, db.ForeignKey('tracking_request.id'),
+                                   nullable=False, index=True)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'), nullable=False, index=True)
+    recipient_type = db.Column(db.String(10), nullable=False)  # 'to', 'cc', 'bcc'
+
+    # Per-recipient engagement for this email
+    has_opened = db.Column(db.Boolean, default=False, nullable=False)
+    first_opened_at = db.Column(db.DateTime, nullable=True)
+    open_count = db.Column(db.Integer, default=0, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    tracking_request = db.relationship('TrackingRequest', back_populates='recipients')
+    contact = db.relationship('Contact', back_populates='tracking_recipients')
+
+    def to_dict(self):
+        return {
+            'contact_id': self.contact_id,
+            'email': self.contact.email,
+            'name': self.contact.display_name,
+            'type': self.recipient_type,
+            'has_opened': self.has_opened,
+            'first_opened_at': self.first_opened_at.isoformat() if self.first_opened_at else None,
+            'open_count': self.open_count
+        }
+
+
+class TrackingEvent(db.Model):
+    """Represents a single email open event"""
+    __tablename__ = 'tracking_event'
+
+    id = db.Column(db.Integer, primary_key=True)
+    tracking_request_id = db.Column(db.Integer, db.ForeignKey('tracking_request.id'),
+                                   nullable=False, index=True)
+
+    # Event data
+    opened_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    ip_hash = db.Column(db.String(64), nullable=True, index=True)  # SHA256 for privacy
+
+    # Client information - parsed from user agent
+    user_agent_parsed = db.Column(db.JSON, nullable=True)
+    # Stores: {"browser": "Chrome 120", "os": "Mac OS X", "device": "Desktop"}
+
+    # Geolocation - from IP lookup (ip-api.com free tier)
+    country_code = db.Column(db.String(2), nullable=True)  # "US", "GB", etc.
+    city = db.Column(db.String(100), nullable=True)
+    timezone = db.Column(db.String(50), nullable=True)  # "America/Los_Angeles"
+
+    # Metadata
+    is_first_open = db.Column(db.Boolean, default=False, nullable=False)
+
+    # Relationships
+    tracking_request = db.relationship('TrackingRequest', back_populates='events')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'opened_at': self.opened_at.isoformat() if self.opened_at else None,
+            'user_agent_parsed': self.user_agent_parsed,
+            'city': self.city,
+            'country_code': self.country_code,
+            'timezone': self.timezone,
+            'is_first_open': self.is_first_open,
+        }

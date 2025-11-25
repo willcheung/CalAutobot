@@ -2,15 +2,18 @@
 
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
+import base64
+import io
 
-from flask import jsonify, session, request, url_for
+from flask import jsonify, session, request, url_for, send_file, g
 import requests
 from flask_login import current_user
 
 from app import app, db
-from app.models import EventType, User, Contact
+from app.models import EventType, User, Contact, TrackingRequest, TrackingRecipient, TrackingEvent
 from app.services import availability as availability_service, contacts as contact_service
 from app.services.availability import AvailabilityError
+from app.services import tracking_service
 
 def add_cors_headers_for_extension(response):
     """Add proper CORS headers for Chrome extension requests"""
@@ -681,6 +684,233 @@ def extension_process_events():
         response = jsonify({
             'error': 'Processing failed',
             'code': 'PROCESSING_ERROR',
+            'message': str(e)
+        })
+        add_cors_headers_for_extension(response)
+        return response, 500
+
+
+# ==============================================================================
+# Email Tracking Endpoints
+# ==============================================================================
+
+@app.route('/api/tracking/pixel/<tracking_id>', methods=['GET'])
+def tracking_pixel(tracking_id):
+    """
+    Serves tracking pixel and records open event.
+    PUBLIC endpoint - no authentication required.
+    """
+    # Record event asynchronously (don't block pixel response)
+    try:
+        tracking_service.record_tracking_event(
+            tracking_id=tracking_id,
+            ip_address=request.headers.get('X-Forwarded-For', request.remote_addr),
+            user_agent=request.headers.get('User-Agent')
+        )
+    except Exception as e:
+        app.logger.error(f"Error recording tracking event: {e}")
+
+    # Return 1x1 transparent GIF
+    gif_bytes = base64.b64decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7')
+    return send_file(
+        io.BytesIO(gif_bytes),
+        mimetype='image/gif',
+        max_age=0
+    )
+
+
+@app.route('/api/tracking/requests', methods=['POST', 'OPTIONS'])
+def create_tracking_request():
+    """
+    Creates a new tracking request.
+    Request body: {
+        "tracking_id": "abc123...",
+        "subject": "Meeting follow-up",
+        "recipients": [{"email": "...", "name": "..."}],
+        "cc_recipients": [...],
+        "gmail_message_id": "...",
+        "gmail_thread_id": "..."
+    }
+    """
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        add_cors_headers_for_extension(response)
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+
+    user, email = _resolve_extension_user()
+
+    if not user:
+        response = jsonify({
+            'error': 'Authentication required',
+            'code': 'AUTH_REQUIRED'
+        })
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    try:
+        data = request.get_json()
+
+        tracking_request = tracking_service.create_tracking_request(
+            user=user,
+            tracking_id=data['tracking_id'],
+            subject=data.get('subject'),
+            recipients=data['recipients'],
+            cc_recipients=data.get('cc_recipients'),
+            bcc_recipients=data.get('bcc_recipients'),
+            gmail_message_id=data.get('gmail_message_id'),
+            gmail_thread_id=data.get('gmail_thread_id')
+        )
+
+        response = jsonify({
+            'success': True,
+            'tracking_request': tracking_request.to_dict()
+        })
+        add_cors_headers_for_extension(response)
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Error creating tracking request: {e}")
+        response = jsonify({
+            'error': 'Failed to create tracking request',
+            'code': 'CREATE_FAILED',
+            'message': str(e)
+        })
+        add_cors_headers_for_extension(response)
+        return response, 500
+
+
+@app.route('/api/tracking/requests', methods=['GET', 'OPTIONS'])
+def get_tracking_requests():
+    """
+    Get last 50 tracking requests (no pagination, no filtering).
+    Returns basic list with new_opens_count for badge notification.
+    """
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        add_cors_headers_for_extension(response)
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+
+    user, email = _resolve_extension_user()
+
+    if not user:
+        response = jsonify({
+            'error': 'Authentication required',
+            'code': 'AUTH_REQUIRED'
+        })
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    try:
+        since = request.args.get('since')  # For polling - get events since last check
+
+        # Get recent tracking requests
+        requests_query = TrackingRequest.query.filter_by(
+            user_id=user.id,
+            is_active=True
+        ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
+
+        # Count new opens since last poll (for badge)
+        new_opens_count = 0
+        if since:
+            since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+            new_opens_count = db.session.query(db.func.count(TrackingEvent.id)).join(
+                TrackingRequest
+            ).filter(
+                TrackingRequest.user_id == user.id,
+                TrackingEvent.opened_at >= since_dt
+            ).scalar() or 0
+
+        # Include events data for popup UI (limit to first event for performance)
+        response = jsonify({
+            'success': True,
+            'requests': [req.to_dict(include_events=True) for req in requests_query],
+            'new_opens_count': new_opens_count  # For badge notification
+        })
+        add_cors_headers_for_extension(response)
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Error fetching tracking requests: {e}")
+        response = jsonify({
+            'error': 'Failed to fetch tracking requests',
+            'code': 'FETCH_FAILED',
+            'message': str(e)
+        })
+        add_cors_headers_for_extension(response)
+        return response, 500
+
+
+@app.route('/api/contacts/<int:contact_id>/engagement', methods=['GET', 'OPTIONS'])
+def get_contact_engagement(contact_id):
+    """Get email tracking engagement for a specific contact."""
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        add_cors_headers_for_extension(response)
+        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+
+    user, email = _resolve_extension_user()
+
+    if not user:
+        response = jsonify({
+            'error': 'Authentication required',
+            'code': 'AUTH_REQUIRED'
+        })
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    try:
+        contact = Contact.query.filter_by(id=contact_id, user_id=user.id).first()
+
+        if not contact:
+            response = jsonify({
+                'error': 'Contact not found',
+                'code': 'NOT_FOUND'
+            })
+            add_cors_headers_for_extension(response)
+            return response, 404
+
+        # Get all tracked emails sent to this contact
+        tracked_emails = db.session.query(TrackingRequest).join(
+            TrackingRecipient
+        ).filter(
+            TrackingRecipient.contact_id == contact.id
+        ).order_by(TrackingRequest.sent_at.desc()).limit(20).all()
+
+        response = jsonify({
+            'success': True,
+            'contact': {
+                'id': contact.id,
+                'email': contact.email,
+                'display_name': contact.display_name,
+                'emails_received': contact.emails_received,
+                'emails_opened': contact.emails_opened,
+                'open_rate': contact.email_open_rate,
+                'last_email_opened_at': contact.last_email_opened_at.isoformat() if contact.last_email_opened_at else None
+            },
+            'recent_emails': [
+                {
+                    'subject': req.subject,
+                    'sent_at': req.sent_at.isoformat(),
+                    'opened': req.first_opened_at is not None,
+                    'open_count': req.open_count
+                }
+                for req in tracked_emails
+            ]
+        })
+        add_cors_headers_for_extension(response)
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Error fetching contact engagement: {e}")
+        response = jsonify({
+            'error': 'Failed to fetch contact engagement',
+            'code': 'FETCH_FAILED',
             'message': str(e)
         })
         add_cors_headers_for_extension(response)

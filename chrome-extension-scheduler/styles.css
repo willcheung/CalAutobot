@@ -120,3 +120,46 @@
   color: #1a73e8;
   font-weight: 500;
 }
+
+/* Tracking Toggle Styles */
+.calautobot-tracking-toggle {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-family: 'Google Sans', Roboto, RobotoDraft, Helvetica, Arial, sans-serif;
+}
+
+.calautobot-tracking-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 12px;
+  color: #5f6368;
+  user-select: none;
+  gap: 6px;
+}
+
+.calautobot-tracking-checkbox {
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  margin: 0;
+  accent-color: #1a73e8;
+}
+
+.calautobot-tracking-icon {
+  fill: #5f6368;
+  flex-shrink: 0;
+}
+
+.calautobot-tracking-text {
+  white-space: nowrap;
+}
+
+.calautobot-tracking-label:hover .calautobot-tracking-text {
+  color: #202124;
+}
+
+.calautobot-tracking-label:hover .calautobot-tracking-icon {
+  fill: #202124;
+}

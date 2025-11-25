@@ -10,7 +10,11 @@
   },
   "permissions": [
     "identity",
-    "scripting"
+    "scripting",
+    "storage",
+    "alarms",
+    "notifications",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "https://mail.google.com/*"
@@ -29,6 +33,7 @@
       ],
       "js": [
         "inboxsdk.js",
+        "tracking.js",
         "content.js"
       ],
       "css": [
@@ -39,6 +44,15 @@
   ],
   "background": {
     "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "CalAutobot Email Tracking"
   },
   "web_accessible_resources": [
     {
@@ -51,5 +65,14 @@
         "https://mail.google.com/*"
       ]
     }
-  ]
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "self_tracking_prevention",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
 }

@@ -227,6 +227,9 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
     // Generate a unique class for this specific button instance to find it later
     const uniqueClass = 'calautobot-id-' + Math.random().toString(36).substr(2, 9);
 
+    // Generate unique compose ID for tracking state
+    const composeId = 'compose-' + Math.random().toString(36).substr(2, 9);
+
     // 1. Add Button
     composeView.addButton({
       title: 'CalAutobot',
@@ -260,7 +263,54 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
       },
     });
 
-    // 2. Intercept Send to sync contacts
+    // 2. Add Tracking Toggle
+    (async () => {
+      try {
+        const trackingEnabled = await isTrackingEnabled();
+
+        // Create tracking toggle element
+        const trackingToggle = composeView.addStatusBar({
+          height: 20,
+          orderHint: 0,
+        });
+
+        const toggleContainer = document.createElement('div');
+        toggleContainer.className = 'calautobot-tracking-toggle';
+        toggleContainer.innerHTML = `
+          <label class="calautobot-tracking-label">
+            <input type="checkbox" class="calautobot-tracking-checkbox" ${trackingEnabled ? 'checked' : ''} />
+            <svg class="calautobot-tracking-icon" viewBox="0 0 24 24" width="16" height="16">
+              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+            <span class="calautobot-tracking-text">Track email opens</span>
+          </label>
+        `;
+
+        const checkbox = toggleContainer.querySelector('.calautobot-tracking-checkbox');
+
+        // Store initial state
+        await storeComposeTracking(composeId, {
+          enabled: trackingEnabled,
+          trackingId: null, // Will be generated on send
+        });
+
+        // Handle checkbox change
+        checkbox.addEventListener('change', async (e) => {
+          const enabled = e.target.checked;
+          await setTrackingEnabled(enabled);
+          await storeComposeTracking(composeId, {
+            enabled: enabled,
+            trackingId: null,
+          });
+        });
+
+        trackingToggle.el.appendChild(toggleContainer);
+      } catch (err) {
+        console.warn('CalAutobot: Failed to add tracking toggle', err);
+      }
+    })();
+
+    // 3. Intercept Send to sync contacts and inject tracking pixel
     composeView.on('presending', async (event) => {
       try {
         const authed = await ensureAuthenticated();
@@ -279,9 +329,92 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
             name: r.name
           }));
 
+        // Sync contacts to API
         await sendContactsToAPI(recipients);
+
+        // Check if tracking is enabled for this compose
+        const trackingState = await getComposeTracking(composeId);
+        if (trackingState && trackingState.enabled) {
+          try {
+            // Generate tracking ID
+            const trackingId = generateTrackingId();
+
+            // Get email body HTML
+            const bodyHtml = composeView.getHTMLContent();
+
+            // Inject tracking pixel
+            const modifiedHtml = injectTrackingPixel(bodyHtml, trackingId);
+
+            // Update email body with pixel
+            composeView.setBodyHTML(modifiedHtml);
+
+            // Store tracking ID for post-send API call
+            await storeComposeTracking(composeId, {
+              enabled: true,
+              trackingId: trackingId,
+            });
+
+            console.log('CalAutobot: Tracking pixel injected', trackingId);
+          } catch (err) {
+            console.error('CalAutobot: Failed to inject tracking pixel', err);
+          }
+        }
       } catch (err) {
-        console.warn('CalAutobot: Failed to sync contacts on send', err);
+        console.warn('CalAutobot: Failed to process presending', err);
+      }
+    });
+
+    // 4. After Send - Create tracking request
+    composeView.on('sent', async (event) => {
+      try {
+        const trackingState = await getComposeTracking(composeId);
+        if (!trackingState || !trackingState.trackingId) {
+          return; // Tracking not enabled for this email
+        }
+
+        const authed = await ensureAuthenticated();
+        if (!authed) return;
+
+        // Get recipients
+        const to = composeView.getToRecipients();
+        const cc = composeView.getCcRecipients();
+        const bcc = composeView.getBccRecipients();
+
+        const toRecipients = to
+          .filter(r => r.emailAddress.toLowerCase() !== 'cal@calautobot.com')
+          .map(r => ({ email: r.emailAddress, name: r.name || '' }));
+        const ccRecipients = cc
+          .filter(r => r.emailAddress.toLowerCase() !== 'cal@calautobot.com')
+          .map(r => ({ email: r.emailAddress, name: r.name || '' }));
+        const bccRecipients = bcc
+          .filter(r => r.emailAddress.toLowerCase() !== 'cal@calautobot.com')
+          .map(r => ({ email: r.emailAddress, name: r.name || '' }));
+
+        // Get subject
+        const subject = composeView.getSubject() || '(no subject)';
+
+        // Get thread ID if available
+        const threadId = composeView.getThreadID();
+
+        // Create tracking request via API
+        await createTrackingRequest({
+          trackingId: trackingState.trackingId,
+          subject: subject,
+          recipients: toRecipients,
+          ccRecipients: ccRecipients,
+          bccRecipients: bccRecipients,
+          gmailThreadId: threadId || null,
+          userEmail: userEmail,
+        });
+
+        console.log('CalAutobot: Tracking request created', trackingState.trackingId);
+
+        // Clear compose tracking state
+        await clearComposeTracking(composeId);
+      } catch (err) {
+        console.error('CalAutobot: Failed to create tracking request', err);
+        // Clean up compose tracking even on error
+        await clearComposeTracking(composeId);
       }
     });
 

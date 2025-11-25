@@ -22,9 +22,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-const API_BASES = ['https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
+const API_BASES = ['http://localhost:5001', 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
 
 let activeApiBase = API_BASES[0];
+
+// Tracking notification state
+const TRACKING_ALARM_NAME = 'trackingPoll';
+const TRACKING_POLL_INTERVAL = 0.5; // 30 seconds (in minutes)
+let lastPollTime = null;
 
 function buildApiUrl(path, params = {}) {
     const url = new URL(path, activeApiBase);
@@ -124,6 +129,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     break;
                 case 'LOG_ERROR':
                     sendResponse(handleLogError(payload));
+                    break;
+                case 'GET_AUTH_TOKEN':
+                    // For popup to get auth token
+                    const result = await getAuthToken(false);
+                    sendResponse(result);
                     break;
                 default:
                     // If it has an action but we don't recognize it, it might be for another part of our app
@@ -387,3 +397,179 @@ async function handleSendContacts(userEmail, contacts) {
         return { success: false, error: err.message };
     }
 }
+
+// ===== TRACKING NOTIFICATION SYSTEM =====
+
+/**
+ * Initialize tracking notifications on extension startup
+ */
+chrome.runtime.onStartup.addListener(() => {
+    console.log('CalAutobot: Extension started, initializing tracking notifications');
+    initializeTrackingPolling();
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+    console.log('CalAutobot: Extension installed/updated, initializing tracking notifications');
+    initializeTrackingPolling();
+});
+
+/**
+ * Set up chrome.alarms for periodic polling
+ */
+async function initializeTrackingPolling() {
+    // Clear any existing alarm
+    await chrome.alarms.clear(TRACKING_ALARM_NAME);
+
+    // Create new alarm for 30-second intervals
+    chrome.alarms.create(TRACKING_ALARM_NAME, {
+        delayInMinutes: TRACKING_POLL_INTERVAL,
+        periodInMinutes: TRACKING_POLL_INTERVAL,
+    });
+
+    // Store initialization time
+    await chrome.storage.local.set({
+        trackingPollInitialized: new Date().toISOString()
+    });
+
+    console.log('CalAutobot: Tracking polling initialized (30s intervals)');
+}
+
+/**
+ * Handle alarm events
+ */
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (alarm.name === TRACKING_ALARM_NAME) {
+        await pollTrackingUpdates();
+    }
+});
+
+/**
+ * Poll for new tracking opens
+ */
+async function pollTrackingUpdates() {
+    try {
+        // Check if user is authenticated
+        let result = await getAuthToken(false);
+        if (!result.token) {
+            // Not authenticated, skip polling
+            return;
+        }
+
+        const token = result.token;
+
+        // Build URL with "since" parameter if we have a lastPollTime
+        const params = {};
+        if (lastPollTime) {
+            params.since = lastPollTime;
+        }
+
+        const url = buildApiUrl('/api/tracking/requests', params);
+        const resp = await fetchFromApi(url, {}, token);
+
+        if (!resp.ok) {
+            console.warn('CalAutobot: Failed to poll tracking updates', resp.status);
+            return;
+        }
+
+        const data = await resp.json();
+
+        if (data.success && data.new_opens_count > 0) {
+            // Update badge
+            await updateBadge(data.new_opens_count);
+
+            // Show notifications for new opens
+            await showTrackingNotifications(data.requests);
+        } else if (data.success && data.new_opens_count === 0) {
+            // Clear badge if no new opens
+            await chrome.action.setBadgeText({ text: '' });
+        }
+
+        // Update last poll time
+        lastPollTime = new Date().toISOString();
+        await chrome.storage.local.set({ lastTrackingPoll: lastPollTime });
+
+    } catch (err) {
+        console.error('CalAutobot: Error polling tracking updates', err);
+    }
+}
+
+/**
+ * Update extension badge with new opens count
+ */
+async function updateBadge(count) {
+    if (count > 0) {
+        const badgeText = count > 99 ? '99+' : count.toString();
+        await chrome.action.setBadgeText({ text: badgeText });
+        await chrome.action.setBadgeBackgroundColor({ color: '#1a73e8' });
+    } else {
+        await chrome.action.setBadgeText({ text: '' });
+    }
+}
+
+/**
+ * Show desktop notifications for newly opened emails
+ */
+async function showTrackingNotifications(requests) {
+    // Get notification preferences
+    const { notificationsEnabled = true } = await chrome.storage.local.get(['notificationsEnabled']);
+
+    if (!notificationsEnabled) {
+        return;
+    }
+
+    // Get stored notification state to avoid duplicates
+    const { notifiedOpens = {} } = await chrome.storage.local.get(['notifiedOpens']);
+
+    for (const request of requests) {
+        // Skip if we've already notified about this tracking request's opens
+        if (notifiedOpens[request.tracking_id]) {
+            continue;
+        }
+
+        // Check if email was opened
+        if (request.open_count > 0 && request.first_opened_at) {
+            // Get list of recipients who opened
+            const openedRecipients = request.recipients
+                .filter(r => r.opened)
+                .map(r => r.name || r.email)
+                .slice(0, 3); // Limit to 3 names
+
+            let notificationMessage = '';
+            if (openedRecipients.length === 1) {
+                notificationMessage = `${openedRecipients[0]} opened your email`;
+            } else if (openedRecipients.length === 2) {
+                notificationMessage = `${openedRecipients[0]} and ${openedRecipients[1]} opened your email`;
+            } else if (openedRecipients.length > 2) {
+                notificationMessage = `${openedRecipients[0]}, ${openedRecipients[1]} and ${openedRecipients.length - 2} others opened your email`;
+            }
+
+            // Create notification
+            await chrome.notifications.create(`tracking-${request.tracking_id}`, {
+                type: 'basic',
+                iconUrl: 'icons/icon128.png',
+                title: 'Email Opened',
+                message: notificationMessage,
+                contextMessage: request.subject || '(no subject)',
+                priority: 1,
+                requireInteraction: false,
+            });
+
+            // Mark as notified
+            notifiedOpens[request.tracking_id] = new Date().toISOString();
+        }
+    }
+
+    // Save updated notification state
+    await chrome.storage.local.set({ notifiedOpens });
+}
+
+/**
+ * Handle notification clicks
+ */
+chrome.notifications.onClicked.addListener((notificationId) => {
+    if (notificationId.startsWith('tracking-')) {
+        // Open Gmail when notification is clicked
+        chrome.tabs.create({ url: 'https://mail.google.com' });
+        chrome.notifications.clear(notificationId);
+    }
+});
