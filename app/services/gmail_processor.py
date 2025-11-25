@@ -1,5 +1,6 @@
 import logging
 import json
+import base64
 from datetime import datetime
 from typing import List, Dict, Optional
 from app.models import User, Event, UserEmail, TextInput, MeetingRequest, MeetingMessage
@@ -298,8 +299,13 @@ def process_single_email(email_data: Dict) -> bool:
                         
                         logger.info(f"🔗 Attempting to download attachment: {filename}")
                         
-                        # Download attachment content from Gmail
-                        attachment_content = gmail_service.download_attachment(message_id, attachment_id)
+                        # Use inline data if available, otherwise download from Gmail
+                        if attachment_info.get('data'):
+                            attachment_content = base64.urlsafe_b64decode(attachment_info['data'].encode('UTF-8'))
+                            logger.info(f"📎 Used inline attachment data for: {filename}")
+                        else:
+                            # Download attachment content from Gmail
+                            attachment_content = gmail_service.download_attachment(message_id, attachment_id)
                         
                         if attachment_content:
                             attachment_data = {

@@ -393,15 +393,21 @@ class GmailService:
             # Check for attachments in parts
             if 'parts' in payload:
                 for part in payload['parts']:
-                    if part.get('filename') and part.get('body', {}).get('attachmentId'):
-                        attachment_info = {
-                            'name': part['filename'],
-                            'content-type': part.get('mimeType', 'application/octet-stream'),
-                            'size': part.get('body', {}).get('size', 0),
-                            'attachment_id': part['body']['attachmentId'],
-                            'message_id': message_id
-                        }
-                        attachments.append(attachment_info)
+                    if part.get('filename'):
+                        body = part.get('body', {})
+                        attachment_id = body.get('attachmentId')
+                        data = body.get('data')
+                        
+                        if attachment_id or data:
+                            attachment_info = {
+                                'name': part['filename'],
+                                'content-type': part.get('mimeType', 'application/octet-stream'),
+                                'size': body.get('size', 0),
+                                'attachment_id': attachment_id,
+                                'message_id': message_id,
+                                'data': data  # Include raw data if available
+                            }
+                            attachments.append(attachment_info)
             
             if attachments:
                 logger.info(f"Found {len(attachments)} attachments in email {message_id}")
