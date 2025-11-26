@@ -522,9 +522,9 @@ class TrackingRequest(db.Model):
                 for tr in self.recipients.all()
             ],
             'is_active': self.is_active,
-            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
-            'first_opened_at': self.first_opened_at.isoformat() if self.first_opened_at else None,
-            'last_opened_at': self.last_opened_at.isoformat() if self.last_opened_at else None,
+            'sent_at': self.sent_at.isoformat() + 'Z' if self.sent_at else None,
+            'first_opened_at': self.first_opened_at.isoformat() + 'Z' if self.first_opened_at else None,
+            'last_opened_at': self.last_opened_at.isoformat() + 'Z' if self.last_opened_at else None,
             'open_count': self.open_count,
             'unique_open_count': self.unique_open_count,
             'gmail_thread_id': self.gmail_thread_id,
@@ -562,7 +562,7 @@ class TrackingRecipient(db.Model):
             'name': self.contact.display_name,
             'type': self.recipient_type,
             'has_opened': self.has_opened,
-            'first_opened_at': self.first_opened_at.isoformat() if self.first_opened_at else None,
+            'first_opened_at': self.first_opened_at.isoformat() + 'Z' if self.first_opened_at else None,
             'open_count': self.open_count
         }
 
@@ -597,7 +597,7 @@ class TrackingEvent(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'opened_at': self.opened_at.isoformat() if self.opened_at else None,
+            'opened_at': self.opened_at.isoformat() + 'Z' if self.opened_at else None,
             'user_agent_parsed': self.user_agent_parsed,
             'city': self.city,
             'country_code': self.country_code,
