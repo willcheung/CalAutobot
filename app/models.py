@@ -38,6 +38,9 @@ class User(UserMixin, db.Model):
     calendly_plan = db.Column(db.String(50), nullable=True)
     calendly_connected_at = db.Column(db.DateTime, nullable=True)
 
+    # Email tracking fields
+    tracking_last_viewed_at = db.Column(db.DateTime, nullable=True)
+
     # Relationship with events
     events = db.relationship('Event', backref='user', lazy=True, cascade='all, delete-orphan')
     text_inputs = db.relationship('TextInput', backref='user', lazy=True, cascade='all, delete-orphan')
