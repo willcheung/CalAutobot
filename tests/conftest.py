@@ -41,12 +41,21 @@ def test_app(tmp_path_factory):
 @pytest.fixture(autouse=True, scope="function")
 def reset_db(test_app):
     """Automatically clear database state between tests to prevent constraint violations."""
+    # Rollback any pending transactions before test
+    with test_app.app_context():
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+
     # Run test
     yield
-    
+
     # Clean up after test - just truncate all tables to reset state
     with test_app.app_context():
         try:
+            # Rollback any pending transactions first
+            db.session.rollback()
             # Fast cleanup: just delete all rows from all tables
             meta = db.metadata
             for table in reversed(meta.sorted_tables):

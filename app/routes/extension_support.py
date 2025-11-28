@@ -813,22 +813,30 @@ def get_tracking_requests():
             is_active=True
         ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
 
-        # Count new opens since last poll (for badge)
+        # Count new opens since user last viewed dashboard (for badge)
         new_opens_count = 0
-        if since:
-            since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+        if user.tracking_last_viewed_at:
+            # Count events since last viewed
             new_opens_count = db.session.query(db.func.count(TrackingEvent.id)).join(
                 TrackingRequest
             ).filter(
                 TrackingRequest.user_id == user.id,
-                TrackingEvent.opened_at >= since_dt
+                TrackingEvent.opened_at >= user.tracking_last_viewed_at
+            ).scalar() or 0
+        else:
+            # Never viewed dashboard - count all events
+            new_opens_count = db.session.query(db.func.count(TrackingEvent.id)).join(
+                TrackingRequest
+            ).filter(
+                TrackingRequest.user_id == user.id
             ).scalar() or 0
 
         # Include events data for popup UI (limit to first event for performance)
         response = jsonify({
             'success': True,
             'requests': [req.to_dict(include_events=True) for req in requests_query],
-            'new_opens_count': new_opens_count  # For badge notification
+            'new_opens_count': new_opens_count,  # For badge notification
+            'tracking_last_viewed_at': user.tracking_last_viewed_at.isoformat() if user.tracking_last_viewed_at else None
         })
         add_cors_headers_for_extension(response)
         return response
@@ -838,6 +846,53 @@ def get_tracking_requests():
         response = jsonify({
             'error': 'Failed to fetch tracking requests',
             'code': 'FETCH_FAILED',
+            'message': str(e)
+        })
+        add_cors_headers_for_extension(response)
+        return response, 500
+
+
+@app.route('/api/tracking/mark-viewed', methods=['POST', 'OPTIONS'])
+def mark_tracking_viewed():
+    """
+    Mark tracking dashboard as viewed (updates user.tracking_last_viewed_at).
+    This clears the unread count.
+    """
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        add_cors_headers_for_extension(response)
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+
+    user, email = _resolve_extension_user()
+
+    if not user:
+        response = jsonify({
+            'error': 'Authentication required',
+            'code': 'AUTH_REQUIRED'
+        })
+        add_cors_headers_for_extension(response)
+        return response, 401
+
+    try:
+        # Update tracking_last_viewed_at to now
+        user.tracking_last_viewed_at = datetime.utcnow()
+        db.session.commit()
+
+        response = jsonify({
+            'success': True,
+            'tracking_last_viewed_at': user.tracking_last_viewed_at.isoformat()
+        })
+        add_cors_headers_for_extension(response)
+        return response
+
+    except Exception as e:
+        app.logger.error(f"Error marking tracking as viewed: {e}")
+        db.session.rollback()
+        response = jsonify({
+            'error': 'Failed to mark as viewed',
+            'code': 'UPDATE_FAILED',
             'message': str(e)
         })
         add_cors_headers_for_extension(response)

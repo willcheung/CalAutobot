@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-const API_BASES = ['http://localhost:5001', 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
+const API_BASES = ['https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
 
 let activeApiBase = API_BASES[0];
 
@@ -134,6 +134,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     // For popup to get auth token
                     const result = await getAuthToken(false);
                     sendResponse(result);
+                    break;
+                case 'FETCH_TRACKING_REQUESTS':
+                    // Fetch tracking requests via background to avoid CORS issues
+                    const trackingResult = await handleFetchTrackingRequests(payload.userEmail, payload.since);
+                    sendResponse(trackingResult);
+                    break;
+                case 'MARK_TRACKING_VIEWED':
+                    // Mark tracking dashboard as viewed
+                    const markViewedResult = await handleMarkTrackingViewed(payload.userEmail);
+                    sendResponse(markViewedResult);
+                    break;
+                case 'CREATE_TRACKING_REQUEST':
+                    // Create tracking request via background to avoid CORS issues
+                    const createResult = await handleCreateTrackingRequest(payload);
+                    sendResponse(createResult);
                     break;
                 default:
                     // If it has an action but we don't recognize it, it might be for another part of our app
@@ -398,6 +413,116 @@ async function handleSendContacts(userEmail, contacts) {
     }
 }
 
+async function handleFetchTrackingRequests(userEmail, since = null) {
+    let result = await getAuthToken(false);
+
+    if (!result.token) {
+        return { success: false, error: result.error || 'Not authenticated' };
+    }
+
+    const token = result.token;
+
+    try {
+        const params = { user_email: userEmail };
+        if (since) {
+            params.since = since;
+        }
+
+        const response = await fetchFromApi(
+            buildApiUrl('/api/tracking/requests', params),
+            { method: 'GET' },
+            token
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Background: Fetched tracking requests:', data);
+        return { success: true, data: data };
+    } catch (err) {
+        console.error('Failed to fetch tracking requests', err);
+        return { success: false, error: err.message };
+    }
+}
+
+async function handleMarkTrackingViewed(userEmail) {
+    let result = await getAuthToken(false);
+
+    if (!result.token) {
+        return { success: false, error: result.error || 'Not authenticated' };
+    }
+
+    const token = result.token;
+
+    try {
+        const response = await fetchFromApi(
+            buildApiUrl('/api/tracking/mark-viewed', {}),
+            {
+                method: 'POST',
+                body: { user_email: userEmail }
+            },
+            token
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Background: Marked tracking as viewed:', data);
+        return { success: true, data: data };
+    } catch (err) {
+        console.error('Failed to mark tracking as viewed', err);
+        return { success: false, error: err.message };
+    }
+}
+
+async function handleCreateTrackingRequest(payload) {
+    let result = await getAuthToken(false);
+
+    if (!result.token) {
+        return { success: false, error: result.error || 'Not authenticated' };
+    }
+
+    const token = result.token;
+
+    try {
+        const response = await fetchFromApi(
+            buildApiUrl('/api/tracking/requests', {}),
+            {
+                method: 'POST',
+                body: {
+                    user_email: payload.userEmail,
+                    tracking_id: payload.trackingId,
+                    subject: payload.subject,
+                    recipients: payload.recipients,
+                    cc_recipients: payload.ccRecipients || [],
+                    bcc_recipients: payload.bccRecipients || [],
+                    gmail_message_id: payload.gmailMessageId || null,
+                    gmail_thread_id: payload.gmailThreadId || null,
+                }
+            },
+            token
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Background: Tracking request created:', data);
+        return { success: true, data: data };
+    } catch (err) {
+        console.error('Failed to create tracking request', err);
+        return { success: false, error: err.message };
+    }
+}
+
 // ===== TRACKING NOTIFICATION SYSTEM =====
 
 /**
@@ -406,12 +531,37 @@ async function handleSendContacts(userEmail, contacts) {
 chrome.runtime.onStartup.addListener(() => {
     console.log('CalAutobot: Extension started, initializing tracking notifications');
     initializeTrackingPolling();
+    initializeLastDashboardCheck();
 });
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log('CalAutobot: Extension installed/updated, initializing tracking notifications');
     initializeTrackingPolling();
+    initializeLastDashboardCheck();
+
+    // Trigger immediate poll for testing
+    setTimeout(() => {
+        console.log('CalAutobot: Running initial tracking poll...');
+        pollTrackingUpdates();
+    }, 2000);
+
+    console.log('CalAutobot: Extension installed/updated, tracking system ready');
 });
+
+/**
+ * Initialize lastDashboardCheck if not set
+ */
+async function initializeLastDashboardCheck() {
+    const storage = await chrome.storage.local.get(['lastDashboardCheck']);
+    if (!storage.lastDashboardCheck) {
+        // Set to now so we don't show badge for old opens
+        await chrome.storage.local.set({
+            lastDashboardCheck: new Date().toISOString(),
+            unreadTrackingCount: 0
+        });
+        console.log('CalAutobot: Initialized lastDashboardCheck');
+    }
+}
 
 /**
  * Set up chrome.alarms for periodic polling
@@ -448,22 +598,29 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
  */
 async function pollTrackingUpdates() {
     try {
+        console.log('CalAutobot: Polling for tracking updates...');
+
         // Check if user is authenticated
         let result = await getAuthToken(false);
         if (!result.token) {
-            // Not authenticated, skip polling
+            console.log('CalAutobot: Not authenticated, skipping poll');
             return;
         }
 
         const token = result.token;
 
-        // Build URL with "since" parameter if we have a lastPollTime
+        // Get lastDashboardCheck to count unread opens
+        const storage = await chrome.storage.local.get(['lastDashboardCheck', 'lastTrackingPoll']);
+        const lastDashboardCheck = storage.lastDashboardCheck;
+
+        // Build URL with "since" parameter based on last dashboard check
         const params = {};
-        if (lastPollTime) {
-            params.since = lastPollTime;
+        if (lastDashboardCheck) {
+            params.since = lastDashboardCheck;
         }
 
         const url = buildApiUrl('/api/tracking/requests', params);
+        console.log('CalAutobot: Fetching tracking data from:', url.toString());
         const resp = await fetchFromApi(url, {}, token);
 
         if (!resp.ok) {
@@ -472,19 +629,57 @@ async function pollTrackingUpdates() {
         }
 
         const data = await resp.json();
+        console.log('CalAutobot: Received tracking data:', {
+            success: data.success,
+            new_opens_count: data.new_opens_count,
+            requests_count: data.requests?.length
+        });
 
-        if (data.success && data.new_opens_count > 0) {
-            // Update badge
-            await updateBadge(data.new_opens_count);
+        // Count unread opens (opens since last dashboard check)
+        const unreadCount = data.new_opens_count || 0;
+
+        if (data.success && unreadCount > 0) {
+            console.log(`CalAutobot: Found ${unreadCount} new opens, updating badge...`);
+
+            // Store unread count
+            await chrome.storage.local.set({ unreadTrackingCount: unreadCount });
+
+            // Send message to content script to update Gmail button badge
+            try {
+                const tabs = await chrome.tabs.query({ url: 'https://mail.google.com/*' });
+                for (const tab of tabs) {
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: 'UPDATE_TRACKING_BADGE',
+                        count: unreadCount
+                    }).catch(() => {
+                        // Ignore errors if content script not loaded
+                    });
+                }
+            } catch (err) {
+                console.debug('Could not send badge update to content script:', err);
+            }
 
             // Show notifications for new opens
             await showTrackingNotifications(data.requests);
-        } else if (data.success && data.new_opens_count === 0) {
-            // Clear badge if no new opens
-            await chrome.action.setBadgeText({ text: '' });
+        } else if (data.success && unreadCount === 0) {
+            // Clear badges if no new opens
+            await chrome.storage.local.set({ unreadTrackingCount: 0 });
+
+            // Send message to content script to clear Gmail button badge
+            try {
+                const tabs = await chrome.tabs.query({ url: 'https://mail.google.com/*' });
+                for (const tab of tabs) {
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: 'UPDATE_TRACKING_BADGE',
+                        count: 0
+                    }).catch(() => {});
+                }
+            } catch (err) {
+                console.debug('Could not send badge clear to content script:', err);
+            }
         }
 
-        // Update last poll time
+        // Update last poll time (for debugging/monitoring)
         lastPollTime = new Date().toISOString();
         await chrome.storage.local.set({ lastTrackingPoll: lastPollTime });
 

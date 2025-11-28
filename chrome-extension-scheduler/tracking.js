@@ -3,7 +3,7 @@
  * Handles pixel injection, tracking state, and API communication
  */
 
-const API_BASE_URL = 'http://localhost:5001'; // Will fallback to production in background.js
+const API_BASE_URL = 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev';
 
 // --- Tracking ID Generation ---
 
@@ -134,29 +134,35 @@ function injectTrackingPixel(bodyHtml, trackingId) {
  * @returns {Promise<object>} API response
  */
 async function createTrackingRequest(params) {
-  const response = await fetch(`${API_BASE_URL}/api/tracking/requests`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      user_email: params.userEmail,
-      tracking_id: params.trackingId,
-      subject: params.subject,
-      recipients: params.recipients,
-      cc_recipients: params.ccRecipients || [],
-      bcc_recipients: params.bccRecipients || [],
-      gmail_message_id: params.gmailMessageId || null,
-      gmail_thread_id: params.gmailThreadId || null,
-    }),
+  console.log('tracking.js: createTrackingRequest called with params:', params);
+
+  // Create tracking request via background script to avoid CORS issues
+  const result = await new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      {
+        action: 'CREATE_TRACKING_REQUEST',
+        payload: {
+          userEmail: params.userEmail,
+          trackingId: params.trackingId,
+          subject: params.subject,
+          recipients: params.recipients,
+          ccRecipients: params.ccRecipients || [],
+          bccRecipients: params.bccRecipients || [],
+          gmailMessageId: params.gmailMessageId || null,
+          gmailThreadId: params.gmailThreadId || null,
+        }
+      },
+      resolve
+    );
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || 'Failed to create tracking request');
+  console.log('tracking.js: Background result:', result);
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to create tracking request');
   }
 
-  return response.json();
+  return result.data;
 }
 
 /**
@@ -166,12 +172,25 @@ async function createTrackingRequest(params) {
  * @returns {Promise<object>} { requests: [...], new_opens_count: N }
  */
 async function fetchTrackingRequests(userEmail, since = null) {
+  // Get auth token from background
+  const authResult = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ action: 'GET_AUTH_TOKEN' }, resolve);
+  });
+
+  if (!authResult || !authResult.token) {
+    throw new Error('Not authenticated');
+  }
+
   const params = new URLSearchParams({ user_email: userEmail });
   if (since) {
     params.append('since', since.toISOString());
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/tracking/requests?${params}`);
+  const response = await fetch(`${API_BASE_URL}/api/tracking/requests?${params}`, {
+    headers: {
+      'Authorization': `Bearer ${authResult.token}`,
+    },
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch tracking requests');
@@ -187,9 +206,23 @@ async function fetchTrackingRequests(userEmail, since = null) {
  * @returns {Promise<object>}
  */
 async function fetchContactEngagement(contactId, userEmail) {
+  // Get auth token from background
+  const authResult = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ action: 'GET_AUTH_TOKEN' }, resolve);
+  });
+
+  if (!authResult || !authResult.token) {
+    throw new Error('Not authenticated');
+  }
+
   const params = new URLSearchParams({ user_email: userEmail });
   const response = await fetch(
-    `${API_BASE_URL}/api/contacts/${contactId}/engagement?${params}`
+    `${API_BASE_URL}/api/contacts/${contactId}/engagement?${params}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${authResult.token}`,
+      },
+    }
   );
 
   if (!response.ok) {
