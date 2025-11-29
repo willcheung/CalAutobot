@@ -340,9 +340,11 @@ async function loadTrackingData(containerEl) {
     // Try to load cached data first for instant display
     const cached = await chrome.storage.local.get(['cachedTrackingData']);
     if (cached.cachedTrackingData && cached.cachedTrackingData.requests) {
-      console.log('CalAutobot: Displaying cached data instantly');
+      console.log('CalAutobot: Displaying cached data instantly - requests count:', cached.cachedTrackingData.requests.length);
       loadingEl.style.display = 'none';
       renderTrackingData(cached.cachedTrackingData, listEl, emptyEl);
+    } else {
+      console.log('CalAutobot: No cached data available, showing loading state');
     }
 
     // Fetch fresh data in background to update cache
@@ -357,7 +359,8 @@ async function loadTrackingData(containerEl) {
     }
 
     const data = result.data;
-    console.log('CalAutobot: Tracking data received:', data);
+    console.log('CalAutobot: Tracking data received - requests count:', data.requests?.length || 0);
+    console.log('CalAutobot: Full tracking data:', data);
 
     loadingEl.style.display = 'none';
 

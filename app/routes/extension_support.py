@@ -839,18 +839,16 @@ def get_tracking_requests():
                     is_active=True
                 ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
         else:
-            # First load - get all recent requests from last 30 days
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            # First load - get all recent requests (last 50, no time filter)
             requests_query = TrackingRequest.query.options(
                 joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
                 joinedload(TrackingRequest.events)
             ).filter(
                 TrackingRequest.user_id == user.id,
-                TrackingRequest.is_active == True,
-                TrackingRequest.sent_at >= thirty_days_ago
+                TrackingRequest.is_active == True
             ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
 
-            app.logger.info(f"First load - fetching tracking requests from last 30 days - found {len(requests_query)} requests")
+            app.logger.info(f"First load - fetching last 50 tracking requests - found {len(requests_query)} requests")
 
         # Count new opens since user last viewed dashboard (for badge)
         new_opens_count = 0
