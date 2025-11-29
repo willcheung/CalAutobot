@@ -251,6 +251,83 @@ function createDashboardElement() {
   return container;
 }
 
+function renderTrackingData(data, listEl, emptyEl, lastViewedAt = null) {
+  if (!data.success || !data.requests || data.requests.length === 0) {
+    emptyEl.style.display = 'block';
+    listEl.style.display = 'none';
+    return;
+  }
+
+  // Use lastViewedAt from parameter or from data
+  // Ensure timestamp ends with 'Z' for proper UTC parsing
+  let viewedAtStr = lastViewedAt || data.tracking_last_viewed_at;
+  if (viewedAtStr && !viewedAtStr.endsWith('Z')) {
+    viewedAtStr += 'Z';
+  }
+  const viewedAt = viewedAtStr ? new Date(viewedAtStr) : null;
+  console.log('CalAutobot: Rendering with tracking_last_viewed_at:', {
+    raw: viewedAtStr,
+    parsed: viewedAt?.toISOString(),
+    source: lastViewedAt ? 'parameter' : 'data'
+  });
+
+  // Render tracking list (grouped by gmail_thread_id)
+  listEl.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  // Group requests by thread ID
+  const threadGroups = new Map();
+  data.requests.forEach(req => {
+    const threadId = req.gmail_thread_id || `no-thread-${req.id}`;
+    if (!threadGroups.has(threadId)) {
+      threadGroups.set(threadId, []);
+    }
+    threadGroups.get(threadId).push(req);
+  });
+
+  // First, mark which requests have new opens since last viewed
+  const allRequests = Array.from(threadGroups.values())
+    .map(group => group.sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at)))
+    .flat();
+
+  const requestsWithUnread = allRequests.map(req => {
+    // If never viewed (viewedAt is null), treat all opened emails as unread
+    // Otherwise, check if email was opened after last view
+    const hasNewOpens = req.last_opened_at && (
+      !viewedAt || new Date(req.last_opened_at) > viewedAt
+    );
+    console.log(`CalAutobot: Unread check for "${req.subject}":`, {
+      last_opened_at: req.last_opened_at,
+      viewedAt: viewedAt?.toISOString(),
+      isAfter: req.last_opened_at && viewedAt && new Date(req.last_opened_at) > viewedAt,
+      hasNewOpens
+    });
+    return { ...req, isUnread: hasNewOpens };
+  });
+
+  // Sort: unread first (by last_opened_at DESC), then read (by last_opened_at or sent_at DESC)
+  const sortedRequests = requestsWithUnread.sort((a, b) => {
+    // Unread items always come first
+    if (a.isUnread && !b.isUnread) return -1;
+    if (!a.isUnread && b.isUnread) return 1;
+
+    // Within same unread status, sort by last activity (last_opened_at or sent_at)
+    const aTime = a.last_opened_at ? new Date(a.last_opened_at) : new Date(a.sent_at);
+    const bTime = b.last_opened_at ? new Date(b.last_opened_at) : new Date(b.sent_at);
+    return bTime - aTime;
+  });
+
+  listEl.innerHTML = requestsWithUnread.map(req => createTrackingCard(req)).join('');
+
+  // Add event listeners to expand buttons (after DOM is updated)
+  listEl.querySelectorAll('.expand-toggle').forEach(button => {
+    button.addEventListener('click', function () {
+      const cardId = this.getAttribute('data-card-id');
+      toggleExpand(cardId);
+    });
+  });
+}
+
 async function loadTrackingData(containerEl) {
   const loadingEl = containerEl.querySelector('#tracking-loading');
   const errorEl = containerEl.querySelector('#tracking-error');
@@ -260,7 +337,15 @@ async function loadTrackingData(containerEl) {
   try {
     console.log('CalAutobot: Loading tracking data for user:', userEmail);
 
-    // Fetch tracking data via background script to avoid CORS issues
+    // Try to load cached data first for instant display
+    const cached = await chrome.storage.local.get(['cachedTrackingData']);
+    if (cached.cachedTrackingData && cached.cachedTrackingData.requests) {
+      console.log('CalAutobot: Displaying cached data instantly');
+      loadingEl.style.display = 'none';
+      renderTrackingData(cached.cachedTrackingData, listEl, emptyEl);
+    }
+
+    // Fetch fresh data in background to update cache
     const result = await sendMessageToBackground('FETCH_TRACKING_REQUESTS', {
       userEmail: userEmail
     });
@@ -274,61 +359,23 @@ async function loadTrackingData(containerEl) {
     const data = result.data;
     console.log('CalAutobot: Tracking data received:', data);
 
-    // Get tracking_last_viewed_at from backend response
-    const lastViewedAt = data.tracking_last_viewed_at ? new Date(data.tracking_last_viewed_at) : null;
-
     loadingEl.style.display = 'none';
 
-    if (!data.success || !data.requests || data.requests.length === 0) {
-      emptyEl.style.display = 'block';
-      // Still mark as viewed even if empty
-      await sendMessageToBackground('MARK_TRACKING_VIEWED', { userEmail });
-      return;
+    // Render fresh data with highlights based on CURRENT tracking_last_viewed_at
+    renderTrackingData(data, listEl, emptyEl);
+
+    // Mark dashboard as viewed in backend (clears unread count for NEXT open)
+    const markViewedResult = await sendMessageToBackground('MARK_TRACKING_VIEWED', { userEmail });
+
+    // Update cache with SERVER's new tracking_last_viewed_at for next dashboard open
+    // IMPORTANT: Use server timestamp to avoid clock skew issues
+    if (markViewedResult.success && markViewedResult.data.tracking_last_viewed_at) {
+      const updatedData = { ...data, tracking_last_viewed_at: markViewedResult.data.tracking_last_viewed_at };
+      console.log('CalAutobot: Updating cache with new tracking_last_viewed_at:', markViewedResult.data.tracking_last_viewed_at);
+      await chrome.storage.local.set({ cachedTrackingData: updatedData });
+    } else {
+      console.warn('CalAutobot: Failed to update cache - mark viewed result:', markViewedResult);
     }
-
-    // Render tracking list (grouped by gmail_thread_id)
-    listEl.style.display = 'block';
-
-    // Group requests by thread ID
-    const threadGroups = new Map();
-    data.requests.forEach(req => {
-      const threadId = req.gmail_thread_id || `no-thread-${req.id}`;
-      if (!threadGroups.has(threadId)) {
-        threadGroups.set(threadId, []);
-      }
-      threadGroups.get(threadId).push(req);
-    });
-
-    // Sort each thread group by sent_at DESC, then flatten
-    const sortedRequests = Array.from(threadGroups.values())
-      .map(group => group.sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at)))
-      .flat()
-      .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at));
-
-    // Mark which requests have new opens since last viewed (from backend)
-    const requestsWithUnread = sortedRequests.map(req => {
-      const hasNewOpens = lastViewedAt && req.last_opened_at && new Date(req.last_opened_at) > lastViewedAt;
-      console.log(`CalAutobot: Checking unread for "${req.subject}":`, {
-        lastViewedAt: lastViewedAt?.toISOString(),
-        lastOpenedAt: req.last_opened_at,
-        hasNewOpens
-      });
-      return { ...req, isUnread: hasNewOpens };
-    });
-
-    listEl.innerHTML = requestsWithUnread.map(req => createTrackingCard(req)).join('');
-    console.log('CalAutobot: Rendered cards with unread count:', requestsWithUnread.filter(r => r.isUnread).length);
-
-    // Now mark dashboard as viewed in backend (clears unread count)
-    await sendMessageToBackground('MARK_TRACKING_VIEWED', { userEmail });
-
-    // Add event listeners to expand buttons (after DOM is updated)
-    listEl.querySelectorAll('.expand-toggle').forEach(button => {
-      button.addEventListener('click', function () {
-        const cardId = this.getAttribute('data-card-id');
-        toggleExpand(cardId);
-      });
-    });
 
   } catch (error) {
     console.error('Failed to load tracking data:', error);
@@ -360,25 +407,49 @@ function createTrackingCard(req) {
 
   // Format times
   const sentTime = formatDateTime(new Date(req.sent_at));
-  const openTime = hasOpened ? formatDateTime(new Date(req.first_opened_at)) : null;
+  const openTime = hasOpened ? formatDateTime(new Date(req.last_opened_at)) : null;
 
-  // Get first recipient who opened (or first recipient)
-  const firstRecipient = openedRecipients.length > 0
-    ? (openedRecipients[0].name || openedRecipients[0].email)
-    : (req.recipients[0]?.name || req.recipients[0]?.email || 'Unknown');
+  // Build recipient display text for Line 1
+  let recipientText = '';
+  if (openedRecipients.length === 0) {
+    // No one opened - show first recipient
+    recipientText = req.recipients[0]?.name || req.recipients[0]?.email || 'Unknown';
+  } else if (openedRecipients.length === 1) {
+    // One person opened
+    recipientText = openedRecipients[0].name || openedRecipients[0].email;
+  } else if (openedRecipients.length === 2) {
+    // Two people opened
+    const name1 = openedRecipients[0].name || openedRecipients[0].email;
+    const name2 = openedRecipients[1].name || openedRecipients[1].email;
+    recipientText = `${name1}, ${name2}`;
+  } else {
+    // Three or more people opened
+    const name1 = openedRecipients[0].name || openedRecipients[0].email;
+    const name2 = openedRecipients[1].name || openedRecipients[1].email;
+    const othersCount = openedRecipients.length - 2;
+    recipientText = `${name1}, ${name2}, and ${othersCount} other${othersCount > 1 ? 's' : ''}`;
+  }
 
-  // Get device/location from first open
-  let deviceInfo = 'Gmail';
-  let locationInfo = 'google.com network';
+  // Get device type and location from first open
+  let deviceIcon = '🖥️'; // Desktop icon
+  let deviceLabel = 'Desktop';
+  let locationInfo = '📍 Unknown location';
+
   if (req.events && req.events.length > 0) {
     const firstEvent = req.events[0];
-    if (firstEvent.user_agent_parsed?.browser || firstEvent.user_agent_parsed?.device) {
-      deviceInfo = firstEvent.user_agent_parsed?.browser || 'Gmail';
+
+    // Determine device type (Mobile vs Desktop)
+    const device = firstEvent.user_agent_parsed?.device || 'Desktop';
+    if (device === 'Mobile' || device === 'Tablet') {
+      deviceIcon = '📱';
+      deviceLabel = 'Mobile';
     }
-    if (firstEvent.city || firstEvent.country_code) {
-      locationInfo = firstEvent.city
-        ? `${firstEvent.city}, ${firstEvent.country_code}`
-        : firstEvent.country_code || 'google.com network';
+
+    // Format location
+    if (firstEvent.city && firstEvent.country_code) {
+      locationInfo = `📍 ${firstEvent.city}, ${firstEvent.country_code}`;
+    } else if (firstEvent.country_code) {
+      locationInfo = `📍 ${firstEvent.country_code}`;
     }
   }
 
@@ -394,12 +465,32 @@ function createTrackingCard(req) {
       <div class="open-details" style="display: none; margin-top: 6px; padding-top: 4px; padding-left: 8px; border-left: 2px solid #e8eaed;">
         ${sortedEvents.map((event, idx) => {
       const eventTime = formatDateTime(new Date(event.opened_at));
-      const browser = event.user_agent_parsed?.browser || 'Unknown';
-      const location = event.city ? `${event.city}, ${event.country_code}` : (event.country_code || 'Unknown');
+
+      // Device info
+      const device = event.user_agent_parsed?.device || 'Desktop';
+      let deviceIconExp = '🖥️';
+      let deviceLabelExp = 'Desktop';
+      if (device === 'Mobile' || device === 'Tablet') {
+        deviceIconExp = '📱';
+        deviceLabelExp = 'Mobile';
+      }
+
+      // Location info
+      let locationExp = '📍 Unknown location';
+      if (event.city && event.country_code) {
+        locationExp = `📍 ${event.city}, ${event.country_code}`;
+      } else if (event.country_code) {
+        locationExp = `📍 ${event.country_code}`;
+      }
+
+      // Try to match event to recipient (first opened recipient for now, since we don't track per-event recipients)
+      const recipientName = openedRecipients.length > 0
+        ? (openedRecipients[0].name || openedRecipients[0].email)
+        : 'Someone';
 
       return `
             <div style="font-size: 11px; color: #5f6368; padding: 3px 0;">
-              ${eventTime} • ${browser} • ${location}
+              <strong>${recipientName}</strong> ${eventTime} • ${deviceIconExp} ${deviceLabelExp} • ${locationExp}
             </div>
           `;
     }).join('')}
@@ -422,17 +513,17 @@ function createTrackingCard(req) {
       margin-left: -12px;
       margin-right: -12px;
     ">
-      <!-- Line 1: Recipient opened Subject -->
+      <!-- Line 1: Recipient(s) opened Subject -->
       <div style="color: #202124; margin-bottom: 3px;">
-        <strong style="color: #1967d2;">${firstRecipient}</strong> ${hasOpened ? 'opened' : 'received'}
+        <strong style="color: #1967d2;">${recipientText}</strong> ${hasOpened ? 'opened' : 'received'}
         <strong>${req.subject || '(No subject)'}</strong>
       </div>
 
-      <!-- Line 2: Time + Device -->
+      <!-- Line 2: Time + Device + Location -->
       <div style="color: #5f6368; font-size: 11px; margin-bottom: 2px;">
-        ${hasOpened ? openTime : sentTime} • ${deviceInfo}
+        ${hasOpened ? openTime : sentTime} • ${deviceIcon} ${deviceLabel} • ${locationInfo}
         ${req.events && req.events.length > 1 ? `
-          <button class="expand-toggle" data-card-id="${cardId}" data-open-count="${req.open_count}" style="
+          <button class="expand-toggle" data-card-id="${cardId}" data-open-count="${req.events.length}" style="
             background: none;
             border: none;
             color: #1967d2;
@@ -440,7 +531,7 @@ function createTrackingCard(req) {
             padding: 0;
             margin-left: 4px;
             font-size: 11px;
-          ">▼ ${req.open_count} opens</button>
+          ">▼ ${req.events.length} opens</button>
         ` : ''}
       </div>
 
@@ -660,6 +751,28 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
     // Pre-generate tracking ID when compose opens (so it's ready if tracking is enabled)
     trackingState.trackingId = generateTrackingId();
 
+    // Default tracking to enabled (will be overridden by toggle if it loads successfully)
+    trackingState.enabled = true;
+
+    // Flag to track if pixel has been injected
+    let pixelInjected = false;
+
+    // Function to inject pixel into body (called multiple times to ensure it sticks)
+    const ensurePixelInjected = () => {
+      if (!trackingState.enabled || !trackingState.trackingId) return;
+
+      try {
+        const currentHtml = composeView.getHTMLContent();
+        if (!currentHtml.includes('tracking/pixel')) {
+          const modifiedHtml = injectTrackingPixel(currentHtml, trackingState.trackingId);
+          composeView.setBodyHTML(modifiedHtml);
+          console.log('CalAutobot: Pixel injected into compose body');
+        }
+      } catch (err) {
+        console.warn('CalAutobot: Failed to ensure pixel injected', err);
+      }
+    };
+
     // Capture recipients in real-time as they change (BEFORE presending)
     // This is critical because Gmail clears recipients before presending fires
     const updateRecipients = () => {
@@ -745,13 +858,16 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
     // 2. Add Tracking Toggle
     (async () => {
       try {
+        console.log('CalAutobot: Attempting to add tracking toggle...');
         const trackingEnabled = await isTrackingEnabled();
+        console.log('CalAutobot: Tracking preference from storage:', trackingEnabled);
 
         // Create tracking toggle element
         const trackingToggle = composeView.addStatusBar({
           height: 20,
           orderHint: 0,
         });
+        console.log('CalAutobot: Status bar created:', trackingToggle);
 
         const toggleContainer = document.createElement('div');
         toggleContainer.className = 'calautobot-tracking-toggle';
@@ -777,9 +893,20 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           trackingState.enabled = enabled;
           await setTrackingEnabled(enabled); // Save preference for future emails
           console.log('CalAutobot: Tracking toggled:', enabled ? 'ON' : 'OFF', '(ID:', trackingState.trackingId, ')');
+
+          // Inject or remove pixel based on toggle
+          if (enabled) {
+            ensurePixelInjected();
+          }
         });
 
         trackingToggle.el.appendChild(toggleContainer);
+
+        // Inject pixel immediately if tracking is enabled
+        if (trackingEnabled) {
+          setTimeout(ensurePixelInjected, 100);
+        }
+
       } catch (err) {
         console.warn('CalAutobot: Failed to add tracking toggle', err);
       }
@@ -828,12 +955,21 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
 
             // Get email body HTML
             const bodyHtml = composeView.getHTMLContent();
+            console.log('CalAutobot: Original HTML length:', bodyHtml.length);
 
             // Inject tracking pixel
             const modifiedHtml = injectTrackingPixel(bodyHtml, trackingState.trackingId);
+            console.log('CalAutobot: Modified HTML length:', modifiedHtml.length);
+            console.log('CalAutobot: Modified HTML snippet:', modifiedHtml.substring(modifiedHtml.length - 200));
 
             // Update email body with pixel
             composeView.setBodyHTML(modifiedHtml);
+
+            // Verify the change took effect
+            const verifyHtml = composeView.getHTMLContent();
+            console.log('CalAutobot: Verified HTML length:', verifyHtml.length);
+            console.log('CalAutobot: Pixel present in verified HTML:', verifyHtml.includes('tracking/pixel'));
+
             console.log('CalAutobot: Tracking pixel injected successfully');
             console.log('CalAutobot: Note - If you see ERR_BLOCKED_BY_CLIENT, this is expected (self-tracking prevention). Recipients will see the pixel normally.');
           } catch (err) {

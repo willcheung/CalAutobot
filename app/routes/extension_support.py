@@ -816,12 +816,12 @@ def get_tracking_requests():
         # Count new opens since user last viewed dashboard (for badge)
         new_opens_count = 0
         if user.tracking_last_viewed_at:
-            # Count events since last viewed
+            # Count events since last viewed (using > to exclude exact timestamp)
             new_opens_count = db.session.query(db.func.count(TrackingEvent.id)).join(
                 TrackingRequest
             ).filter(
                 TrackingRequest.user_id == user.id,
-                TrackingEvent.opened_at >= user.tracking_last_viewed_at
+                TrackingEvent.opened_at > user.tracking_last_viewed_at
             ).scalar() or 0
         else:
             # Never viewed dashboard - count all events
@@ -882,7 +882,7 @@ def mark_tracking_viewed():
 
         response = jsonify({
             'success': True,
-            'tracking_last_viewed_at': user.tracking_last_viewed_at.isoformat()
+            'tracking_last_viewed_at': user.tracking_last_viewed_at.isoformat() + 'Z'
         })
         add_cors_headers_for_extension(response)
         return response

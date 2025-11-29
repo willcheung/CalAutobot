@@ -632,11 +632,17 @@ async function pollTrackingUpdates() {
         console.log('CalAutobot: Received tracking data:', {
             success: data.success,
             new_opens_count: data.new_opens_count,
+            tracking_last_viewed_at: data.tracking_last_viewed_at,
             requests_count: data.requests?.length
         });
 
         // Count unread opens (opens since last dashboard check)
         const unreadCount = data.new_opens_count || 0;
+        console.log('CalAutobot: Unread count for badge:', unreadCount);
+
+        // Update cache with fresh data
+        await chrome.storage.local.set({ cachedTrackingData: data });
+        console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
 
         if (data.success && unreadCount > 0) {
             console.log(`CalAutobot: Found ${unreadCount} new opens, updating badge...`);
