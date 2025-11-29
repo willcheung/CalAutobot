@@ -817,10 +817,9 @@ def get_tracking_requests():
                 since_dt = datetime.fromisoformat(since.replace('Z', ''))
                 # Only get tracking requests with new opens since 'since' timestamp
                 # This makes polling more efficient by only returning updated data
-                # Eager load recipients and events to avoid N+1 queries
+                # Eager load recipients to avoid N+1 queries (events use lazy='dynamic' so can't eager load)
                 requests_query = TrackingRequest.query.options(
-                    joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
-                    joinedload(TrackingRequest.events)
+                    joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact)
                 ).filter(
                     TrackingRequest.user_id == user.id,
                     TrackingRequest.is_active == True,
@@ -832,8 +831,7 @@ def get_tracking_requests():
                 app.logger.warning(f"Invalid 'since' parameter: {since} - {e}")
                 # Fall back to getting all recent requests
                 requests_query = TrackingRequest.query.options(
-                    joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
-                    joinedload(TrackingRequest.events)
+                    joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact)
                 ).filter_by(
                     user_id=user.id,
                     is_active=True
@@ -841,8 +839,7 @@ def get_tracking_requests():
         else:
             # First load - get all recent requests (last 50, no time filter)
             requests_query = TrackingRequest.query.options(
-                joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
-                joinedload(TrackingRequest.events)
+                joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact)
             ).filter(
                 TrackingRequest.user_id == user.id,
                 TrackingRequest.is_active == True
