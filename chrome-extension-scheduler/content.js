@@ -483,14 +483,9 @@ function createTrackingCard(req) {
         locationExp = `📍 ${event.country_code}`;
       }
 
-      // Try to match event to recipient (first opened recipient for now, since we don't track per-event recipients)
-      const recipientName = openedRecipients.length > 0
-        ? (openedRecipients[0].name || openedRecipients[0].email)
-        : 'Someone';
-
       return `
             <div style="font-size: 11px; color: #5f6368; padding: 3px 0;">
-              <strong>${recipientName}</strong> ${eventTime} • ${deviceIconExp} ${deviceLabelExp} • ${locationExp}
+              ${eventTime} • ${deviceIconExp} ${deviceLabelExp} • ${locationExp}
             </div>
           `;
     }).join('')}

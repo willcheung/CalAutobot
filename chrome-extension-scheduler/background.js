@@ -609,14 +609,18 @@ async function pollTrackingUpdates() {
 
         const token = result.token;
 
-        // Get lastDashboardCheck to count unread opens
+        // Get lastTrackingPoll to fetch only new data since last poll (for efficiency)
         const storage = await chrome.storage.local.get(['lastDashboardCheck', 'lastTrackingPoll']);
-        const lastDashboardCheck = storage.lastDashboardCheck;
+        const lastTrackingPoll = storage.lastTrackingPoll;
 
-        // Build URL with "since" parameter based on last dashboard check
+        // Build URL with "since" parameter based on last poll time (for efficient polling)
+        // This will only fetch tracking requests with new opens since last poll
         const params = {};
-        if (lastDashboardCheck) {
-            params.since = lastDashboardCheck;
+        if (lastTrackingPoll) {
+            params.since = lastTrackingPoll;
+            console.log('CalAutobot: Polling for updates since:', lastTrackingPoll);
+        } else {
+            console.log('CalAutobot: First poll - fetching all recent tracking requests');
         }
 
         const url = buildApiUrl('/api/tracking/requests', params);
@@ -640,7 +644,40 @@ async function pollTrackingUpdates() {
         const unreadCount = data.new_opens_count || 0;
         console.log('CalAutobot: Unread count for badge:', unreadCount);
 
+        // Debug: Show which emails have been opened
+        if (data.requests && data.requests.length > 0) {
+            console.log('CalAutobot: Recent tracking requests:');
+            data.requests.slice(0, 5).forEach(req => {
+                console.log(`  - "${req.subject}" | Sent: ${req.sent_at} | Last opened: ${req.last_opened_at || 'Never'} | Opens: ${req.open_count || 0}`);
+            });
+        }
+
         // Update cache with fresh data
+        if (lastTrackingPoll && data.requests && data.requests.length > 0) {
+            // Incremental update: merge new data with existing cache
+            const existingCache = await chrome.storage.local.get(['cachedTrackingData']);
+            if (existingCache.cachedTrackingData && existingCache.cachedTrackingData.requests) {
+                // Create a map of existing requests by ID
+                const existingMap = new Map();
+                existingCache.cachedTrackingData.requests.forEach(req => {
+                    existingMap.set(req.id, req);
+                });
+
+                // Update or add new requests
+                data.requests.forEach(req => {
+                    existingMap.set(req.id, req);
+                });
+
+                // Convert back to array and sort by sent_at
+                const mergedRequests = Array.from(existingMap.values())
+                    .sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at))
+                    .slice(0, 50); // Keep only 50 most recent
+
+                data.requests = mergedRequests;
+                console.log('CalAutobot: Merged incremental updates with cache - total requests:', mergedRequests.length);
+            }
+        }
+
         await chrome.storage.local.set({ cachedTrackingData: data });
         console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
 
