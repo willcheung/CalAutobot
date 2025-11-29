@@ -836,7 +836,7 @@ def get_tracking_requests():
             'success': True,
             'requests': [req.to_dict(include_events=True) for req in requests_query],
             'new_opens_count': new_opens_count,  # For badge notification
-            'tracking_last_viewed_at': user.tracking_last_viewed_at.isoformat() if user.tracking_last_viewed_at else None
+            'tracking_last_viewed_at': user.tracking_last_viewed_at.isoformat() + 'Z' if user.tracking_last_viewed_at else None
         })
         add_cors_headers_for_extension(response)
         return response
