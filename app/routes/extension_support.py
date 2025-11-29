@@ -808,13 +808,20 @@ def get_tracking_requests():
         since = request.args.get('since')  # For polling - get events since last check
 
         # Get recent tracking requests
+        # Import here to avoid circular dependency
+        from sqlalchemy.orm import joinedload
+
         if since:
             # Parse the since timestamp
             try:
                 since_dt = datetime.fromisoformat(since.replace('Z', ''))
                 # Only get tracking requests with new opens since 'since' timestamp
                 # This makes polling more efficient by only returning updated data
-                requests_query = TrackingRequest.query.filter(
+                # Eager load recipients and events to avoid N+1 queries
+                requests_query = TrackingRequest.query.options(
+                    joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
+                    joinedload(TrackingRequest.events)
+                ).filter(
                     TrackingRequest.user_id == user.id,
                     TrackingRequest.is_active == True,
                     TrackingRequest.last_opened_at > since_dt
@@ -824,14 +831,20 @@ def get_tracking_requests():
             except (ValueError, TypeError) as e:
                 app.logger.warning(f"Invalid 'since' parameter: {since} - {e}")
                 # Fall back to getting all recent requests
-                requests_query = TrackingRequest.query.filter_by(
+                requests_query = TrackingRequest.query.options(
+                    joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
+                    joinedload(TrackingRequest.events)
+                ).filter_by(
                     user_id=user.id,
                     is_active=True
                 ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
         else:
             # First load - get all recent requests from last 30 days
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-            requests_query = TrackingRequest.query.filter(
+            requests_query = TrackingRequest.query.options(
+                joinedload(TrackingRequest.recipients).joinedload(TrackingRecipient.contact),
+                joinedload(TrackingRequest.events)
+            ).filter(
                 TrackingRequest.user_id == user.id,
                 TrackingRequest.is_active == True,
                 TrackingRequest.sent_at >= thirty_days_ago

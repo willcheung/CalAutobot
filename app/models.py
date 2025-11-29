@@ -510,7 +510,7 @@ class TrackingRequest(db.Model):
                                 lazy='dynamic', cascade='all, delete-orphan')
     user = db.relationship('User', backref=db.backref('tracking_requests', lazy='dynamic'))
 
-    def to_dict(self, include_events=False):
+    def to_dict(self, include_events=False, event_limit=10):
         data = {
             'id': self.id,
             'tracking_id': self.tracking_id,
@@ -522,7 +522,7 @@ class TrackingRequest(db.Model):
                     'type': tr.recipient_type,
                     'opened': tr.has_opened
                 }
-                for tr in self.recipients.all()
+                for tr in self.recipients
             ],
             'is_active': self.is_active,
             'sent_at': self.sent_at.isoformat() + 'Z' if self.sent_at else None,
@@ -533,7 +533,9 @@ class TrackingRequest(db.Model):
             'gmail_thread_id': self.gmail_thread_id,
         }
         if include_events:
-            data['events'] = [event.to_dict() for event in self.events.limit(50).all()]
+            # Limit events and sort by most recent
+            events_list = sorted(self.events, key=lambda e: e.opened_at, reverse=True)[:event_limit]
+            data['events'] = [event.to_dict() for event in events_list]
         return data
 
 

@@ -681,6 +681,18 @@ async function pollTrackingUpdates() {
         await chrome.storage.local.set({ cachedTrackingData: data });
         console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
 
+        // Update lastTrackingPoll timestamp AFTER successful data fetch
+        // This ensures next poll will only fetch data newer than this poll
+        // IMPORTANT: Only update if we actually got data, otherwise we'll miss historical data
+        if (data.success && data.requests && data.requests.length > 0) {
+            const pollTimestamp = new Date().toISOString();
+            await chrome.storage.local.set({ lastTrackingPoll: pollTimestamp });
+            console.log('CalAutobot: Updated lastTrackingPoll to:', pollTimestamp);
+        } else if (!lastTrackingPoll) {
+            // First poll returned no data - don't set timestamp yet, keep fetching all data
+            console.log('CalAutobot: First poll returned no data, will retry full fetch on next poll');
+        }
+
         if (data.success && unreadCount > 0) {
             console.log(`CalAutobot: Found ${unreadCount} new opens, updating badge...`);
 
@@ -721,10 +733,6 @@ async function pollTrackingUpdates() {
                 console.debug('Could not send badge clear to content script:', err);
             }
         }
-
-        // Update last poll time (for debugging/monitoring)
-        lastPollTime = new Date().toISOString();
-        await chrome.storage.local.set({ lastTrackingPoll: lastPollTime });
 
     } catch (err) {
         console.error('CalAutobot: Error polling tracking updates', err);
