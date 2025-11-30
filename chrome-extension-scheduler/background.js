@@ -426,6 +426,9 @@ async function handleFetchTrackingRequests(userEmail, since = null) {
         const params = { user_email: userEmail };
         if (since) {
             params.since = since;
+            console.log('Background: Fetching tracking requests WITH since parameter:', since);
+        } else {
+            console.log('Background: Fetching tracking requests WITHOUT since parameter (full load)');
         }
 
         const response = await fetchFromApi(
@@ -515,7 +518,8 @@ async function handleCreateTrackingRequest(payload) {
         }
 
         const data = await response.json();
-        console.log('Background: Tracking request created:', data);
+        console.log('Background: Tracking requests fetched - count:', data.requests?.length || 0);
+        console.log('Background: Full response:', data);
         return { success: true, data: data };
     } catch (err) {
         console.error('Failed to create tracking request', err);
@@ -676,18 +680,31 @@ async function pollTrackingUpdates() {
                 data.requests = mergedRequests;
                 console.log('CalAutobot: Merged incremental updates with cache - total requests:', mergedRequests.length);
             }
+
+            await chrome.storage.local.set({ cachedTrackingData: data });
+            console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
+        } else if (!lastTrackingPoll) {
+            // First poll - full data load, update cache
+            await chrome.storage.local.set({ cachedTrackingData: data });
+            console.log('CalAutobot: Cache updated with initial data - requests:', data.requests?.length || 0);
+        } else {
+            // Incremental poll returned no new data - DON'T update cache
+            // Just update the tracking_last_viewed_at timestamp in existing cache
+            const existingCache = await chrome.storage.local.get(['cachedTrackingData']);
+            if (existingCache.cachedTrackingData) {
+                existingCache.cachedTrackingData.tracking_last_viewed_at = data.tracking_last_viewed_at;
+                existingCache.cachedTrackingData.new_opens_count = data.new_opens_count;
+                await chrome.storage.local.set({ cachedTrackingData: existingCache.cachedTrackingData });
+                console.log('CalAutobot: No new data in poll, preserved cache with', existingCache.cachedTrackingData.requests?.length || 0, 'requests');
+            }
         }
 
-        await chrome.storage.local.set({ cachedTrackingData: data });
-        console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
-
         // Update lastTrackingPoll timestamp AFTER successful data fetch
-        // This ensures next poll will only fetch data newer than this poll
-        // IMPORTANT: Only update if we actually got data, otherwise we'll miss historical data
-        if (data.success && data.requests && data.requests.length > 0) {
-            const pollTimestamp = new Date().toISOString();
-            await chrome.storage.local.set({ lastTrackingPoll: pollTimestamp });
-            console.log('CalAutobot: Updated lastTrackingPoll to:', pollTimestamp);
+        // Use tracking_last_viewed_at from response (server timestamp) instead of client timestamp
+        // This ensures consistency with backend filtering logic
+        if (data.success && data.tracking_last_viewed_at) {
+            await chrome.storage.local.set({ lastTrackingPoll: data.tracking_last_viewed_at });
+            console.log('CalAutobot: Updated lastTrackingPoll to:', data.tracking_last_viewed_at);
         } else if (!lastTrackingPoll) {
             // First poll returned no data - don't set timestamp yet, keep fetching all data
             console.log('CalAutobot: First poll returned no data, will retry full fetch on next poll');

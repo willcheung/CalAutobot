@@ -167,6 +167,19 @@ function createDropdown(composeView, setButtonLoading = () => { }) {
     }
   ));
 
+  // 3. Track email opens (checkbox - get reference to compose state)
+  const trackingCheckbox = document.createElement('div');
+  trackingCheckbox.className = 'calautobot-item';
+  trackingCheckbox.style.cssText = 'cursor: pointer;';
+  trackingCheckbox.innerHTML = `
+    <input type="checkbox" class="calautobot-menu-tracking-checkbox" style="margin-right: 12px; cursor: pointer;" />
+    <span>Track email opens</span>
+  `;
+
+  // Will be initialized when dropdown opens
+  trackingCheckbox._composeView = composeView;
+  dropdown.appendChild(trackingCheckbox);
+
   // Divider
   const divider = document.createElement('div');
   divider.className = 'calautobot-divider';
@@ -670,6 +683,35 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
     });
     console.log('CalAutobot: Tracking toolbar button added successfully');
 
+    // Style the button to look like Gmail's native buttons (white background with border)
+    setTimeout(() => {
+      const icon = document.querySelector('img[src*="icon48.png"]');
+      if (icon) {
+        const appButton = icon.closest('.inboxsdk__appButton') || icon.parentElement?.parentElement;
+        if (appButton) {
+          appButton.style.cssText = `
+            background: white !important;
+            border: 1px solid #dadce0 !important;
+            border-radius: 20px !important;
+            padding: 8px 16px !important;
+            margin: 0 8px !important;
+            cursor: pointer !important;
+            transition: background-color 0.2s, box-shadow 0.2s !important;
+          `;
+
+          // Add hover effect
+          appButton.addEventListener('mouseenter', () => {
+            appButton.style.backgroundColor = '#f8f9fa';
+            appButton.style.boxShadow = '0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15)';
+          });
+          appButton.addEventListener('mouseleave', () => {
+            appButton.style.backgroundColor = 'white';
+            appButton.style.boxShadow = 'none';
+          });
+        }
+      }
+    }, 500);
+
     // Add custom badge element to button (InboxSDK doesn't have built-in badge support)
     updateTrackingBadge = function (count) {
       // Find the app button container
@@ -692,18 +734,18 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
         badge.className = 'calautobot-badge';
         badge.textContent = count > 99 ? '99+' : count.toString();
         badge.style.cssText = `
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           margin-left: 6px;
           background: #1a73e8;
           color: white;
-          border-radius: 10px;
-          min-width: 18px;
-          height: 18px;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
           font-size: 11px;
           font-weight: bold;
-          line-height: 18px;
           text-align: center;
-          padding: 0 5px;
           box-shadow: 0 1px 2px rgba(0,0,0,0.2);
           vertical-align: middle;
         `;
@@ -849,64 +891,37 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           dropdownContent.style.position = 'static'; // SDK handles positioning
           dropdownContent.style.boxShadow = 'none'; // SDK handles shadow
           dropdownContent.style.border = 'none'; // SDK handles border
+
+          // Initialize tracking checkbox from current state
+          const checkbox = dropdownContent.querySelector('.calautobot-menu-tracking-checkbox');
+          if (checkbox) {
+            checkbox.checked = trackingState.enabled;
+
+            // Handle checkbox toggle
+            checkbox.parentElement.addEventListener('click', async (e) => {
+              e.stopPropagation();
+              checkbox.checked = !checkbox.checked;
+              trackingState.enabled = checkbox.checked;
+              await setTrackingEnabled(checkbox.checked);
+              console.log('CalAutobot: Tracking toggled:', checkbox.checked ? 'ON' : 'OFF');
+              if (checkbox.checked) {
+                ensurePixelInjected();
+              }
+            });
+          }
         }
       },
     });
 
-    // 2. Add Tracking Toggle
+    // 2. Initialize tracking state
     (async () => {
-      try {
-        console.log('CalAutobot: Attempting to add tracking toggle...');
-        const trackingEnabled = await isTrackingEnabled();
-        console.log('CalAutobot: Tracking preference from storage:', trackingEnabled);
+      const trackingEnabled = await isTrackingEnabled();
+      trackingState.enabled = trackingEnabled;
+      console.log('CalAutobot: Tracking initialized with ID:', trackingState.trackingId, 'enabled:', trackingState.enabled);
 
-        // Create tracking toggle element
-        const trackingToggle = composeView.addStatusBar({
-          height: 20,
-          orderHint: 0,
-        });
-        console.log('CalAutobot: Status bar created:', trackingToggle);
-
-        const toggleContainer = document.createElement('div');
-        toggleContainer.className = 'calautobot-tracking-toggle';
-        toggleContainer.innerHTML = `
-          <label class="calautobot-tracking-label">
-            <input type="checkbox" class="calautobot-tracking-checkbox" ${trackingEnabled ? 'checked' : ''} />
-            <svg class="calautobot-tracking-icon" viewBox="0 0 24 24" width="16" height="16">
-              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-            </svg>
-            <span class="calautobot-tracking-text">Track email opens</span>
-          </label>
-        `;
-
-        const checkbox = toggleContainer.querySelector('.calautobot-tracking-checkbox');
-
-        // Set initial state
-        trackingState.enabled = trackingEnabled;
-        console.log('CalAutobot: Tracking initialized with ID:', trackingState.trackingId, 'enabled:', trackingState.enabled);
-
-        // Handle checkbox change
-        checkbox.addEventListener('change', async (e) => {
-          const enabled = e.target.checked;
-          trackingState.enabled = enabled;
-          await setTrackingEnabled(enabled); // Save preference for future emails
-          console.log('CalAutobot: Tracking toggled:', enabled ? 'ON' : 'OFF', '(ID:', trackingState.trackingId, ')');
-
-          // Inject or remove pixel based on toggle
-          if (enabled) {
-            ensurePixelInjected();
-          }
-        });
-
-        trackingToggle.el.appendChild(toggleContainer);
-
-        // Inject pixel immediately if tracking is enabled
-        if (trackingEnabled) {
-          setTimeout(ensurePixelInjected, 100);
-        }
-
-      } catch (err) {
-        console.warn('CalAutobot: Failed to add tracking toggle', err);
+      // Inject pixel immediately if tracking is enabled
+      if (trackingEnabled) {
+        setTimeout(ensurePixelInjected, 100);
       }
     })();
 

@@ -204,6 +204,10 @@ def get_location_from_ip(ip_address: str) -> Dict[str, Optional[str]]:
     Returns:
         Dict with country_code, city, timezone
     """
+    # Skip API call for private/internal IP addresses
+    if is_private_ip(ip_address):
+        return {'country_code': None, 'city': None, 'timezone': None}
+
     try:
         import requests
         response = requests.get(
@@ -222,6 +226,25 @@ def get_location_from_ip(ip_address: str) -> Dict[str, Optional[str]]:
         pass
 
     return {'country_code': None, 'city': None, 'timezone': None}
+
+
+def is_private_ip(ip_address: str) -> bool:
+    """
+    Check if IP address is private/internal (RFC 1918, loopback, etc.).
+
+    Args:
+        ip_address: IP address string
+
+    Returns:
+        True if private/internal, False if public
+    """
+    try:
+        import ipaddress
+        ip = ipaddress.ip_address(ip_address)
+        return ip.is_private or ip.is_loopback or ip.is_link_local
+    except (ValueError, TypeError):
+        # Invalid IP format
+        return True  # Treat invalid IPs as private (skip API call)
 
 
 def parse_user_agent(user_agent: str) -> Dict[str, str]:
