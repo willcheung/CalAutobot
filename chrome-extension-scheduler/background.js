@@ -180,7 +180,7 @@ async function handleLogin() {
     // but Chrome's internal state is confused or refusing to prompt.
     // We can force a prompt using launchWebAuthFlow with the same client ID.
     if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
-        console.log('OAuth2 revoked, attempting force re-auth via launchWebAuthFlow');
+  // console.log('OAuth2 revoked, attempting force re-auth via launchWebAuthFlow');
         try {
             const manifest = chrome.runtime.getManifest();
             const clientId = manifest.oauth2.client_id;
@@ -261,7 +261,7 @@ async function handleCheckAuth(userEmail) {
     } catch (err) {
         // Retry logic for stale tokens
         if (err.message === 'unauthorized' && currentToken) {
-            console.log('Auth check unauthorized, retrying with fresh token...');
+  // console.log('Auth check unauthorized, retrying with fresh token...');
             // Token is already removed from cache by fetchFromApi if 401
 
             const freshResult = await getAuthToken(false);
@@ -297,7 +297,7 @@ async function handleFetchAvailability(userEmail, count) {
 
     // Handle OAuth2 revoked error
     if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
-        console.log('OAuth2 revoked in fetch availability, user needs to re-authenticate');
+  // console.log('OAuth2 revoked in fetch availability, user needs to re-authenticate');
         return {
             success: false,
             error: 'Please sign in again. Click the CalAutobot button and try again.'
@@ -330,7 +330,7 @@ async function handleFetchAvailability(userEmail, count) {
         // If error is "unauthorized", the token might be stale
         // Remove it from cache and try ONE more time with a fresh token
         if (err.message === 'unauthorized' && token) {
-            console.log('Token unauthorized, getting fresh token...');
+  // console.log('Token unauthorized, getting fresh token...');
             await chrome.identity.removeCachedAuthToken({ token });
 
             // Get a fresh token (non-interactive)
@@ -358,7 +358,7 @@ async function handleFetchBookingLink(userEmail) {
 
     // Handle OAuth2 revoked error
     if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
-        console.log('OAuth2 revoked in fetch booking link, user needs to re-authenticate');
+  // console.log('OAuth2 revoked in fetch booking link, user needs to re-authenticate');
         return {
             success: false,
             error: 'Please sign in again. Click the CalAutobot button and try again.'
@@ -391,7 +391,7 @@ async function handleSendContacts(userEmail, contacts) {
 
     // Handle OAuth2 revoked error - fail silently for contacts sync
     if (result.error && result.error.includes('OAuth2 not granted or revoked')) {
-        console.log('OAuth2 revoked in send contacts, skipping sync');
+  // console.log('OAuth2 revoked in send contacts, skipping sync');
         return { success: false, error: 'Authentication required' };
     }
 
@@ -426,9 +426,9 @@ async function handleFetchTrackingRequests(userEmail, since = null) {
         const params = { user_email: userEmail };
         if (since) {
             params.since = since;
-            console.log('Background: Fetching tracking requests WITH since parameter:', since);
+  // console.log('Background: Fetching tracking requests WITH since parameter:', since);
         } else {
-            console.log('Background: Fetching tracking requests WITHOUT since parameter (full load)');
+  // console.log('Background: Fetching tracking requests WITHOUT since parameter (full load)');
         }
 
         const response = await fetchFromApi(
@@ -443,7 +443,7 @@ async function handleFetchTrackingRequests(userEmail, since = null) {
         }
 
         const data = await response.json();
-        console.log('Background: Fetched tracking requests:', data);
+  // console.log('Background: Fetched tracking requests:', data);
         return { success: true, data: data };
     } catch (err) {
         console.error('Failed to fetch tracking requests', err);
@@ -476,7 +476,7 @@ async function handleMarkTrackingViewed(userEmail) {
         }
 
         const data = await response.json();
-        console.log('Background: Marked tracking as viewed:', data);
+  // console.log('Background: Marked tracking as viewed:', data);
         return { success: true, data: data };
     } catch (err) {
         console.error('Failed to mark tracking as viewed', err);
@@ -518,8 +518,8 @@ async function handleCreateTrackingRequest(payload) {
         }
 
         const data = await response.json();
-        console.log('Background: Tracking requests fetched - count:', data.requests?.length || 0);
-        console.log('Background: Full response:', data);
+  // console.log('Background: Tracking requests fetched - count:', data.requests?.length || 0);
+  // console.log('Background: Full response:', data);
         return { success: true, data: data };
     } catch (err) {
         console.error('Failed to create tracking request', err);
@@ -533,23 +533,23 @@ async function handleCreateTrackingRequest(payload) {
  * Initialize tracking notifications on extension startup
  */
 chrome.runtime.onStartup.addListener(() => {
-    console.log('CalAutobot: Extension started, initializing tracking notifications');
+  // console.log('CalAutobot: Extension started, initializing tracking notifications');
     initializeTrackingPolling();
     initializeLastDashboardCheck();
 });
 
 chrome.runtime.onInstalled.addListener(() => {
-    console.log('CalAutobot: Extension installed/updated, initializing tracking notifications');
+  // console.log('CalAutobot: Extension installed/updated, initializing tracking notifications');
     initializeTrackingPolling();
     initializeLastDashboardCheck();
 
     // Trigger immediate poll for testing
     setTimeout(() => {
-        console.log('CalAutobot: Running initial tracking poll...');
+  // console.log('CalAutobot: Running initial tracking poll...');
         pollTrackingUpdates();
     }, 2000);
 
-    console.log('CalAutobot: Extension installed/updated, tracking system ready');
+  // console.log('CalAutobot: Extension installed/updated, tracking system ready');
 });
 
 /**
@@ -563,7 +563,7 @@ async function initializeLastDashboardCheck() {
             lastDashboardCheck: new Date().toISOString(),
             unreadTrackingCount: 0
         });
-        console.log('CalAutobot: Initialized lastDashboardCheck');
+  // console.log('CalAutobot: Initialized lastDashboardCheck');
     }
 }
 
@@ -585,7 +585,7 @@ async function initializeTrackingPolling() {
         trackingPollInitialized: new Date().toISOString()
     });
 
-    console.log('CalAutobot: Tracking polling initialized (30s intervals)');
+  // console.log('CalAutobot: Tracking polling initialized (30s intervals)');
 }
 
 /**
@@ -602,12 +602,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
  */
 async function pollTrackingUpdates() {
     try {
-        console.log('CalAutobot: Polling for tracking updates...');
+  // console.log('CalAutobot: Polling for tracking updates...');
 
         // Check if user is authenticated
         let result = await getAuthToken(false);
         if (!result.token) {
-            console.log('CalAutobot: Not authenticated, skipping poll');
+  // console.log('CalAutobot: Not authenticated, skipping poll');
             return;
         }
 
@@ -622,13 +622,13 @@ async function pollTrackingUpdates() {
         const params = {};
         if (lastTrackingPoll) {
             params.since = lastTrackingPoll;
-            console.log('CalAutobot: Polling for updates since:', lastTrackingPoll);
+  // console.log('CalAutobot: Polling for updates since:', lastTrackingPoll);
         } else {
-            console.log('CalAutobot: First poll - fetching all recent tracking requests');
+  // console.log('CalAutobot: First poll - fetching all recent tracking requests');
         }
 
         const url = buildApiUrl('/api/tracking/requests', params);
-        console.log('CalAutobot: Fetching tracking data from:', url.toString());
+  // console.log('CalAutobot: Fetching tracking data from:', url.toString());
         const resp = await fetchFromApi(url, {}, token);
 
         if (!resp.ok) {
@@ -637,7 +637,7 @@ async function pollTrackingUpdates() {
         }
 
         const data = await resp.json();
-        console.log('CalAutobot: Received tracking data:', {
+  // console.log('CalAutobot: Received tracking data:', {
             success: data.success,
             new_opens_count: data.new_opens_count,
             tracking_last_viewed_at: data.tracking_last_viewed_at,
@@ -646,13 +646,13 @@ async function pollTrackingUpdates() {
 
         // Count unread opens (opens since last dashboard check)
         const unreadCount = data.new_opens_count || 0;
-        console.log('CalAutobot: Unread count for badge:', unreadCount);
+  // console.log('CalAutobot: Unread count for badge:', unreadCount);
 
         // Debug: Show which emails have been opened
         if (data.requests && data.requests.length > 0) {
-            console.log('CalAutobot: Recent tracking requests:');
+  // console.log('CalAutobot: Recent tracking requests:');
             data.requests.slice(0, 5).forEach(req => {
-                console.log(`  - "${req.subject}" | Sent: ${req.sent_at} | Last opened: ${req.last_opened_at || 'Never'} | Opens: ${req.open_count || 0}`);
+  // console.log(`  - "${req.subject}" | Sent: ${req.sent_at} | Last opened: ${req.last_opened_at || 'Never'} | Opens: ${req.open_count || 0}`);
             });
         }
 
@@ -678,15 +678,15 @@ async function pollTrackingUpdates() {
                     .slice(0, 50); // Keep only 50 most recent
 
                 data.requests = mergedRequests;
-                console.log('CalAutobot: Merged incremental updates with cache - total requests:', mergedRequests.length);
+  // console.log('CalAutobot: Merged incremental updates with cache - total requests:', mergedRequests.length);
             }
 
             await chrome.storage.local.set({ cachedTrackingData: data });
-            console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
+  // console.log('CalAutobot: Cache updated with tracking_last_viewed_at:', data.tracking_last_viewed_at);
         } else if (!lastTrackingPoll) {
             // First poll - full data load, update cache
             await chrome.storage.local.set({ cachedTrackingData: data });
-            console.log('CalAutobot: Cache updated with initial data - requests:', data.requests?.length || 0);
+  // console.log('CalAutobot: Cache updated with initial data - requests:', data.requests?.length || 0);
         } else {
             // Incremental poll returned no new data - DON'T update cache
             // Just update the tracking_last_viewed_at timestamp in existing cache
@@ -695,7 +695,7 @@ async function pollTrackingUpdates() {
                 existingCache.cachedTrackingData.tracking_last_viewed_at = data.tracking_last_viewed_at;
                 existingCache.cachedTrackingData.new_opens_count = data.new_opens_count;
                 await chrome.storage.local.set({ cachedTrackingData: existingCache.cachedTrackingData });
-                console.log('CalAutobot: No new data in poll, preserved cache with', existingCache.cachedTrackingData.requests?.length || 0, 'requests');
+  // console.log('CalAutobot: No new data in poll, preserved cache with', existingCache.cachedTrackingData.requests?.length || 0, 'requests');
             }
         }
 
@@ -704,14 +704,14 @@ async function pollTrackingUpdates() {
         // This ensures consistency with backend filtering logic
         if (data.success && data.tracking_last_viewed_at) {
             await chrome.storage.local.set({ lastTrackingPoll: data.tracking_last_viewed_at });
-            console.log('CalAutobot: Updated lastTrackingPoll to:', data.tracking_last_viewed_at);
+  // console.log('CalAutobot: Updated lastTrackingPoll to:', data.tracking_last_viewed_at);
         } else if (!lastTrackingPoll) {
             // First poll returned no data - don't set timestamp yet, keep fetching all data
-            console.log('CalAutobot: First poll returned no data, will retry full fetch on next poll');
+  // console.log('CalAutobot: First poll returned no data, will retry full fetch on next poll');
         }
 
         if (data.success && unreadCount > 0) {
-            console.log(`CalAutobot: Found ${unreadCount} new opens, updating badge...`);
+  // console.log(`CalAutobot: Found ${unreadCount} new opens, updating badge...`);
 
             // Store unread count
             await chrome.storage.local.set({ unreadTrackingCount: unreadCount });

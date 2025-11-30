@@ -822,7 +822,7 @@ def get_tracking_requests():
                     TrackingRequest.last_opened_at > since_dt
                 ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
 
-                app.logger.info(f"Fetching tracking requests with opens since {since_dt} - found {len(requests_query)} requests")
+                # app.logger.info(f"Fetching tracking requests with opens since {since_dt} - found {len(requests_query)} requests")
             except (ValueError, TypeError) as e:
                 app.logger.warning(f"Invalid 'since' parameter: {since} - {e}")
                 # Fall back to getting all recent requests
@@ -837,7 +837,7 @@ def get_tracking_requests():
                 TrackingRequest.is_active == True
             ).order_by(TrackingRequest.sent_at.desc()).limit(50).all()
 
-            app.logger.info(f"First load - fetching last 50 tracking requests - found {len(requests_query)} requests")
+            # app.logger.info(f"First load - fetching last 50 tracking requests - found {len(requests_query)} requests")
 
         # Count new opens since user last viewed dashboard (for badge)
         new_opens_count = 0
