@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Scheduler and Email Tracker",
-  "description": "Insert CalAutobot availability or booking links directly into Gmail compose windows.",
-  "version": "1.0.0",
+  "name": "Email Tracker and AI Scheduler",
+  "description": "Schedule meetings with one click, track email opens in real-time, and manage contacts without leaving your inbox",
+  "version": "1.0.1",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -13,14 +13,13 @@
     "scripting",
     "storage",
     "alarms",
-    "notifications",
-    "declarativeNetRequest"
+    "notifications"
   ],
   "host_permissions": [
     "https://mail.google.com/*"
   ],
   "oauth2": {
-    "client_id": "609660480116-gn5g0smq5nih4n0km73kac8l6b7vlpii.apps.googleusercontent.com",
+    "client_id": "609660480116-k0e3a450kb4270evm0l7kimt50o95sdd.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile"
@@ -64,14 +63,5 @@
         "https://mail.google.com/*"
       ]
     }
-  ],
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "self_tracking_prevention",
-        "enabled": true,
-        "path": "rules.json"
-      }
-    ]
-  }
+  ]
 }

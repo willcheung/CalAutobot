@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-const API_BASES = ['https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev'];
+const API_BASES = ['https://calautobot.com'];
 
 let activeApiBase = API_BASES[0];
 
@@ -637,12 +637,12 @@ async function pollTrackingUpdates() {
         }
 
         const data = await resp.json();
-  // console.log('CalAutobot: Received tracking data:', {
-            success: data.success,
-            new_opens_count: data.new_opens_count,
-            tracking_last_viewed_at: data.tracking_last_viewed_at,
-            requests_count: data.requests?.length
-        });
+        // console.log('CalAutobot: Received tracking data:', {
+        //     success: data.success,
+        //     new_opens_count: data.new_opens_count,
+        //     tracking_last_viewed_at: data.tracking_last_viewed_at,
+        //     requests_count: data.requests?.length
+        // });
 
         // Count unread opens (opens since last dashboard check)
         const unreadCount = data.new_opens_count || 0;

@@ -3,7 +3,7 @@
  * Handles pixel injection, tracking state, and API communication
  */
 
-const API_BASE_URL = 'https://2df5bf01-2bac-4ced-b741-7ba31655935b-00-1qhgrsiodr7l4.kirk.replit.dev';
+const API_BASE_URL = 'https://calautobot.com';
 
 // --- Tracking ID Generation ---
 

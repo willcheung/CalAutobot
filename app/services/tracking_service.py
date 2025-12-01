@@ -137,6 +137,13 @@ def record_tracking_event(
     if not tracking_request:
         return None
 
+    # Prevent self-tracking: check if current user is the sender
+    from flask_login import current_user
+    if current_user.is_authenticated and tracking_request.user:
+        if current_user.email == tracking_request.user.email:
+            # Silently ignore self-opens
+            return None
+
     # Hash IP for privacy (no raw IP storage)
     ip_hash = hashlib.sha256(ip_address.encode()).hexdigest() if ip_address else None
 

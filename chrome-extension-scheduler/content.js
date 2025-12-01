@@ -279,10 +279,10 @@ function renderTrackingData(data, listEl, emptyEl, lastViewedAt = null) {
   }
   const viewedAt = viewedAtStr ? new Date(viewedAtStr) : null;
   // console.log('CalAutobot: Rendering with tracking_last_viewed_at:', {
-    raw: viewedAtStr,
-    parsed: viewedAt?.toISOString(),
-    source: lastViewedAt ? 'parameter' : 'data'
-  });
+  //   raw: viewedAtStr,
+  //   parsed: viewedAt?.toISOString(),
+  //   source: lastViewedAt ? 'parameter' : 'data'
+  // });
 
   // Render tracking list (grouped by gmail_thread_id)
   listEl.style.display = 'block';
@@ -310,11 +310,11 @@ function renderTrackingData(data, listEl, emptyEl, lastViewedAt = null) {
       !viewedAt || new Date(req.last_opened_at) > viewedAt
     );
   // console.log(`CalAutobot: Unread check for "${req.subject}":`, {
-      last_opened_at: req.last_opened_at,
-      viewedAt: viewedAt?.toISOString(),
-      isAfter: req.last_opened_at && viewedAt && new Date(req.last_opened_at) > viewedAt,
-      hasNewOpens
-    });
+  //     last_opened_at: req.last_opened_at,
+  //     viewedAt: viewedAt?.toISOString(),
+  //     isAfter: req.last_opened_at && viewedAt && new Date(req.last_opened_at) > viewedAt,
+  //     hasNewOpens
+  //   });
     return { ...req, isUnread: hasNewOpens };
   });
 
@@ -398,21 +398,88 @@ async function loadTrackingData(containerEl) {
     console.error('Error stack:', error.stack);
     console.error('Error message:', error.message);
     loadingEl.style.display = 'none';
-    errorEl.style.display = 'block';
 
-    // Update error message to show actual error
-    const errorMsg = errorEl.querySelector('div:nth-child(2)');
-    if (errorMsg) {
-      errorMsg.textContent = `Failed to load tracking data: ${error.message || 'Unknown error'}`;
-    }
+    // Check if it's an authentication error
+    const isAuthError = error.message && (
+      error.message.includes('Not authenticated') ||
+      error.message.includes('authentication') ||
+      error.message.includes('unauthorized') ||
+      error.message.includes('sign in') ||
+      error.message.includes('OAuth2') ||
+      error.message.includes('oauth')
+    );
 
-    const retryBtn = errorEl.querySelector('#retry-btn');
-    if (retryBtn) {
-      retryBtn.addEventListener('click', () => {
-        errorEl.style.display = 'none';
-        loadingEl.style.display = 'block';
-        loadTrackingData(containerEl);
-      });
+    if (isAuthError) {
+      // Show sign-in UI instead of error (using same button as homepage)
+      errorEl.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px;">
+          <div style="font-size: 16px; color: #5f6368; margin-bottom: 24px;">Sign in to view your email tracking</div>
+          <button id="signin-btn" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            transition: all 0.2s;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+          " onmouseover="this.style.boxShadow='0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)'; this.style.borderColor='#d2e3fc'; this.style.background='#f8f9fa';" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)'; this.style.borderColor='#dadce0'; this.style.background='white';">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" style="flex-shrink: 0;">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign in with Google
+          </button>
+        </div>
+      `;
+      errorEl.style.display = 'block';
+
+      const signinBtn = errorEl.querySelector('#signin-btn');
+      if (signinBtn) {
+        signinBtn.addEventListener('click', async () => {
+          try {
+            // Reuse the same auth flow as "Insert availability"
+            const authed = await ensureAuthenticated();
+            if (authed) {
+              // Redirect to onboarding page (same flow as "Insert availability")
+              const onboardingUrl = 'https://calautobot.com/onboarding';
+              window.open(onboardingUrl, '_blank');
+
+              // Also reload tracking data after successful auth
+              errorEl.style.display = 'none';
+              loadingEl.style.display = 'block';
+              loadTrackingData(containerEl);
+            }
+          } catch (err) {
+            console.error('Sign in failed:', err);
+            alert('Failed to sign in. Please try again.');
+          }
+        });
+      }
+    } else {
+      // Show regular error with retry button
+      errorEl.style.display = 'block';
+      const errorMsg = errorEl.querySelector('div:nth-child(2)');
+      if (errorMsg) {
+        errorMsg.textContent = `Failed to load tracking data: ${error.message || 'Unknown error'}`;
+      }
+
+      const retryBtn = errorEl.querySelector('#retry-btn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          errorEl.style.display = 'none';
+          loadingEl.style.display = 'block';
+          loadTrackingData(containerEl);
+        });
+      }
     }
   }
 }
@@ -842,12 +909,12 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           trackingState.subject = composeView.getSubject() || '(no subject)';
           trackingState.threadId = composeView.getThreadID();
 
-  // console.log('CalAutobot: Recipients updated:', {
-            to: trackingState.recipients.to.length,
-            cc: trackingState.recipients.cc.length,
-            bcc: trackingState.recipients.bcc.length,
-            total: newTotal
-          });
+          // console.log('CalAutobot: Recipients updated:', {
+          //   to: trackingState.recipients.to.length,
+          //   cc: trackingState.recipients.cc.length,
+          //   bcc: trackingState.recipients.bcc.length,
+          //   total: newTotal
+          // });
         } else {
   // console.log('CalAutobot: Ignoring empty recipients update (keeping captured recipients)');
         }
@@ -945,12 +1012,12 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           ...trackingState.recipients.bcc
         ];
 
-  // console.log('CalAutobot: Presending - using captured recipients:', {
-          to: trackingState.recipients.to.length,
-          cc: trackingState.recipients.cc.length,
-          bcc: trackingState.recipients.bcc.length,
-          total: allRecipients.length
-        });
+        // console.log('CalAutobot: Presending - using captured recipients:', {
+        //   to: trackingState.recipients.to.length,
+        //   cc: trackingState.recipients.cc.length,
+        //   bcc: trackingState.recipients.bcc.length,
+        //   total: allRecipients.length
+        // });
 
         // Safety check - warn if no recipients captured
         if (allRecipients.length === 0) {
@@ -1029,15 +1096,15 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           return;
         }
 
-  // console.log('CalAutobot: Creating tracking request with params:', {
-          trackingId: trackingState.trackingId,
-          subject: trackingState.subject,
-          recipientCount: toRecipients.length,
-          ccCount: ccRecipients.length,
-          bccCount: bccRecipients.length,
-          totalRecipients,
-          userEmail
-        });
+        // console.log('CalAutobot: Creating tracking request with params:', {
+        //   trackingId: trackingState.trackingId,
+        //   subject: trackingState.subject,
+        //   recipientCount: toRecipients.length,
+        //   ccCount: ccRecipients.length,
+        //   bccCount: bccRecipients.length,
+        //   totalRecipients,
+        //   userEmail
+        // });
 
         // Create tracking request via API
         const result = await createTrackingRequest({
