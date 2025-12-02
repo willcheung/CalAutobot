@@ -5,10 +5,10 @@ import json
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    username = db.Column(db.String(64), nullable=False, index=True)  # Not unique - multiple people can share names
     handle = db.Column(db.String(64), unique=True, index=True, nullable=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    google_id = db.Column(db.String(100), unique=True, nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)  # Email is unique
+    google_id = db.Column(db.String(100), unique=True, nullable=True)  # Google ID is unique
     google_token = db.Column(db.Text, nullable=True)
     google_refresh_token = db.Column(db.Text, nullable=True)  # Store refresh token separately
     extraction_calendar_id = db.Column(db.String(100), nullable=True)  # Store Cal Pilot calendar ID
