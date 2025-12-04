@@ -273,9 +273,9 @@ def extension_availability_text():
         return response, 500
 
     all_slots = _flatten_slots(availability_batch)
-    
-    # Get number of days to show (default 5)
-    days_param = request.args.get('days', 5)
+
+    # Get number of days to show (default 10)
+    days_param = request.args.get('days', 10)
     try:
         days_to_show = max(1, min(14, int(days_param)))
     except (TypeError, ValueError):
@@ -291,19 +291,6 @@ def extension_availability_text():
     # Consolidate consecutive slots for better readability
     consolidated_slots = _consolidate_consecutive_slots(visible_slots)
 
-    slots_payload = []
-    lines = []
-    for slot in consolidated_slots:
-        display = _format_slot_display(slot, tz)
-        slots_payload.append(
-            {
-                'start': slot.start.isoformat(),
-                'end': slot.end.isoformat(),
-                'display': display,
-            }
-        )
-        lines.append(f"- {display}")
-
     if not consolidated_slots:
         response = jsonify(
             {
@@ -315,8 +302,43 @@ def extension_availability_text():
         add_cors_headers_for_extension(response)
         return response, 200
 
-    text_header = f"Here are some options for {event_type.title}:"
+    # Group slots by day for concise display
+    from collections import defaultdict
+    slots_by_day = defaultdict(list)
+    slots_payload = []
+
+    for slot in consolidated_slots:
+        start_local = slot.start.astimezone(tz)
+        day_key = start_local.strftime("%A, %b %-d")  # e.g., "Monday, Dec 2"
+
+        # Concise time format: 2-3pm or 10am-12pm with timezone
+        start_time = start_local.strftime("%I:%M %p").lstrip("0").lower().replace(":00", "")
+        end_time = slot.end.astimezone(tz).strftime("%I:%M %p").lstrip("0").lower().replace(":00", "")
+        tz_abbr = start_local.strftime("%Z")  # e.g., "PST"
+        time_range = f"{start_time}-{end_time} {tz_abbr}"
+
+        slots_by_day[day_key].append(time_range)
+
+        # Original display for payload
+        display = _format_slot_display(slot, tz)
+        slots_payload.append(
+            {
+                'start': slot.start.isoformat(),
+                'end': slot.end.isoformat(),
+                'display': display,
+            }
+        )
+
+    # Build grouped text with title + sub-bullets
+    lines = []
+    for day, times in slots_by_day.items():
+        lines.append(f"{day}:")
+        for time in times:
+            lines.append(f"  • {time}")
+
+    text_header = f"Available times for {event_type.title}:"
     text_body = "\n".join(lines)
+
     response = jsonify(
         {
             'success': True,

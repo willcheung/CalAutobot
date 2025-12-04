@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict, List
 import hashlib
 import re
+from user_agents import parse
 
 from app import db
 from app.models import TrackingRequest, TrackingEvent, TrackingRecipient, User
@@ -206,11 +207,15 @@ def get_location_from_ip(ip_address: str) -> Dict[str, Optional[str]]:
     Get geolocation using free ip-api.com (45 req/min limit).
 
     Args:
-        ip_address: IP address to lookup
+        ip_address: IP address to lookup (may contain comma-separated list from X-Forwarded-For)
 
     Returns:
         Dict with country_code, city, timezone
     """
+    # Extract first IP from X-Forwarded-For header (client's real IP)
+    if ',' in ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+
     # Skip API call for private/internal IP addresses
     if is_private_ip(ip_address):
         return {'country_code': None, 'city': None, 'timezone': None}
@@ -229,8 +234,11 @@ def get_location_from_ip(ip_address: str) -> Dict[str, Optional[str]]:
                 'city': data.get('city'),
                 'timezone': data.get('timezone')
             }
-    except Exception:
-        pass
+        # Log failures for debugging
+        elif data.get('status') == 'fail':
+            print(f"IP geolocation failed for {ip_address}: {data.get('message', 'unknown error')}")
+    except Exception as e:
+        print(f"IP geolocation exception for {ip_address}: {str(e)}")
 
     return {'country_code': None, 'city': None, 'timezone': None}
 
@@ -256,7 +264,7 @@ def is_private_ip(ip_address: str) -> bool:
 
 def parse_user_agent(user_agent: str) -> Dict[str, str]:
     """
-    Parse user agent without external library.
+    Parse user agent using user_agents library.
 
     Args:
         user_agent: User agent string
@@ -264,53 +272,26 @@ def parse_user_agent(user_agent: str) -> Dict[str, str]:
     Returns:
         Dict with browser, os, device
     """
-    ua_lower = user_agent.lower()
+    ua = parse(user_agent)
 
-    # Browser + version
-    browser = "Unknown"
-    if 'chrome' in ua_lower and 'edg' not in ua_lower:
-        version = re.search(r'chrome/([\d.]+)', ua_lower)
-        browser = f"Chrome {version.group(1).split('.')[0]}" if version else "Chrome"
-    elif 'firefox' in ua_lower:
-        version = re.search(r'firefox/([\d.]+)', ua_lower)
-        browser = f"Firefox {version.group(1).split('.')[0]}" if version else "Firefox"
-    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
-        version = re.search(r'version/([\d.]+)', ua_lower)
-        browser = f"Safari {version.group(1).split('.')[0]}" if version else "Safari"
-    elif 'edg' in ua_lower:
-        version = re.search(r'edg/([\d.]+)', ua_lower)
-        browser = f"Edge {version.group(1).split('.')[0]}" if version else "Edge"
+    # Browser with major version
+    browser = ua.browser.family
+    if ua.browser.version_string:
+        major_version = ua.browser.version_string.split('.')[0]
+        browser = f"{ua.browser.family} {major_version}"
 
-    # OS
-    os = "Unknown"
-    if 'windows nt 10' in ua_lower:
-        os = "Windows 10"
-    elif 'windows nt 11' in ua_lower:
-        os = "Windows 11"
-    elif 'windows' in ua_lower:
-        os = "Windows"
-    elif 'mac os x' in ua_lower:
-        version = re.search(r'mac os x ([\d_]+)', ua_lower)
-        if version:
-            os = f"Mac OS X {version.group(1).replace('_', '.')}"
-        else:
-            os = "Mac OS X"
-    elif 'linux' in ua_lower:
-        os = "Linux"
-    elif 'iphone' in ua_lower:
-        os = "iOS"
-    elif 'ipad' in ua_lower:
-        os = "iPad"
-    elif 'android' in ua_lower:
-        version = re.search(r'android ([\d.]+)', ua_lower)
-        os = f"Android {version.group(1)}" if version else "Android"
+    # OS with version
+    os = ua.os.family
+    if ua.os.version_string:
+        os = f"{ua.os.family} {ua.os.version_string}"
 
     # Device type
-    device = "Desktop"
-    if 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower:
+    if ua.is_mobile:
         device = "Mobile"
-    elif 'tablet' in ua_lower or 'ipad' in ua_lower:
+    elif ua.is_tablet:
         device = "Tablet"
+    else:
+        device = "Desktop"
 
     return {
         "browser": browser,
