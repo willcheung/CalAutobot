@@ -2302,7 +2302,7 @@ pre {
     text-decoration: none;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     color: #1f2937;
-    max-width: 320px;
+    max-width: 360px;
 }
 
 .bookings-cta:hover {
