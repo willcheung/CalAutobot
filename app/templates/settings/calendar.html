@@ -7,6 +7,7 @@
             <h1 class="mb-1">Calendars</h1>
             <p class="text-muted mb-0">Configure how your event types interact with your calendars.</p>
         </div>
+        {% include "partials/chrome_extension_promo.html" %}
     </div>
 
     {% set active_tab = "calendars" %}
@@ -14,8 +15,10 @@
 
     {# Only disable calendar settings for paid Calendly plans (standard, teams, enterprise) #}
     {# Free plan users need Google Calendar settings because Calendly API doesn't support booking on free plans #}
-    {% set calendly_paid_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan in ['standard', 'teams', 'enterprise'] %}
-    {% set calendly_free_plan = current_user.calendly_access_token and current_user.calendly_plan and current_user.calendly_plan|lower == 'basic' %}
+    {% set calendly_paid_plan = current_user.calendly_access_token and current_user.calendly_plan and
+    current_user.calendly_plan in ['standard', 'teams', 'enterprise'] %}
+    {% set calendly_free_plan = current_user.calendly_access_token and current_user.calendly_plan and
+    current_user.calendly_plan|lower == 'basic' %}
 
     <!-- Calendly Integration Status -->
     <div class="settings-section card shadow-sm mb-3">
@@ -29,85 +32,100 @@
 
             <div class="mt-3">
                 {% if current_user.calendly_access_token %}
-                    <div class="d-flex align-items-center gap-3 p-3" style="background: #dcfce7; border: 1px solid #86efac; border-radius: 8px;">
-                        <div class="flex-grow-1">
-                            <div class="mb-2">
-                                <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly" style="height: 32px; width: auto; object-fit: contain;">
-                            </div>
-                            <div class="fw-semibold mb-1" style="color: #15803d;">
-                                Calendly Connected
-                                {% if current_user.calendly_plan %}
-                                    <span class="badge bg-secondary ms-2" style="font-weight: 500; text-transform: capitalize;">{{ current_user.calendly_plan }} plan</span>
-                                {% endif %}
-                            </div>
-                            {% if current_user.calendly_scheduling_url %}
-                                <div class="small text-muted">
-                                    Scheduling URL: <a href="{{ current_user.calendly_scheduling_url }}" target="_blank" rel="noopener">{{ current_user.calendly_scheduling_url }}</a>
-                                </div>
+                <div class="d-flex align-items-center gap-3 p-3"
+                    style="background: #dcfce7; border: 1px solid #86efac; border-radius: 8px;">
+                    <div class="flex-grow-1">
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly"
+                                style="height: 32px; width: auto; object-fit: contain;">
+                        </div>
+                        <div class="fw-semibold mb-1" style="color: #15803d;">
+                            Calendly Connected
+                            {% if current_user.calendly_plan %}
+                            <span class="badge bg-secondary ms-2"
+                                style="font-weight: 500; text-transform: capitalize;">{{ current_user.calendly_plan }}
+                                plan</span>
                             {% endif %}
-                            <div class="small text-muted mt-2">
-                                <i data-feather="info" style="width: 14px; height: 14px;"></i>
-                                <strong>Sync</strong> to get latest Calendly settings
-                            </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <form method="post" action="{{ url_for('calendly_auth.sync_event_types') }}">
-                                <button type="submit" class="btn btn-outline-primary btn-sm" title="Sync event types from Calendly">
-                                    <i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i>
-                                    &nbsp;Sync
-                                </button>
-                            </form>
-                            <form method="post" action="{{ url_for('calendly_auth.disconnect') }}">
-                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to disconnect Calendly? Your event types and bookings will no longer sync.');">
-                                    Disconnect
-                                </button>
-                            </form>
+                        {% if current_user.calendly_scheduling_url %}
+                        <div class="small text-muted">
+                            Scheduling URL: <a href="{{ current_user.calendly_scheduling_url }}" target="_blank"
+                                rel="noopener">{{ current_user.calendly_scheduling_url }}</a>
+                        </div>
+                        {% endif %}
+                        <div class="small text-muted mt-2">
+                            <i data-feather="info" style="width: 14px; height: 14px;"></i>
+                            <strong>Sync</strong> to get latest Calendly settings
                         </div>
                     </div>
+                    <div class="d-flex gap-2">
+                        <form method="post" action="{{ url_for('calendly_auth.sync_event_types') }}">
+                            <button type="submit" class="btn btn-outline-primary btn-sm"
+                                title="Sync event types from Calendly">
+                                <i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i>
+                                &nbsp;Sync
+                            </button>
+                        </form>
+                        <form method="post" action="{{ url_for('calendly_auth.disconnect') }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Are you sure you want to disconnect Calendly? Your event types and bookings will no longer sync.');">
+                                Disconnect
+                            </button>
+                        </form>
+                    </div>
+                </div>
                 {% else %}
-                    <div class="d-flex align-items-center gap-3 p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
-                        <div class="flex-grow-1">
-                            <div class="mb-2">
-                                <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly" style="height: 32px; width: auto; object-fit: contain;">
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
-                                    <span style="width: 6px; height: 6px; background: #dc2626; border-radius: 50%;"></span>
-                                    Not connected
-                                </span>
-                            </div>
+                <div class="d-flex align-items-center gap-3 p-3"
+                    style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <div class="flex-grow-1">
+                        <div class="mb-2">
+                            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly"
+                                style="height: 32px; width: auto; object-fit: contain;">
                         </div>
-                        <a href="{{ url_for('calendly_auth.connect') }}" class="btn btn-primary" style="white-space: nowrap;">
-                            Connect
-                        </a>
+                        <div class="d-flex align-items-center gap-2">
+                            <span
+                                style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; background: #fee2e2; color: #991b1b; border-radius: 999px; font-size: 0.8rem; font-weight: 500;">
+                                <span style="width: 6px; height: 6px; background: #dc2626; border-radius: 50%;"></span>
+                                Not connected
+                            </span>
+                        </div>
                     </div>
+                    <a href="{{ url_for('calendly_auth.connect') }}" class="btn btn-primary"
+                        style="white-space: nowrap;">
+                        Connect
+                    </a>
+                </div>
                 {% endif %}
                 {% if calendly_free_plan %}
-                    <div class="alert alert-permanent alert-warning d-flex align-items-start gap-2 mt-3 mb-0" role="alert" style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412;">
-                        <i data-feather="alert-circle" style="width: 18px; height: 18px; margin-top: 2px;"></i>
-                        <div class="small mb-0" style="color: #9a3412;">
-                            <div class="fw-semibold">Calendly free plan doesn't allow Cal to create meetings!</div>
-                                            <div>We will still use Calendly to check availability, but meetings will be booked directly to Google Calendar, bypassing Calendly. Alternatively, you can disconnect Calendly and use our native booking system.</div>
-                        </div>
+                <div class="alert alert-permanent alert-warning d-flex align-items-start gap-2 mt-3 mb-0" role="alert"
+                    style="background: #fff7ed; border: 1px solid #fb923c; color: #9a3412;">
+                    <i data-feather="alert-circle" style="width: 18px; height: 18px; margin-top: 2px;"></i>
+                    <div class="small mb-0" style="color: #9a3412;">
+                        <div class="fw-semibold">Calendly free plan doesn't allow Cal to create meetings!</div>
+                        <div>We will still use Calendly to check availability, but meetings will be booked directly to
+                            Google Calendar, bypassing Calendly. Alternatively, you can disconnect Calendly and use our
+                            native booking system.</div>
                     </div>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
     {% if calendar_error %}
-        <div class="alert alert-warning alert-permanent mt-3 d-flex flex-column flex-md-row align-items-start gap-3" role="alert">
-            <div>
-                <strong class="d-block mb-1">We need access to your Google Calendar</strong>
-                <p class="mb-0 small text-muted">
-                    Please connect your Google Calendar to start booking.
-                </p>
-            </div>
-            <a href="#" class="google-calendar-connect-btn mt-3 mt-md-0" onclick="connectGoogleCalendar(); return false;">
-                <img src="{{ url_for('static', filename='images/google-calendar.svg') }}" alt="Google Calendar icon">
-                <span>Connect Google Calendar</span>
-            </a>
+    <div class="alert alert-warning alert-permanent mt-3 d-flex flex-column flex-md-row align-items-start gap-3"
+        role="alert">
+        <div>
+            <strong class="d-block mb-1">We need access to your Google Calendar</strong>
+            <p class="mb-0 small text-muted">
+                Please connect your Google Calendar to start booking.
+            </p>
         </div>
+        <a href="#" class="google-calendar-connect-btn mt-3 mt-md-0" onclick="connectGoogleCalendar(); return false;">
+            <img src="{{ url_for('static', filename='images/google-calendar.svg') }}" alt="Google Calendar icon">
+            <span>Connect Google Calendar</span>
+        </a>
+    </div>
     {% endif %}
 
     <form method="post" class="calendar-settings-form">
@@ -121,70 +139,83 @@
                 </div>
 
                 {% if writable_calendars %}
-                    <div class="mb-3" {% if calendly_paid_plan %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
-                        <label class="form-label" for="booking_calendar_id">Add booking events to:</label>
-                        <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id" onchange="this.form.submit()" {% if calendly_paid_plan %}disabled{% endif %}>
-                            {% for calendar in writable_calendars %}
-                                <option value="{{ calendar.id }}" {% if calendar.id == booking_calendar_id %}selected{% endif %}>
-                                    {{ calendar.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">
-                            {% if calendly_paid_plan %}
-                                <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly - bookings are saved to your Calendly-connected calendar.
-                            {% else %}
-                                All meetings booked through Cal and scheduling page will be added to this calendar.
-                            {% endif %}
-                        </div>
-                        {% if booking_calendar_missing %}
-                            <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
-                                Your previously selected calendar is no longer available. Please choose another calendar for new bookings.
-                            </div>
+                <div class="mb-3" {% if calendly_paid_plan %}style="opacity: 0.5; pointer-events: none;" {% endif %}>
+                    <label class="form-label" for="booking_calendar_id">Add booking events to:</label>
+                    <select class="form-select form-control-compact" id="booking_calendar_id" name="booking_calendar_id"
+                        onchange="this.form.submit()" {% if calendly_paid_plan %}disabled{% endif %}>
+                        {% for calendar in writable_calendars %}
+                        <option value="{{ calendar.id }}" {% if calendar.id==booking_calendar_id %}selected{% endif %}>
+                            {{ calendar.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        {% if calendly_paid_plan %}
+                        <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly - bookings
+                        are saved to your Calendly-connected calendar.
+                        {% else %}
+                        All meetings booked through Cal and scheduling page will be added to this calendar.
                         {% endif %}
                     </div>
+                    {% if booking_calendar_missing %}
+                    <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
+                        Your previously selected calendar is no longer available. Please choose another calendar for new
+                        bookings.
+                    </div>
+                    {% endif %}
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="extraction_calendar_id">🆓🛠️ <strong>Free tool!</strong> <br/>Add event extraction to:</label>
-                        <select class="form-select form-control-compact" id="extraction_calendar_id" name="extraction_calendar_id" onchange="this.form.submit()">
-                            {% for calendar in writable_calendars %}
-                                <option value="{{ calendar.id }}" {% if calendar.id == extraction_calendar_id %}selected{% endif %}>
-                                    {{ calendar.name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text">
-                            Forward emails, itineraries, or pictures to <strong>Cal@CalAutobot.com</strong> and it turns them into calendar events.<br/>
-                            Or try out free <a href="https://chromewebstore.google.com/detail/calautobot-pictures-to-go/lmempdbkammjlmomcgjglolnmebeedok">Chrome Extension</a>.
-                        </div>
-                        {% if extraction_calendar_missing %}
-                            <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
-                                We cannot find your extraction calendar. Pick another calendar to continue saving AI-created events.
-                            </div>
-                        {% endif %}
+                <div class="mb-3">
+                    <label class="form-label" for="extraction_calendar_id">🆓🛠️ <strong>Free tool!</strong> <br />Add
+                        event extraction to:</label>
+                    <select class="form-select form-control-compact" id="extraction_calendar_id"
+                        name="extraction_calendar_id" onchange="this.form.submit()">
+                        {% for calendar in writable_calendars %}
+                        <option value="{{ calendar.id }}" {% if calendar.id==extraction_calendar_id %}selected{% endif
+                            %}>
+                            {{ calendar.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        Forward emails, itineraries, or pictures to <strong>Cal@CalAutobot.com</strong> and it turns
+                        them into calendar events.<br />
+                        Or try out free <a
+                            href="https://chromewebstore.google.com/detail/calautobot-pictures-to-go/lmempdbkammjlmomcgjglolnmebeedok">Chrome
+                            Extension</a>.
                     </div>
+                    {% if extraction_calendar_missing %}
+                    <div class="alert alert-warning mt-3 mb-0 py-2 px-3">
+                        We cannot find your extraction calendar. Pick another calendar to continue saving AI-created
+                        events.
+                    </div>
+                    {% endif %}
+                </div>
                 {% elif calendars %}
-                    <div class="alert alert-light mb-0">
-                        We currently have view-only access to your calendars. Please re-connect your Google account with calendar write access to add events.
-                    </div>
+                <div class="alert alert-light mb-0">
+                    We currently have view-only access to your calendars. Please re-connect your Google account with
+                    calendar write access to add events.
+                </div>
                 {% else %}
-                    <div class="alert alert-light mb-0">
-                        Connect your Google Calendar to choose where new bookings are saved.
-                    </div>
+                <div class="alert alert-light mb-0">
+                    Connect your Google Calendar to choose where new bookings are saved.
+                </div>
                 {% endif %}
             </div>
         </div>
 
-        <div class="settings-section card shadow-sm" {% if calendly_paid_plan or calendly_free_plan %}style="opacity: 0.5;"{% endif %}>
+        <div class="settings-section card shadow-sm" {% if calendly_paid_plan or calendly_free_plan
+            %}style="opacity: 0.5;" {% endif %}>
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                     <div>
                         <h5 class="card-title mb-1">Check for conflicts</h5>
                         <p class="text-muted small mb-0">
                             {% if calendly_paid_plan or calendly_free_plan %}
-                                <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly - conflict checking is handled by Calendly's availability system.
+                            <i data-feather="lock" style="width: 14px; height: 14px;"></i> Managed via Calendly -
+                            conflict checking is handled by Calendly's availability system.
                             {% else %}
-                                Select which calendars you want to check for conflicts to prevent double bookings.
+                            Select which calendars you want to check for conflicts to prevent double bookings.
                             {% endif %}
                         </p>
                     </div>
@@ -194,47 +225,42 @@
                 </div>
 
                 {% if calendars %}
-                    <div class="calendar-list" {% if calendly_paid_plan or calendly_free_plan %}style="pointer-events: none;"{% endif %}>
-                        {% for calendar in calendars %}
-                            <div class="calendar-entry {% if calendar.id == primary_calendar_id %}calendar-entry-primary{% endif %}">
-                                <div class="calendar-entry-meta">
-                                    <div class="calendar-entry-name">
-                                        {{ calendar.name }}
-                                        {% if calendar.id == primary_calendar_id %}
-                                            <span class="badge bg-light text-dark ms-2">Primary</span>
-                                        {% endif %}
-                                        {% if calendar.is_booking_destination %}
-                                            <span class="badge bg-primary text-white ms-2">Bookings</span>
-                                        {% endif %}
-                                        {% if calendar.is_extraction_destination %}
-                                            <span class="badge bg-secondary text-white ms-2">Extraction</span>
-                                        {% endif %}
-                                    </div>
-                                    {% if not calendar.can_add_events %}
-                                        <div class="calendar-entry-access text-muted">View-only access</div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-check form-switch calendar-entry-switch">
-                                    <input
-                                        class="form-check-input"
-                                        type="checkbox"
-                                        role="switch"
-                                        id="conflict-{{ loop.index }}"
-                                        name="conflict_calendar_ids"
-                                        value="{{ calendar.id }}"
-                                        {% if calendar.selected_for_conflicts %}checked{% endif %}
-                                        {% if calendly_paid_plan or calendly_free_plan %}disabled{% endif %}
-                                        onchange="this.form.submit()"
-                                    >
-                                    <label class="form-check-label" for="conflict-{{ loop.index }}"></label>
-                                </div>
+                <div class="calendar-list" {% if calendly_paid_plan or calendly_free_plan
+                    %}style="pointer-events: none;" {% endif %}>
+                    {% for calendar in calendars %}
+                    <div
+                        class="calendar-entry {% if calendar.id == primary_calendar_id %}calendar-entry-primary{% endif %}">
+                        <div class="calendar-entry-meta">
+                            <div class="calendar-entry-name">
+                                {{ calendar.name }}
+                                {% if calendar.id == primary_calendar_id %}
+                                <span class="badge bg-light text-dark ms-2">Primary</span>
+                                {% endif %}
+                                {% if calendar.is_booking_destination %}
+                                <span class="badge bg-primary text-white ms-2">Bookings</span>
+                                {% endif %}
+                                {% if calendar.is_extraction_destination %}
+                                <span class="badge bg-secondary text-white ms-2">Extraction</span>
+                                {% endif %}
                             </div>
-                        {% endfor %}
+                            {% if not calendar.can_add_events %}
+                            <div class="calendar-entry-access text-muted">View-only access</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-check form-switch calendar-entry-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="conflict-{{ loop.index }}"
+                                name="conflict_calendar_ids" value="{{ calendar.id }}" {% if
+                                calendar.selected_for_conflicts %}checked{% endif %} {% if calendly_paid_plan or
+                                calendly_free_plan %}disabled{% endif %} onchange="this.form.submit()">
+                            <label class="form-check-label" for="conflict-{{ loop.index }}"></label>
+                        </div>
                     </div>
+                    {% endfor %}
+                </div>
                 {% else %}
-                    <div class="alert alert-light mb-0">
-                        Once calendars are connected, choose which ones to scan for conflicts.
-                    </div>
+                <div class="alert alert-light mb-0">
+                    Once calendars are connected, choose which ones to scan for conflicts.
+                </div>
                 {% endif %}
             </div>
         </div>

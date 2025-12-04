@@ -9,9 +9,11 @@
             gap: 0.6rem;
             max-width: 320px;
         }
+
         .followup-inline-control select {
             width: 60px;
         }
+
         h6.form-label {
             font-size: 0.8rem;
         }
@@ -21,13 +23,7 @@
             <h1 class="mb-1">AI Assistant</h1>
             <p class="text-muted mb-0">Control how Cal follows up on stalled scheduling threads.</p>
         </div>
-        <a class="bookings-cta" href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" rel="noopener noreferrer">
-            <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome logo" class="bookings-cta__icon">
-            <div class="bookings-cta__copy">
-                <span class="bookings-cta__title">Capture events from emails or websites</span>
-                <span class="bookings-cta__subtitle">Forward emails to <strong>Cal@CalAutobot.com</strong> or use our free Chrome Extension</span>
-            </div>
-        </a>
+        {% include "partials/chrome_extension_promo.html" %}
     </div>
 
     {% set active_tab = "assistant" %}
@@ -39,13 +35,8 @@
                 <h5 class="text-uppercase text-muted fs-6 mb-3">Follow-ups</h5>
                 <div class="mb-4">
                     <div class="form-check form-switch">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            id="follow_up_enabled"
-                            name="follow_up_enabled"
-                            {% if follow_up_enabled %}checked{% endif %}
-                        >
+                        <input class="form-check-input" type="checkbox" id="follow_up_enabled" name="follow_up_enabled"
+                            {% if follow_up_enabled %}checked{% endif %}>
                         <label class="form-check-label" for="follow_up_enabled">
                             Enable automatic follow-ups
                         </label>
@@ -58,17 +49,13 @@
                 <div class="mb-4">
                     <h6 class="form-label"><label for="follow_up_first_delay_days">First follow-up</label></h6>
                     <div class="followup-inline-control">
-                        <select
-                            class="form-select form-control-compact"
-                            id="follow_up_first_delay_days"
-                            name="follow_up_first_delay_days"
-                            data-followup-control="true"
-                            {% if not follow_up_enabled %}disabled{% endif %}
-                        >
+                        <select class="form-select form-control-compact" id="follow_up_first_delay_days"
+                            name="follow_up_first_delay_days" data-followup-control="true" {% if not follow_up_enabled
+                            %}disabled{% endif %}>
                             {% for day in day_options %}
-                                <option value="{{ day }}" {% if day == first_delay %}selected{% endif %}>
-                                    {{ day }}
-                                </option>
+                            <option value="{{ day }}" {% if day==first_delay %}selected{% endif %}>
+                                {{ day }}
+                            </option>
                             {% endfor %}
                         </select>
                         <span class="followup-inline-label">days after no replies</span>
@@ -79,19 +66,16 @@
                 </div>
 
                 <div class="mb-4">
-                    <h6 class="form-label"><label for="follow_up_second_delay_days_display">Second follow-up</label></h6>
+                    <h6 class="form-label"><label for="follow_up_second_delay_days_display">Second follow-up</label>
+                    </h6>
                     <div class="followup-inline-control">
-                        <select
-                            class="form-select form-control-compact"
-                            id="follow_up_second_delay_days"
-                            name="follow_up_second_delay_days"
-                            data-followup-control="true"
-                            {% if not follow_up_enabled %}disabled{% endif %}
-                        >
+                        <select class="form-select form-control-compact" id="follow_up_second_delay_days"
+                            name="follow_up_second_delay_days" data-followup-control="true" {% if not follow_up_enabled
+                            %}disabled{% endif %}>
                             {% for day in day_options %}
-                                <option value="{{ day }}" {% if day == second_delay %}selected{% endif %}>
-                                    {{ day }}
-                                </option>
+                            <option value="{{ day }}" {% if day==second_delay %}selected{% endif %}>
+                                {{ day }}
+                            </option>
                             {% endfor %}
                         </select>
                         <span class="followup-inline-label">days after no replies</span>
@@ -105,15 +89,12 @@
                 <div class="mb-4">
                     <label class="form-label" for="meeting_reminder_lead_hours_select">Cal sends reminder </label>
                     <div class="followup-inline-control">
-                        <select
-                            class="form-select form-control-compact"
-                            id="meeting_reminder_lead_hours_select"
-                            name="meeting_reminder_lead_hours"
-                        >
+                        <select class="form-select form-control-compact" id="meeting_reminder_lead_hours_select"
+                            name="meeting_reminder_lead_hours">
                             {% for hours in reminder_options %}
-                                <option value="{{ hours }}" {% if hours == reminder_lead %}selected{% endif %}>
-                                    {{ hours }}
-                                </option>
+                            <option value="{{ hours }}" {% if hours==reminder_lead %}selected{% endif %}>
+                                {{ hours }}
+                            </option>
                             {% endfor %}
                         </select>
                         <span class="followup-inline-label">hours before the meeting starts</span>
@@ -131,25 +112,25 @@
 
 {% block scripts %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const followupControls = document.querySelectorAll("[data-followup-control='true']");
-    const toggle = document.getElementById("follow_up_enabled");
+    document.addEventListener("DOMContentLoaded", function () {
+        const followupControls = document.querySelectorAll("[data-followup-control='true']");
+        const toggle = document.getElementById("follow_up_enabled");
 
-    function syncDisabledState() {
-        const enabled = toggle.checked;
-        followupControls.forEach((control) => {
-            control.disabled = !enabled;
-            const wrapper = control.closest(".mb-4");
-            if (wrapper) {
-                wrapper.classList.toggle("opacity-50", !enabled);
-            }
+        function syncDisabledState() {
+            const enabled = toggle.checked;
+            followupControls.forEach((control) => {
+                control.disabled = !enabled;
+                const wrapper = control.closest(".mb-4");
+                if (wrapper) {
+                    wrapper.classList.toggle("opacity-50", !enabled);
+                }
+            });
+        }
+
+        toggle.addEventListener("change", () => {
+            syncDisabledState();
         });
-    }
-
-    toggle.addEventListener("change", () => {
         syncDisabledState();
     });
-    syncDisabledState();
-});
 </script>
 {% endblock %}

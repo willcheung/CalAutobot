@@ -7,6 +7,7 @@
             <h1 class="mb-1">Profile</h1>
             <p class="text-muted mb-0">Update the booking link and details guests see when scheduling with you.</p>
         </div>
+        {% include "partials/chrome_extension_promo.html" %}
     </div>
 
     {% set active_tab = "profile" %}
@@ -19,29 +20,24 @@
                     <label class="form-label" for="handle">Public URL</label>
                     <div class="input-group">
                         <span class="input-group-text form-control-compact-prefix">CalAutobot.com/u/</span>
-                        <input
-                            type="text"
-                            class="form-control form-control-compact"
-                            id="handle"
-                            name="handle"
-                            value="{{ current_user.handle or '' }}"
-                            aria-describedby="handle-help"
-                            required
-                        >
+                        <input type="text" class="form-control form-control-compact" id="handle" name="handle"
+                            value="{{ current_user.handle or '' }}" aria-describedby="handle-help" required>
                     </div>
                     <div id="handle-help" class="form-text">
-                        Tip: Share <code>CalAutobot.com/u/{{ current_user.handle or 'your-handle' }}</code> with guests to book time.
+                        Tip: Share <code>CalAutobot.com/u/{{ current_user.handle or 'your-handle' }}</code> with guests
+                        to book time.
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="display_name">Full name</label>
-                    <input type="text" class="form-control form-control-compact" id="display_name" name="display_name" value="{{ current_user.username }}" required>
+                    <input type="text" class="form-control form-control-compact" id="display_name" name="display_name"
+                        value="{{ current_user.username }}" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="timezone">Timezone</label>
                     <select class="form-select form-control-compact" id="timezone" name="timezone">
                         {% for tz in timezones %}
-                            <option value="{{ tz }}" {% if current_user.timezone == tz %}selected{% endif %}>{{ tz }}</option>
+                        <option value="{{ tz }}" {% if current_user.timezone==tz %}selected{% endif %}>{{ tz }}</option>
                         {% endfor %}
                     </select>
                 </div>

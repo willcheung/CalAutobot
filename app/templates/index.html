@@ -806,13 +806,13 @@
         line-height: 1.6;
     }
 
-    .works-with-section {
-        padding: 2rem 0;
-        background: #e5e7eb;
+    .works-with-container {
         display: flex;
-        justify-content: center;
         align-items: center;
         gap: 1rem;
+        padding-top: 1.25rem;
+        margin-top: 1rem;
+        border-top: 1px solid #f1f5f9;
     }
 
     .works-with-text {
@@ -827,7 +827,7 @@
     .works-with-logo {
         display: inline-flex;
         align-items: center;
-        padding: 0.35rem 1rem;
+        padding: 0;
     }
 
     .works-with-logo img {
@@ -911,6 +911,148 @@
         .pricing-grid {
             grid-template-columns: 1fr;
         }
+
+        .extension-feature-card {
+            flex-direction: column;
+        }
+
+        .extension-feature-image {
+            flex: 0 0 auto;
+        }
+
+        .extension-feature-image img {
+            max-height: 300px;
+        }
+    }
+
+    /* Chrome Extension Section */
+    .chrome-extension-section {
+        padding: clamp(3rem, 10vw, 6rem) 0;
+        background: white;
+    }
+
+    .extension-subtitle {
+        font-size: clamp(1rem, 3vw, 1.2rem);
+        color: #6b7280;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .extension-features-grid {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(1.5rem, 4vw, 2rem);
+        margin-top: clamp(2rem, 6vw, 3.5rem);
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .extension-feature-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid #f1f5f9;
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        transition: all 0.3s ease;
+    }
+
+    .extension-feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .extension-feature-image {
+        flex: 0 0 45%;
+        padding: clamp(1.5rem, 4vw, 2.5rem);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .extension-feature-card--wide-image .extension-feature-image {
+        flex: 0 0 60%;
+    }
+
+    .extension-feature-image img {
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .extension-feature-content {
+        padding: clamp(1.25rem, 3vw, 2rem);
+        flex: 1;
+    }
+
+    .extension-feature-content h3 {
+        font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: #111827;
+    }
+
+    .extension-feature-content p {
+        color: #6b7280;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .extension-feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .extension-feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+
+    .extension-feature-list li svg {
+        width: 18px;
+        height: 18px;
+        color: #10b981;
+        flex-shrink: 0;
+    }
+
+    .extension-cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 18px 40px;
+        border-radius: 12px;
+        font-size: 1.15rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .extension-cta-btn:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .chrome-icon {
+        flex-shrink: 0;
+        width: 48px !important;
+        height: 48px !important;
+    }
     }
 </style>
 {% endblock %}
@@ -927,12 +1069,11 @@
                     🚀 BETA
                 </div>
 
-                <h1 class="waitlist-title">Qualify leads and book meetings automatically</h1>
+                <h1 class="waitlist-title">Wasting hours chasing replies and scheduling meetings?</h1>
 
                 <p class="waitlist-subtitle">
-                    Meet Cal, your AI lead-warmer and scheduling assistant.
-                    Keep leads warm with a personal touch, no new workflow needed.<br />
-                    CC Cal and get back to real work.
+                    Cal is your AI assistant that handles email follow-ups, warms leads, and books meetings
+                    automatically so you can focus on actual work.
                 </p>
 
                 {% if not current_user.is_authenticated %}
@@ -967,12 +1108,73 @@
         </div>
     </div>
 </div>
-<section class="works-with-section">
-    <span class="works-with-text">Works with</span>
-    <div class="works-with-logo">
-        <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
+
+<section class="chrome-extension-section" id="chrome-extension">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10 text-center">
+                <h2 class="mb-3">Start with our free Chrome extension</h2>
+                <p class="extension-subtitle">
+                    See who’s opening your emails and insert your availability with one click.<br />
+                    Try our AI agents for free when you’re ready.
+                </p>
+            </div>
+        </div>
+
+        <div class="extension-features-grid">
+            <div class="extension-feature-card extension-feature-card--wide-image">
+                <div class="extension-feature-image">
+                    <img src="{{ url_for('static', filename='images/product-email-tracking.png') }}"
+                        alt="Email Tracking Dashboard" loading="lazy">
+                </div>
+                <div class="extension-feature-content">
+                    <h3>Track Email Opens in Real-Time</h3>
+                    <p>Know who’s engaging and who’s ghosting.
+                    </p>
+                    <ul class="extension-feature-list">
+                        <li><i data-feather="check-circle"></i> Real-time notifications</li>
+                        <li><i data-feather="check-circle"></i> Device & location</li>
+                        <li><i data-feather="check-circle"></i> Without leaving Gmail</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="extension-feature-card">
+                <div class="extension-feature-image">
+                    <img src="{{ url_for('static', filename='images/product-insert-availability.png') }}"
+                        alt="Insert Availability" loading="lazy">
+                </div>
+                <div class="extension-feature-content">
+                    <h3>Insert Availability with One Click</h3>
+                    <p>No tab switching, no calendar checking. Just instant scheduling.
+                    </p>
+                    <ul class="extension-feature-list">
+                        <li><i data-feather="check-circle"></i> One-click insert availability and booking link</li>
+                        <li><i data-feather="check-circle"></i> CC Cal to let AI handle booking</li>
+                        <li><i data-feather="check-circle"></i> Google Calendar + Calendly friendly</li>
+                    </ul>
+                    <div class="works-with-container">
+                        <span class="works-with-text">Works with</span>
+                        <div class="works-with-logo">
+                            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="https://chromewebstore.google.com/detail/email-tracker-and-ai-sche/fhpijonhfjpnnbglkobbhbibppbfabmo"
+                target="_blank" class="extension-cta-btn">
+                <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome" class="chrome-icon"
+                    width="48" height="48">
+                Install for Free on Chrome
+            </a>
+        </div>
     </div>
+
 </section>
+
 <!-- <section class="email-stack" id="how-it-works">
     <div class="container">
         <div class="row justify-content-center">
