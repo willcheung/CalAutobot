@@ -306,16 +306,21 @@ def extension_availability_text():
     from collections import defaultdict
     slots_by_day = defaultdict(list)
     slots_payload = []
+    tz_abbr = None  # Store timezone abbreviation
 
     for slot in consolidated_slots:
         start_local = slot.start.astimezone(tz)
-        day_key = start_local.strftime("%A, %b %-d")  # e.g., "Monday, Dec 2"
+        day_key = start_local.strftime("%a %b %-d")  # e.g., "Mon Dec 2"
 
-        # Concise time format: 2-3pm or 10am-12pm with timezone
+        # Concise time format: 2-3pm or 10am-12pm without timezone (added once at end of line)
         start_time = start_local.strftime("%I:%M %p").lstrip("0").lower().replace(":00", "")
         end_time = slot.end.astimezone(tz).strftime("%I:%M %p").lstrip("0").lower().replace(":00", "")
-        tz_abbr = start_local.strftime("%Z")  # e.g., "PST"
-        time_range = f"{start_time}-{end_time} {tz_abbr}"
+
+        # Store timezone abbreviation (same for all slots)
+        if tz_abbr is None:
+            tz_abbr = start_local.strftime("%Z")  # e.g., "PST"
+
+        time_range = f"{start_time}-{end_time}"
 
         slots_by_day[day_key].append(time_range)
 
@@ -329,12 +334,11 @@ def extension_availability_text():
             }
         )
 
-    # Build grouped text with title + sub-bullets
+    # Build grouped text with times on same line, comma-separated
     lines = []
     for day, times in slots_by_day.items():
-        lines.append(f"{day}:")
-        for time in times:
-            lines.append(f"  • {time}")
+        times_str = ", ".join(times)
+        lines.append(f"  {day}: {times_str} {tz_abbr}")
 
     text_header = f"Available times for {event_type.title}:"
     text_body = "\n".join(lines)
