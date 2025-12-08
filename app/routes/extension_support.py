@@ -313,8 +313,8 @@ def extension_availability_text():
         day_key = start_local.strftime("%a %b %-d")  # e.g., "Mon Dec 2"
 
         # Concise time format: 2-3pm or 10am-12pm without timezone (added once at end of line)
-        start_time = start_local.strftime("%I:%M %p").lstrip("0").lower().replace(":00", "")
-        end_time = slot.end.astimezone(tz).strftime("%I:%M %p").lstrip("0").lower().replace(":00", "")
+        start_time = start_local.strftime("%I:%M%p").lstrip("0").lower().replace(":00", "")
+        end_time = slot.end.astimezone(tz).strftime("%I:%M%p").lstrip("0").lower().replace(":00", "")
 
         # Store timezone abbreviation (same for all slots)
         if tz_abbr is None:

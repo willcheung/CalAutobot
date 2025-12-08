@@ -151,6 +151,29 @@ def record_tracking_event(
     # Parse user agent to structured JSON
     user_agent_parsed = parse_user_agent(user_agent) if user_agent else None
 
+    # Fallback: Fingerprint-based self-tracking prevention
+    # Catches self-opens when user isn't logged into web app
+    from datetime import timedelta
+    
+    recent_threshold = datetime.utcnow() - timedelta(minutes=10)
+    if tracking_request.sent_at > recent_threshold and ip_hash and user_agent_parsed:
+        # Check if same IP + browser combo opened this email recently
+        recent_events = TrackingEvent.query.filter_by(
+            tracking_request_id=tracking_request.id,
+            ip_hash=ip_hash
+        ).filter(
+            TrackingEvent.opened_at > recent_threshold
+        ).all()
+        
+        # If same IP + same browser/device = likely self-open
+        for event in recent_events:
+            if (event.user_agent_parsed and
+                event.user_agent_parsed.get('device') == user_agent_parsed.get('device') and
+                event.user_agent_parsed.get('browser') == user_agent_parsed.get('browser')):
+                # Silently ignore self-open
+                return None
+
+
     # Get geolocation from IP (using free ip-api.com)
     location = get_location_from_ip(ip_address) if ip_address else {}
 
