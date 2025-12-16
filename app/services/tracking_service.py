@@ -161,8 +161,9 @@ def record_tracking_event(
     # Parse user agent to structured JSON
     user_agent_parsed = parse_user_agent(user_agent) if user_agent else None
 
-    # Fallback: Fingerprint-based self-tracking prevention
-    # Check if opener matches sender's fingerprint (captured at send time)
+    # ===== SELF-TRACKING PREVENTION (Multiple Layers) =====
+    
+    # Layer 1: Sender fingerprint check (catches first self-open if IP matches)
     if tracking_request.sender_ip_hash and ip_hash == tracking_request.sender_ip_hash:
         # Same IP - check user agent too for higher confidence
         if tracking_request.sender_user_agent_parsed and user_agent_parsed:
@@ -173,13 +174,34 @@ def record_tracking_event(
             
             # If either is Gmail proxy, ignore device comparison
             if sender_device == 'Gmail' or opener_device == 'Gmail':
-                # Only match on browser (device unknown due to proxy)
                 if sender_browser == opener_browser:
                     return None  # Sender opening their own email
             else:
-                # Both are real devices - match on both device and browser
                 if sender_device == opener_device and sender_browser == opener_browser:
                     return None  # Sender opening their own email
+    
+    # Layer 2: Duplicate detection (catches repeated self-opens from same IP/UA)
+    # This is critical for Gmail proxy opens, where sender IP differs from proxy IP
+    if ip_hash and user_agent_parsed:
+        previous_events = TrackingEvent.query.filter_by(
+            tracking_request_id=tracking_request.id,
+            ip_hash=ip_hash
+        ).all()
+        
+        for event in previous_events:
+            if event.user_agent_parsed:
+                prev_device = event.user_agent_parsed.get('device')
+                curr_device = user_agent_parsed.get('device')
+                prev_browser = event.user_agent_parsed.get('browser')
+                curr_browser = user_agent_parsed.get('browser')
+                
+                # If either is Gmail proxy, only match on browser
+                if prev_device == 'Gmail' or curr_device == 'Gmail':
+                    if prev_browser == curr_browser:
+                        return None  # Duplicate open from same IP/browser
+                else:
+                    if prev_device == curr_device and prev_browser == curr_browser:
+                        return None  # Duplicate open from same IP/device/browser
 
 
     # Get geolocation from IP (using free ip-api.com)
