@@ -138,9 +138,11 @@ function createTrackingCard(req) {
   const browser = userAgent.browser || 'Unknown';
   const os = userAgent.os || 'Unknown';
   const device = userAgent.device || 'Desktop';
-  const location = firstEvent?.city && firstEvent?.country_code
-    ? `${firstEvent.city}, ${firstEvent.country_code}`
-    : 'Unknown location';
+  const location = firstEvent?.city && firstEvent?.region && firstEvent?.country_code
+    ? `${firstEvent.city}, ${firstEvent.region}, ${firstEvent.country_code}`
+    : firstEvent?.city && firstEvent?.country_code
+      ? `${firstEvent.city}, ${firstEvent.country_code}`
+      : 'Unknown location';
 
   return `
     <div class="tracking-card ${hasOpened ? 'opened' : 'unopened'}" data-tracking-id="${req.tracking_id}">
@@ -166,7 +168,7 @@ function createTrackingCard(req) {
         <div class="tracking-card-body">
           <div class="tracking-platform">
             <span class="platform-icon">
-              ${device === 'Mobile' ? '📱' : device === 'Tablet' ? '💻' : '🖥️'}
+              ${device === 'Mobile' ? '📱' : device === 'Tablet' ? '💻' : device === 'Gmail' ? '🌐' : '🖥️'}
             </span>
             <span>${browser} on ${os}</span>
             ${location !== 'Unknown location' ? `<span class="tracking-location">• ${location}</span>` : ''}
@@ -174,7 +176,7 @@ function createTrackingCard(req) {
           <div class="tracking-open-count">
             <span>Opened ${req.open_count} time${req.open_count > 1 ? 's' : ''}</span>
             ${req.open_count > 1 && req.unique_open_count > 1 ?
-              `<span class="unique-count">(${req.unique_open_count} unique)</span>` : ''}
+        `<span class="unique-count">(${req.unique_open_count} unique)</span>` : ''}
             ${req.open_count > 1 ? `
               <button class="tracking-expand-btn" data-action="expand">▼</button>
             ` : ''}

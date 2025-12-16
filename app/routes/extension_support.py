@@ -778,6 +778,10 @@ def create_tracking_request():
     try:
         data = request.get_json()
 
+        # Capture sender's fingerprint for self-tracking detection
+        sender_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        sender_user_agent = request.headers.get('User-Agent')
+
         tracking_request = tracking_service.create_tracking_request(
             user=user,
             tracking_id=data['tracking_id'],
@@ -786,7 +790,9 @@ def create_tracking_request():
             cc_recipients=data.get('cc_recipients'),
             bcc_recipients=data.get('bcc_recipients'),
             gmail_message_id=data.get('gmail_message_id'),
-            gmail_thread_id=data.get('gmail_thread_id')
+            gmail_thread_id=data.get('gmail_thread_id'),
+            sender_ip=sender_ip,
+            sender_user_agent=sender_user_agent
         )
 
         response = jsonify({

@@ -499,6 +499,10 @@ class TrackingRequest(db.Model):
     gmail_message_id = db.Column(db.String(255), nullable=True)
     gmail_thread_id = db.Column(db.String(255), nullable=True, index=True)
 
+    # Sender fingerprint for self-tracking detection
+    sender_ip_hash = db.Column(db.String(64), nullable=True)  # SHA256 of sender's IP
+    sender_user_agent_parsed = db.Column(db.JSON, nullable=True)  # Sender's user agent at send time
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -590,6 +594,7 @@ class TrackingEvent(db.Model):
 
     # Geolocation - from IP lookup (ip-api.com free tier)
     country_code = db.Column(db.String(2), nullable=True)  # "US", "GB", etc.
+    region = db.Column(db.String(100), nullable=True)  # State/province: "CA", "NY", "England"
     city = db.Column(db.String(100), nullable=True)
     timezone = db.Column(db.String(50), nullable=True)  # "America/Los_Angeles"
 
@@ -605,6 +610,7 @@ class TrackingEvent(db.Model):
             'opened_at': self.opened_at.isoformat() + 'Z' if self.opened_at else None,
             'user_agent_parsed': self.user_agent_parsed,
             'city': self.city,
+            'region': self.region,
             'country_code': self.country_code,
             'timezone': self.timezone,
             'is_first_open': self.is_first_open,

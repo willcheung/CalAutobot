@@ -309,12 +309,12 @@ function renderTrackingData(data, listEl, emptyEl, lastViewedAt = null) {
     const hasNewOpens = req.last_opened_at && (
       !viewedAt || new Date(req.last_opened_at) > viewedAt
     );
-  // console.log(`CalAutobot: Unread check for "${req.subject}":`, {
-  //     last_opened_at: req.last_opened_at,
-  //     viewedAt: viewedAt?.toISOString(),
-  //     isAfter: req.last_opened_at && viewedAt && new Date(req.last_opened_at) > viewedAt,
-  //     hasNewOpens
-  //   });
+    // console.log(`CalAutobot: Unread check for "${req.subject}":`, {
+    //     last_opened_at: req.last_opened_at,
+    //     viewedAt: viewedAt?.toISOString(),
+    //     isAfter: req.last_opened_at && viewedAt && new Date(req.last_opened_at) > viewedAt,
+    //     hasNewOpens
+    //   });
     return { ...req, isUnread: hasNewOpens };
   });
 
@@ -348,16 +348,16 @@ async function loadTrackingData(containerEl) {
   const listEl = containerEl.querySelector('#tracking-list');
 
   try {
-  // console.log('CalAutobot: Loading tracking data for user:', userEmail);
+    // console.log('CalAutobot: Loading tracking data for user:', userEmail);
 
     // Try to load cached data first for instant display
     const cached = await chrome.storage.local.get(['cachedTrackingData']);
     if (cached.cachedTrackingData && cached.cachedTrackingData.requests) {
-  // console.log('CalAutobot: Displaying cached data instantly - requests count:', cached.cachedTrackingData.requests.length);
+      // console.log('CalAutobot: Displaying cached data instantly - requests count:', cached.cachedTrackingData.requests.length);
       loadingEl.style.display = 'none';
       renderTrackingData(cached.cachedTrackingData, listEl, emptyEl);
     } else {
-  // console.log('CalAutobot: No cached data available, showing loading state');
+      // console.log('CalAutobot: No cached data available, showing loading state');
     }
 
     // Fetch fresh data in background to update cache
@@ -365,15 +365,15 @@ async function loadTrackingData(containerEl) {
       userEmail: userEmail
     });
 
-  // console.log('CalAutobot: Tracking result:', result);
+    // console.log('CalAutobot: Tracking result:', result);
 
     if (!result.success) {
       throw new Error(result.error || 'Failed to fetch tracking data');
     }
 
     const data = result.data;
-  // console.log('CalAutobot: Tracking data received - requests count:', data.requests?.length || 0);
-  // console.log('CalAutobot: Full tracking data:', data);
+    // console.log('CalAutobot: Tracking data received - requests count:', data.requests?.length || 0);
+    // console.log('CalAutobot: Full tracking data:', data);
 
     loadingEl.style.display = 'none';
 
@@ -387,7 +387,7 @@ async function loadTrackingData(containerEl) {
     // IMPORTANT: Use server timestamp to avoid clock skew issues
     if (markViewedResult.success && markViewedResult.data.tracking_last_viewed_at) {
       const updatedData = { ...data, tracking_last_viewed_at: markViewedResult.data.tracking_last_viewed_at };
-  // console.log('CalAutobot: Updating cache with new tracking_last_viewed_at:', markViewedResult.data.tracking_last_viewed_at);
+      // console.log('CalAutobot: Updating cache with new tracking_last_viewed_at:', markViewedResult.data.tracking_last_viewed_at);
       await chrome.storage.local.set({ cachedTrackingData: updatedData });
     } else {
       console.warn('CalAutobot: Failed to update cache - mark viewed result:', markViewedResult);
@@ -521,15 +521,20 @@ function createTrackingCard(req) {
   if (req.events && req.events.length > 0) {
     const firstEvent = req.events[0];
 
-    // Determine device type (Mobile vs Desktop)
+    // Determine device type (Mobile, Desktop, or Gmail proxy)
     const device = firstEvent.user_agent_parsed?.device || 'Desktop';
-    if (device === 'Mobile' || device === 'Tablet') {
+    if (device === 'Gmail') {
+      deviceIcon = '🌐';
+      deviceLabel = 'Gmail';
+    } else if (device === 'Mobile' || device === 'Tablet') {
       deviceIcon = '📱';
       deviceLabel = 'Mobile';
     }
 
-    // Format location
-    if (firstEvent.city && firstEvent.country_code) {
+    // Format location with region (state/province)
+    if (firstEvent.city && firstEvent.region && firstEvent.country_code) {
+      locationInfo = `📍 ${firstEvent.city}, ${firstEvent.region}, ${firstEvent.country_code}`;
+    } else if (firstEvent.city && firstEvent.country_code) {
       locationInfo = `📍 ${firstEvent.city}, ${firstEvent.country_code}`;
     } else if (firstEvent.country_code) {
       locationInfo = `📍 ${firstEvent.country_code}`;
@@ -553,14 +558,19 @@ function createTrackingCard(req) {
       const device = event.user_agent_parsed?.device || 'Desktop';
       let deviceIconExp = '🖥️';
       let deviceLabelExp = 'Desktop';
-      if (device === 'Mobile' || device === 'Tablet') {
+      if (device === 'Gmail') {
+        deviceIconExp = '🌐';
+        deviceLabelExp = 'Gmail';
+      } else if (device === 'Mobile' || device === 'Tablet') {
         deviceIconExp = '📱';
         deviceLabelExp = 'Mobile';
       }
 
-      // Location info
+      // Location info with region
       let locationExp = '📍 Unknown location';
-      if (event.city && event.country_code) {
+      if (event.city && event.region && event.country_code) {
+        locationExp = `📍 ${event.city}, ${event.region}, ${event.country_code}`;
+      } else if (event.city && event.country_code) {
         locationExp = `📍 ${event.city}, ${event.country_code}`;
       } else if (event.country_code) {
         locationExp = `📍 ${event.country_code}`;
@@ -734,7 +744,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
       title: 'Email Tracking',
       iconUrl: chrome.runtime.getURL('icons/icon48.png'),
       onClick: function (event) {
-  // console.log('CalAutobot: Tracking button clicked', event);
+        // console.log('CalAutobot: Tracking button clicked', event);
 
         // Reset badge when opened (updates lastDashboardCheck timestamp)
         chrome.storage.local.set({
@@ -748,7 +758,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
         showTrackingDropdown(event.dropdown);
       }
     });
-  // console.log('CalAutobot: Tracking toolbar button added successfully');
+    // console.log('CalAutobot: Tracking toolbar button added successfully');
 
     // Style the button to look like Gmail's native buttons (white background with border)
     setTimeout(() => {
@@ -873,7 +883,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
         if (!currentHtml.includes('tracking/pixel')) {
           const modifiedHtml = injectTrackingPixel(currentHtml, trackingState.trackingId);
           composeView.setBodyHTML(modifiedHtml);
-  // console.log('CalAutobot: Pixel injected into compose body');
+          // console.log('CalAutobot: Pixel injected into compose body');
         }
       } catch (err) {
         console.warn('CalAutobot: Failed to ensure pixel injected', err);
@@ -916,7 +926,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           //   total: newTotal
           // });
         } else {
-  // console.log('CalAutobot: Ignoring empty recipients update (keeping captured recipients)');
+          // console.log('CalAutobot: Ignoring empty recipients update (keeping captured recipients)');
         }
       } catch (err) {
         console.warn('CalAutobot: Failed to update recipients', err);
@@ -970,7 +980,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
               checkbox.checked = !checkbox.checked;
               trackingState.enabled = checkbox.checked;
               await setTrackingEnabled(checkbox.checked);
-  // console.log('CalAutobot: Tracking toggled:', checkbox.checked ? 'ON' : 'OFF');
+              // console.log('CalAutobot: Tracking toggled:', checkbox.checked ? 'ON' : 'OFF');
               if (checkbox.checked) {
                 ensurePixelInjected();
               }
@@ -984,7 +994,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
     (async () => {
       const trackingEnabled = await isTrackingEnabled();
       trackingState.enabled = trackingEnabled;
-  // console.log('CalAutobot: Tracking initialized with ID:', trackingState.trackingId, 'enabled:', trackingState.enabled);
+      // console.log('CalAutobot: Tracking initialized with ID:', trackingState.trackingId, 'enabled:', trackingState.enabled);
 
       // Inject pixel immediately if tracking is enabled
       if (trackingEnabled) {
@@ -1031,32 +1041,32 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
         // Check if tracking is enabled for this compose
         if (trackingState.enabled && trackingState.trackingId) {
           try {
-  // console.log('CalAutobot: Injecting tracking pixel with ID:', trackingState.trackingId);
+            // console.log('CalAutobot: Injecting tracking pixel with ID:', trackingState.trackingId);
 
             // Get email body HTML
             const bodyHtml = composeView.getHTMLContent();
-  // console.log('CalAutobot: Original HTML length:', bodyHtml.length);
+            // console.log('CalAutobot: Original HTML length:', bodyHtml.length);
 
             // Inject tracking pixel
             const modifiedHtml = injectTrackingPixel(bodyHtml, trackingState.trackingId);
-  // console.log('CalAutobot: Modified HTML length:', modifiedHtml.length);
-  // console.log('CalAutobot: Modified HTML snippet:', modifiedHtml.substring(modifiedHtml.length - 200));
+            // console.log('CalAutobot: Modified HTML length:', modifiedHtml.length);
+            // console.log('CalAutobot: Modified HTML snippet:', modifiedHtml.substring(modifiedHtml.length - 200));
 
             // Update email body with pixel
             composeView.setBodyHTML(modifiedHtml);
 
             // Verify the change took effect
             const verifyHtml = composeView.getHTMLContent();
-  // console.log('CalAutobot: Verified HTML length:', verifyHtml.length);
-  // console.log('CalAutobot: Pixel present in verified HTML:', verifyHtml.includes('tracking/pixel'));
+            // console.log('CalAutobot: Verified HTML length:', verifyHtml.length);
+            // console.log('CalAutobot: Pixel present in verified HTML:', verifyHtml.includes('tracking/pixel'));
 
-  // console.log('CalAutobot: Tracking pixel injected successfully');
-  // console.log('CalAutobot: Note - If you see ERR_BLOCKED_BY_CLIENT, this is expected (self-tracking prevention). Recipients will see the pixel normally.');
+            // console.log('CalAutobot: Tracking pixel injected successfully');
+            // console.log('CalAutobot: Note - If you see ERR_BLOCKED_BY_CLIENT, this is expected (self-tracking prevention). Recipients will see the pixel normally.');
           } catch (err) {
             console.error('CalAutobot: Failed to inject tracking pixel', err);
           }
         } else {
-  // console.log('CalAutobot: Tracking not enabled, skipping pixel injection');
+          // console.log('CalAutobot: Tracking not enabled, skipping pixel injection');
         }
       } catch (err) {
         console.warn('CalAutobot: Failed to process presending', err);
@@ -1066,10 +1076,10 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
     // 4. After Send - Create tracking request
     composeView.on('sent', async (event) => {
       try {
-  // console.log('CalAutobot: Email sent');
+        // console.log('CalAutobot: Email sent');
 
         if (!trackingState.enabled) {
-  // console.log('CalAutobot: Tracking disabled by user, skipping tracking request');
+          // console.log('CalAutobot: Tracking disabled by user, skipping tracking request');
           return;
         }
 
@@ -1117,7 +1127,7 @@ InboxSDK.load(2, 'sdk_scheduler_142f817c3e').then((sdk) => {
           userEmail: userEmail,
         });
 
-  // console.log('CalAutobot: Tracking request created successfully', result);
+        // console.log('CalAutobot: Tracking request created successfully', result);
       } catch (err) {
         console.error('CalAutobot: Failed to create tracking request', err);
         console.error('CalAutobot: Error stack:', err.stack);

@@ -157,6 +157,7 @@ def test_record_tracking_event_basic(test_app, service_user):
         with patch('app.services.tracking_service.get_location_from_ip') as mock_geo:
             mock_geo.return_value = {
                 'country_code': 'US',
+                'region': 'NY',
                 'city': 'New York',
                 'timezone': 'America/New_York'
             }
@@ -374,6 +375,7 @@ def test_get_location_from_ip_success(test_app):
             mock_response.json.return_value = {
                 'status': 'success',
                 'countryCode': 'US',
+                'region': 'CA',
                 'city': 'Mountain View',
                 'timezone': 'America/Los_Angeles'
             }
@@ -382,6 +384,7 @@ def test_get_location_from_ip_success(test_app):
             location = tracking_service.get_location_from_ip('8.8.8.8')
 
             assert location['country_code'] == 'US'
+            assert location['region'] == 'CA'
             assert location['city'] == 'Mountain View'
             assert location['timezone'] == 'America/Los_Angeles'
 
@@ -395,6 +398,7 @@ def test_get_location_from_ip_failure(test_app):
             location = tracking_service.get_location_from_ip('invalid')
 
             assert location['country_code'] is None
+            assert location['region'] is None
             assert location['city'] is None
             assert location['timezone'] is None
 
@@ -410,6 +414,7 @@ def test_get_location_from_ip_unsuccessful_response(test_app):
             location = tracking_service.get_location_from_ip('127.0.0.1')
 
             assert location['country_code'] is None
+            assert location['region'] is None
             assert location['city'] is None
             assert location['timezone'] is None
 

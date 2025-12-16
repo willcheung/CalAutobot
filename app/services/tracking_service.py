@@ -22,6 +22,8 @@ def create_tracking_request(
     bcc_recipients: Optional[List[Dict]] = None,
     gmail_message_id: Optional[str] = None,
     gmail_thread_id: Optional[str] = None,
+    sender_ip: Optional[str] = None,
+    sender_user_agent: Optional[str] = None,
 ) -> TrackingRequest:
     """
     Create tracking request and link to contacts.
@@ -35,16 +37,24 @@ def create_tracking_request(
         bcc_recipients: List of BCC recipients
         gmail_message_id: Gmail message ID
         gmail_thread_id: Gmail thread ID
+        sender_ip: Sender's IP address (for fingerprinting)
+        sender_user_agent: Sender's user agent (for fingerprinting)
 
     Returns:
         TrackingRequest instance
     """
+    # Hash sender IP for privacy
+    sender_ip_hash = hashlib.sha256(sender_ip.encode()).hexdigest() if sender_ip else None
+    sender_ua_parsed = parse_user_agent(sender_user_agent) if sender_user_agent else None
+    
     tracking_request = TrackingRequest(
         user_id=user.id,
         tracking_id=tracking_id,
         subject=subject,
         gmail_message_id=gmail_message_id,
         gmail_thread_id=gmail_thread_id,
+        sender_ip_hash=sender_ip_hash,
+        sender_user_agent_parsed=sender_ua_parsed,
         sent_at=datetime.utcnow()
     )
     db.session.add(tracking_request)
@@ -152,26 +162,24 @@ def record_tracking_event(
     user_agent_parsed = parse_user_agent(user_agent) if user_agent else None
 
     # Fallback: Fingerprint-based self-tracking prevention
-    # Catches self-opens when user isn't logged into web app
-    from datetime import timedelta
-    
-    recent_threshold = datetime.utcnow() - timedelta(minutes=10)
-    if tracking_request.sent_at > recent_threshold and ip_hash and user_agent_parsed:
-        # Check if same IP + browser combo opened this email recently
-        recent_events = TrackingEvent.query.filter_by(
-            tracking_request_id=tracking_request.id,
-            ip_hash=ip_hash
-        ).filter(
-            TrackingEvent.opened_at > recent_threshold
-        ).all()
-        
-        # If same IP + same browser/device = likely self-open
-        for event in recent_events:
-            if (event.user_agent_parsed and
-                event.user_agent_parsed.get('device') == user_agent_parsed.get('device') and
-                event.user_agent_parsed.get('browser') == user_agent_parsed.get('browser')):
-                # Silently ignore self-open
-                return None
+    # Check if opener matches sender's fingerprint (captured at send time)
+    if tracking_request.sender_ip_hash and ip_hash == tracking_request.sender_ip_hash:
+        # Same IP - check user agent too for higher confidence
+        if tracking_request.sender_user_agent_parsed and user_agent_parsed:
+            sender_device = tracking_request.sender_user_agent_parsed.get('device')
+            opener_device = user_agent_parsed.get('device')
+            sender_browser = tracking_request.sender_user_agent_parsed.get('browser')
+            opener_browser = user_agent_parsed.get('browser')
+            
+            # If either is Gmail proxy, ignore device comparison
+            if sender_device == 'Gmail' or opener_device == 'Gmail':
+                # Only match on browser (device unknown due to proxy)
+                if sender_browser == opener_browser:
+                    return None  # Sender opening their own email
+            else:
+                # Both are real devices - match on both device and browser
+                if sender_device == opener_device and sender_browser == opener_browser:
+                    return None  # Sender opening their own email
 
 
     # Get geolocation from IP (using free ip-api.com)
@@ -187,6 +195,7 @@ def record_tracking_event(
         ip_hash=ip_hash,
         user_agent_parsed=user_agent_parsed,
         country_code=location.get('country_code'),
+        region=location.get('region'),
         city=location.get('city'),
         timezone=location.get('timezone'),
         is_first_open=is_first_open
@@ -233,7 +242,7 @@ def get_location_from_ip(ip_address: str) -> Dict[str, Optional[str]]:
         ip_address: IP address to lookup (may contain comma-separated list from X-Forwarded-For)
 
     Returns:
-        Dict with country_code, city, timezone
+        Dict with country_code, region, city, timezone
     """
     # Extract first IP from X-Forwarded-For header (client's real IP)
     if ',' in ip_address:
@@ -241,19 +250,20 @@ def get_location_from_ip(ip_address: str) -> Dict[str, Optional[str]]:
 
     # Skip API call for private/internal IP addresses
     if is_private_ip(ip_address):
-        return {'country_code': None, 'city': None, 'timezone': None}
+        return {'country_code': None, 'region': None, 'city': None, 'timezone': None}
 
     try:
         import requests
         response = requests.get(
             f'http://ip-api.com/json/{ip_address}',
-            params={'fields': 'status,countryCode,city,timezone'},
+            params={'fields': 'status,countryCode,region,city,timezone'},
             timeout=2
         )
         data = response.json()
         if data.get('status') == 'success':
             return {
                 'country_code': data.get('countryCode'),
+                'region': data.get('region'),  # State/province (e.g., "CA", "NY")
                 'city': data.get('city'),
                 'timezone': data.get('timezone')
             }
@@ -295,6 +305,15 @@ def parse_user_agent(user_agent: str) -> Dict[str, str]:
     Returns:
         Dict with browser, os, device
     """
+    # Detect Gmail image proxy first (before parsing)
+    is_gmail_proxy = (
+        'GoogleImageProxy' in user_agent or
+        'ggpht.com' in user_agent or
+        'Google Web Preview' in user_agent or
+        # Gmail often uses this specific outdated Windows version
+        ('Windows NT 5.1' in user_agent and 'Gecko' in user_agent)
+    )
+    
     ua = parse(user_agent)
 
     # Browser with major version
@@ -309,7 +328,9 @@ def parse_user_agent(user_agent: str) -> Dict[str, str]:
         os = f"{ua.os.family} {ua.os.version_string}"
 
     # Device type
-    if ua.is_mobile:
+    if is_gmail_proxy:
+        device = "Gmail"  # Gmail image proxy - actual device unknown
+    elif ua.is_mobile:
         device = "Mobile"
     elif ua.is_tablet:
         device = "Tablet"
