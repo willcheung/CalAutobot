@@ -230,9 +230,12 @@ def record_tracking_event(
                     if prev_device == curr_device and prev_browser == curr_browser:
                         return None  # Duplicate open from same IP/device/browser
 
-
     # Get geolocation from IP (using free ip-api.com)
-    location = get_location_from_ip(ip_address) if ip_address else {}
+    # Skip for Gmail proxy - location would be Google's servers, not actual reader
+    if user_agent_parsed and user_agent_parsed.get('device') == 'Gmail':
+        location = {}  # Don't store misleading Mountain View location
+    else:
+        location = get_location_from_ip(ip_address) if ip_address else {}
 
     # Check if this is first open
     is_first_open = tracking_request.first_opened_at is None
