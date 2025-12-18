@@ -13,6 +13,28 @@ from app.models import TrackingRequest, TrackingEvent, TrackingRecipient, User
 from app.services.contacts import ensure_contact
 
 
+def is_prefetch_bot(user_agent: str) -> bool:
+    """
+    Detect Gmail/email prefetch bots that load images before user opens.
+    These are NOT real opens - Gmail pre-fetches when sending.
+    
+    NOTE: This is DIFFERENT from Gmail Image Proxy (GoogleImageProxy/ggpht.com)
+    which loads when user actually opens - those ARE real opens.
+    """
+    if not user_agent:
+        return False
+    
+    # Gmail prefetch uses very outdated browser combo (Chrome 42 + Edge 12)
+    # No real user has this - only Gmail's prefetch bot
+    # Verified as of Jan 2025
+    is_gmail_prefetch = (
+        'Chrome/42.0.2311.135' in user_agent and 
+        'Edge/12.246' in user_agent
+    )
+    
+    return is_gmail_prefetch
+
+
 def create_tracking_request(
     user: User,
     tracking_id: str,
@@ -147,6 +169,11 @@ def record_tracking_event(
 
     if not tracking_request:
         return None
+
+    # Block Gmail prefetch bots (these load images immediately when SENDING)
+    # This is different from Gmail Image Proxy which loads when user opens
+    if user_agent and is_prefetch_bot(user_agent):
+        return None  # Ignore prefetch - not a real open
 
     # Prevent self-tracking: check if current user is the sender
     from flask_login import current_user
