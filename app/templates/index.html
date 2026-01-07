@@ -1109,70 +1109,76 @@
     </div>
 </div>
 
-<section class="chrome-extension-section" id="chrome-extension">
+<section class="product-intro-section" id="product">
     <div class="container">
         <div class="row justify-content-center mb-5">
-            <div class="col-lg-10 text-center">
-                <h2 class="mb-3">Start with our free Chrome extension in Gmail</h2>
-                <p class="extension-subtitle">
-                    See who’s opening your emails and insert your availability with one click.<br />
-                    Try our AI agents for free when you’re ready.
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">Your AI assistant and scheduling app</h2>
+                <p class="text-muted">Discover a variety of our advanced features. Unlimited and free for individuals.
                 </p>
             </div>
         </div>
 
-        <div class="extension-features-grid">
-            <div class="extension-feature-card extension-feature-card--wide-image">
-                <div class="extension-feature-image">
-                    <img src="{{ url_for('static', filename='images/product-email-tracking.png') }}"
-                        alt="Email Tracking Dashboard" loading="lazy">
-                </div>
-                <div class="extension-feature-content">
-                    <h3>Track Email Opens in Real-Time</h3>
-                    <p>Know who’s engaging and who’s ghosting.
-                    </p>
-                    <ul class="extension-feature-list">
-                        <li><i data-feather="check-circle"></i> Real-time notifications</li>
-                        <li><i data-feather="check-circle"></i> Device & location</li>
-                        <li><i data-feather="check-circle"></i> Without leaving Gmail</li>
-                    </ul>
+        <div class="product-intro-grid">
+            <div class="intro-card">
+                <h3>Auto follow-ups, reminders, 24/7 </h3>
+                <p>Keep your leads warm. Cal reads the full email context, propose times, follows up, and send
+                    reminders. Just like a human assistant working 24/7.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-cc-cal.jpg') }}"
+                        alt="Product shot showing Cal cc'd on an email thread" loading="lazy">
                 </div>
             </div>
 
-            <div class="extension-feature-card">
-                <div class="extension-feature-image">
-                    <img src="{{ url_for('static', filename='images/product-insert-availability.png') }}"
-                        alt="Insert Availability" loading="lazy">
-                </div>
-                <div class="extension-feature-content">
-                    <h3>Insert Availability with One Click</h3>
-                    <p>No tab switching, no calendar checking. Just instant scheduling.
-                    </p>
-                    <ul class="extension-feature-list">
-                        <li><i data-feather="check-circle"></i> One-click insert availability and booking link</li>
-                        <li><i data-feather="check-circle"></i> Automatically save contacts</li>
-                        <li><i data-feather="check-circle"></i> Google Calendar + Calendly friendly</li>
-                    </ul>
-                    <div class="works-with-container">
-                        <span class="works-with-text">Works with</span>
-                        <div class="works-with-logo">
-                            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
-                        </div>
-                    </div>
+            <div class="intro-card">
+                <h3>Watch multiple calendars for conflicts</h3>
+                <p>Cal keeps an eye on multiple calendars so you never double-book. Pick the source of truth and we
+                    orchestrate the rest.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-calendar-conflicts.jpg') }}"
+                        alt="Calendar view highlighting conflict detection across schedules" loading="lazy">
                 </div>
             </div>
-        </div>
 
-        <div class="text-center mt-5">
-            <a href="https://chromewebstore.google.com/detail/email-tracker-and-ai-sche/fhpijonhfjpnnbglkobbhbibppbfabmo"
-                target="_blank" class="extension-cta-btn">
-                <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome" class="chrome-icon"
-                    width="48" height="48">
-                Install for Free on Chrome
-            </a>
+            <div class="intro-card">
+                <h3>Contacts with intelligent columns</h3>
+                <p>Your every contact in one place. Cal keeps track of follow-ups and last interaction date so you don't
+                    have to.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-contacts.jpg') }}"
+                        alt="Availability comparison across global timezones" loading="lazy">
+                </div>
+            </div>
+
+            <div class="intro-card">
+                <h3>Public booking page? We have that too</h3>
+                <p>Need something sharable for your inbound leads? Toggle on your branded booking page and let Cal keep
+                    it in sync with your email bookings.</p>
+                <div class="intro-card__media">
+                    <img src="{{ url_for('static', filename='images/product-public-page.jpg') }}"
+                        alt="Preview of a public booking page powered by Cal" loading="lazy">
+                </div>
+            </div>
         </div>
     </div>
-
+    <div class="stats-grid">
+        <div class="stat-item">
+            <span class="stat-number">5+ hrs</span>
+            <div class="stat-label">Saved per week</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">Zero</span>
+            <div class="stat-label">Learning curve</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">30 sec</span>
+            <div class="stat-label">Setup time</div>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">100%</span>
+            <div class="stat-label">Personal touch</div>
+        </div>
+    </div>
 </section>
 
 <!-- <section class="email-stack" id="how-it-works">
@@ -1311,78 +1317,6 @@
     </div>
 </section>
 
-<section class="product-intro-section" id="product">
-    <div class="container">
-        <div class="row justify-content-center mb-5">
-            <div class="col-lg-8 text-center">
-                <h2 class="mb-3">Your AI assistant and scheduling app</h2>
-                <p class="text-muted">Discover a variety of our advanced features. Unlimited and free for individuals.
-                </p>
-            </div>
-        </div>
-
-        <div class="product-intro-grid">
-            <div class="intro-card">
-                <h3>Auto follow-ups, reminders, 24/7 </h3>
-                <p>Keep your leads warm. Cal reads the full email context, propose times, follows up, and send
-                    reminders. Just like a human assistant working 24/7.</p>
-                <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-cc-cal.jpg') }}"
-                        alt="Product shot showing Cal cc'd on an email thread" loading="lazy">
-                </div>
-            </div>
-
-            <div class="intro-card">
-                <h3>Watch multiple calendars for conflicts</h3>
-                <p>Cal keeps an eye on multiple calendars so you never double-book. Pick the source of truth and we
-                    orchestrate the rest.</p>
-                <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-calendar-conflicts.jpg') }}"
-                        alt="Calendar view highlighting conflict detection across schedules" loading="lazy">
-                </div>
-            </div>
-
-            <div class="intro-card">
-                <h3>Contacts with intelligent columns</h3>
-                <p>Your every contact in one place. Cal keeps track of follow-ups and last interaction date so you don't
-                    have to.</p>
-                <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-contacts.jpg') }}"
-                        alt="Availability comparison across global timezones" loading="lazy">
-                </div>
-            </div>
-
-            <div class="intro-card">
-                <h3>Public booking page? We have that too</h3>
-                <p>Need something sharable for your inbound leads? Toggle on your branded booking page and let Cal keep
-                    it in sync with your email bookings.</p>
-                <div class="intro-card__media">
-                    <img src="{{ url_for('static', filename='images/product-public-page.jpg') }}"
-                        alt="Preview of a public booking page powered by Cal" loading="lazy">
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="stats-grid">
-        <div class="stat-item">
-            <span class="stat-number">5+ hrs</span>
-            <div class="stat-label">Saved per week</div>
-        </div>
-        <div class="stat-item">
-            <span class="stat-number">Zero</span>
-            <div class="stat-label">Learning curve</div>
-        </div>
-        <div class="stat-item">
-            <span class="stat-number">30 sec</span>
-            <div class="stat-label">Setup time</div>
-        </div>
-        <div class="stat-item">
-            <span class="stat-number">100%</span>
-            <div class="stat-label">Personal touch</div>
-        </div>
-    </div>
-</section>
-
 <div class="section-cta text-center">
     {% if not current_user.is_authenticated %}
     <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large"
@@ -1484,6 +1418,72 @@
     </a>
     {% endif %}
 </div>
+
+<section class="chrome-extension-section" id="chrome-extension">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10 text-center">
+                <h2 class="mb-3">Start with our free Chrome extension in Gmail</h2>
+                <p class="extension-subtitle">
+                    See who’s opening your emails and insert your availability with one click.<br />
+                    Try our AI agents for free when you’re ready.
+                </p>
+            </div>
+        </div>
+
+        <div class="extension-features-grid">
+            <div class="extension-feature-card extension-feature-card--wide-image">
+                <div class="extension-feature-image">
+                    <img src="{{ url_for('static', filename='images/product-email-tracking.png') }}"
+                        alt="Email Tracking Dashboard" loading="lazy">
+                </div>
+                <div class="extension-feature-content">
+                    <h3>Track Email Opens in Real-Time</h3>
+                    <p>Know who’s engaging and who’s ghosting.
+                    </p>
+                    <ul class="extension-feature-list">
+                        <li><i data-feather="check-circle"></i> Real-time notifications</li>
+                        <li><i data-feather="check-circle"></i> Device & location</li>
+                        <li><i data-feather="check-circle"></i> Without leaving Gmail</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="extension-feature-card">
+                <div class="extension-feature-image">
+                    <img src="{{ url_for('static', filename='images/product-insert-availability.png') }}"
+                        alt="Insert Availability" loading="lazy">
+                </div>
+                <div class="extension-feature-content">
+                    <h3>Insert Availability with One Click</h3>
+                    <p>No tab switching, no calendar checking. Just instant scheduling.
+                    </p>
+                    <ul class="extension-feature-list">
+                        <li><i data-feather="check-circle"></i> One-click insert availability and booking link</li>
+                        <li><i data-feather="check-circle"></i> Automatically save contacts</li>
+                        <li><i data-feather="check-circle"></i> Google Calendar + Calendly friendly</li>
+                    </ul>
+                    <div class="works-with-container">
+                        <span class="works-with-text">Works with</span>
+                        <div class="works-with-logo">
+                            <img src="{{ url_for('static', filename='images/calendly-logo.png') }}" alt="Calendly">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="https://chromewebstore.google.com/detail/email-tracker-and-ai-sche/fhpijonhfjpnnbglkobbhbibppbfabmo"
+                target="_blank" class="extension-cta-btn">
+                <img src="{{ url_for('static', filename='images/chrome-icon.svg') }}" alt="Chrome" class="chrome-icon"
+                    width="48" height="48">
+                Install for Free on Chrome
+            </a>
+        </div>
+    </div>
+
+</section>
 
 <section class="pricing-section" id="pricing">
     <div class="container">
