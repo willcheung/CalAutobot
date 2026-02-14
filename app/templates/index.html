@@ -1138,10 +1138,11 @@
                     🚀 BETA
                 </div>
 
-                <h1 class="waitlist-title">Stop wasting hours chasing replies and scheduling meetings</h1>
+                <h1 class="waitlist-title">Your meetings, booked automatically</h1>
 
                 <p class="waitlist-subtitle">
-                    Cal is your AI assistant that handles meeting scheduling and email follow-ups automatically so you can focus on actual work.
+                    CC Cal on any email and your AI assistant schedules the meeting, follows up, and sends reminders.
+                    You stay focused.
                 </p>
 
                 {% if not current_user.is_authenticated %}
@@ -1160,6 +1161,9 @@
                             </svg>
                         </button>
                     </div>
+                    <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
+                        Try Cal free. Just add this address to any email cc and Cal handles the rest.
+                    </p>
                 </div>
                 {% else %}
                 <div class="hero-actions mt-4">
@@ -1178,7 +1182,8 @@
         <div class="row justify-content-center">
             <div class="col-lg-7 text-center">
                 <h2 class="email-stack__title">See Cal work like your real assistant</h2>
-                <p class="email-stack__subtitle">Just CC <strong>Cal@CalAutobot.com</strong> and watch the meeting come together.</p>
+                <p class="email-stack__subtitle">Just CC <strong>Cal@CalAutobot.com</strong> and watch the meeting come
+                    together.</p>
             </div>
         </div>
     </div>
@@ -1186,35 +1191,44 @@
         <div class="email-stack__stage">
             <figure class="email-stack__card" data-stack-index="0">
                 <picture>
-                    <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email1-mobile.jpg') }}">
-                    <img src="{{ url_for('static', filename='images/email1.jpg') }}" alt="Inbox showing Cal cc'd onto an email">
+                    <source media="(max-width: 576px)"
+                        srcset="{{ url_for('static', filename='images/email1-mobile.jpg') }}">
+                    <img src="{{ url_for('static', filename='images/email1.jpg') }}"
+                        alt="Inbox showing Cal cc'd onto an email">
                 </picture>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="1">
                 <div class="email-stack__highlight-frame">
                     <picture>
-                        <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email2-mobile.jpg') }}">
-                        <img src="{{ url_for('static', filename='images/email2.jpg') }}" alt="Cal proposing meeting times back to the thread">
+                        <source media="(max-width: 576px)"
+                            srcset="{{ url_for('static', filename='images/email2-mobile.jpg') }}">
+                        <img src="{{ url_for('static', filename='images/email2.jpg') }}"
+                            alt="Cal proposing meeting times back to the thread">
                     </picture>
                 </div>
             </figure>
             <figure class="email-stack__card" data-stack-index="2">
                 <picture>
-                    <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email3-mobile.jpg') }}">
-                    <img src="{{ url_for('static', filename='images/email3.jpg') }}" alt="Recipient confirming a time with Cal">
+                    <source media="(max-width: 576px)"
+                        srcset="{{ url_for('static', filename='images/email3-mobile.jpg') }}">
+                    <img src="{{ url_for('static', filename='images/email3.jpg') }}"
+                        alt="Recipient confirming a time with Cal">
                 </picture>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="3">
                 <div class="email-stack__highlight-frame">
                     <picture>
-                        <source media="(max-width: 576px)" srcset="{{ url_for('static', filename='images/email4-mobile.jpg') }}">
-                        <img src="{{ url_for('static', filename='images/email4.jpg') }}" alt="Cal confirming the meeting and updating calendars">
+                        <source media="(max-width: 576px)"
+                            srcset="{{ url_for('static', filename='images/email4-mobile.jpg') }}">
+                        <img src="{{ url_for('static', filename='images/email4.jpg') }}"
+                            alt="Cal confirming the meeting and updating calendars">
                     </picture>
                 </div>
             </figure>
             <figure class="email-stack__card email-stack__card--highlight" data-stack-index="4">
                 <div class="email-stack__highlight-frame">
-                    <img src="{{ url_for('static', filename='images/meeting.jpg') }}" alt="Meeting preparation view generated by Cal">
+                    <img src="{{ url_for('static', filename='images/meeting.jpg') }}"
+                        alt="Meeting preparation view generated by Cal">
                 </div>
             </figure>
         </div>
@@ -1319,7 +1333,7 @@
     {% endif %}
 </div>
 
-
+<!--
 <section class="ai-agents-section" id="ai-agents">
     <div class="container">
         <div class="row justify-content-center mb-5">
@@ -1407,7 +1421,7 @@
         </p>
     </div>
 </section>
-
+-->
 <div class="use-cases-section">
     <div class="container">
         <div class="row justify-content-center mb-5">
@@ -1444,13 +1458,13 @@
 
             <div class="col-md-4">
                 <div class="use-case-card">
-                    <h4><i data-feather="users"
-                            style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Home &
-                        Physical Services</h4>
-                    <p class="scenario">"What service do you provide? What time are you available?"</p>
-                    <p class="text-muted mb-0">Coordinating clients with for services is time-consuming. Cal handles
-                        availability checks and calendar invites automatically, reducing unnecessary missed calls and
-                        improving customer experience.</p>
+                    <h4><i data-feather="user"
+                            style="width: 20px; height: 20px; vertical-align: text-bottom; color: #6366f1;"></i> Busy
+                        Professionals</h4>
+                    <p class="scenario">"Can we grab coffee next week to catch up?"</p>
+                    <p class="text-muted mb-0">Networking calls, coffee chats, and catch-ups add up fast. CC Cal on the
+                        thread and the meeting gets scheduled without you lifting a finger. Perfect for anyone who
+                        juggles a packed calendar and a full inbox.</p>
                 </div>
             </div>
 
@@ -1488,7 +1502,7 @@
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-lg-10 text-center">
-                <h2 class="mb-3">Start with our free Chrome extension in Gmail</h2>
+                <h2 class="mb-3">Still not sure? Start with our free Chrome extension in Gmail</h2>
                 <p class="extension-subtitle">
                     See who’s opening your emails and insert your availability with one click.<br />
                     Try our AI agents for free when you’re ready.
@@ -1614,14 +1628,12 @@
                 <h3>Power Users</h3>
                 <p class="plan-subtitle">For more advanced and customizable AI assistant</p>
                 <div class="plan-price">
-                    <span class="plan-price-original">$50</span>
+                    <!--<span class="plan-price-original">$20</span>-->
                     <span class="plan-price-current">$0</span>
                     <span class="plan-price-unit">/ user / mo (first 3 months)</span>
                 </div>
-                <p class="pricing-waitlist-helper pricing-price-note">Get $150 off when you sign up for free today</p>
                 <p class="fw-semibold mb-2">Everything in Free, plus:</p>
                 <ul class="pricing-features">
-                    <li><i data-feather="check"></i>AI Leads Closer 🤖</li>
                     <li><i data-feather="check"></i>AI CRM Tracker 🤖</li>
                     <li><i data-feather="check"></i>Remove CalAutobot branding</li>
                     <li><i data-feather="check"></i>Custom email (AI@company.com) </li>
@@ -1633,7 +1645,6 @@
                     <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Intelligent timeline for each contact 🤖</li>
                     <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Auto-updates last touch point 🤖</li>
                     <li>&nbsp;&nbsp;&nbsp;<i data-feather="check"></i>Summarizes past email conversations 🤖</li>
-                    <li><i data-feather="check"></i>CRM integration</li>
                 </ul>
             </div>
 
