@@ -57,58 +57,5 @@ localPort = 31460
 externalPort = 8081
 exposeLocalhost = true
 
-[[ports]]
-localPort = 33785
-externalPort = 8000
-
-[[ports]]
-localPort = 34511
-externalPort = 5000
-
-[[ports]]
-localPort = 39979
-externalPort = 4200
-
-[[ports]]
-localPort = 40617
-externalPort = 6000
-
-[[ports]]
-localPort = 41759
-externalPort = 3002
-
-[[ports]]
-localPort = 44837
-externalPort = 6800
-exposeLocalhost = true
-
-[[ports]]
-localPort = 45305
-externalPort = 3001
-
-[[ports]]
-localPort = 45361
-externalPort = 5173
-
-[[ports]]
-localPort = 48509
-externalPort = 9000
-exposeLocalhost = true
-
-[[ports]]
-localPort = 52450
-externalPort = 3003
-exposeLocalhost = true
-
-[[ports]]
-localPort = 54270
-externalPort = 3000
-exposeLocalhost = true
-
-[[ports]]
-localPort = 59087
-externalPort = 8008
-exposeLocalhost = true
-
 [objectStorage]
 defaultBucketID = "replit-objstore-42af3b1d-2f64-453b-91fd-821709ea91e8"

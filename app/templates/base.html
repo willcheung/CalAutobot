@@ -33,7 +33,7 @@
     you can book faster with AI.') %}
     {% set meta_type = meta_type | default('website') %}
     {% set meta_url = meta_url | default(request.base_url) %}
-    {% set meta_image = meta_image | default(url_for('static', filename='images/logo.png', _external=True)) %}
+    {% set meta_image = meta_image | default(url_for('static', filename='images/og-card.png', _external=True)) %}
 
     <meta name="description" content="{{ meta_description }}">
     <meta property="og:site_name" content="{{ site_name }}">
