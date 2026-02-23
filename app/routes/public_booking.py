@@ -58,7 +58,7 @@ def _render_profile_page(user: User):
         meta_kwargs["meta_image"] = user.profile_picture_url
 
     return render_template(
-        "public/profile.html",
+        "booking/profile.html",
         user=user,
         event_types=event_types,
         display_sidebar=False,
@@ -277,7 +277,7 @@ def _render_event_type_page(user: User, slug: str):
         meta_kwargs["meta_image"] = user.profile_picture_url
 
     return render_template(
-        "public/event_type.html",
+        "booking/event_type.html",
         user=user,
         event_type=event_type,
         target_date=target_date,
@@ -508,7 +508,7 @@ def confirm_booking_page(handle: str, slug: str):
                         cancel_booking_event(user, original_event)
                 slot_end = selected_slot.end
                 return render_template(
-                    "public/confirmation.html",
+                    "booking/confirmation.html",
                     user=user,
                     event_type=event_type,
                     host_date_display=host_date_display,
@@ -551,7 +551,7 @@ def confirm_booking_page(handle: str, slug: str):
     slot_end = selected_slot.end
     notes_value = request.form.get("notes", "") if request.method == "POST" else ""
     return render_template(
-        "public/confirm_booking.html",
+        "booking/confirm_booking.html",
         user=user,
         event_type=event_type,
         slot_iso=slot_iso,

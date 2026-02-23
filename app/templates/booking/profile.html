@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ user.display_name }} - Event Types{% endblock %}
+{% block content %}
+<div class="container mt-4 public-page">
+    <div class="booking-powered-by">
+        Powered by <span>Cal</span>Autobot.com
+    </div>
+    <div class="public-profile-header card shadow-sm mb-4">
+        <div class="card-body d-flex align-items-center gap-3">
+            <div class="profile-avatar{% if user.profile_picture_url %} profile-avatar--image{% endif %}">
+                {% if user.profile_picture_url %}
+                    <img src="{{ user.profile_picture_url }}" alt="{{ user.display_name }} profile photo" loading="lazy">
+                {% else %}
+                    {{ user.display_name[:1] }}
+                {% endif %}
+            </div>
+            <div>
+                <h1 class="mb-1">{{ user.display_name }}</h1>
+                <p class="text-muted mb-0">@{{ user.handle }}</p>
+            </div>
+        </div>
+    </div>
+
+    {% if event_types %}
+        <div class="row g-3">
+            {% for event_type in event_types %}
+                <div class="col-12 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ event_type.title }}</h5>
+                            <p class="card-text flex-grow-1">{{ event_type.description or 'Pick a time that works for you.' }}</p>
+                            <a class="btn btn-primary" href="{{ url_for('public_booking.event_type_page', handle=user.handle, slug=event_type.slug) }}">Select time</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card empty-state text-center py-5">
+            <div class="card-body">
+                <h3>No available booking slots</h3>
+                <p class="text-muted mb-0">{{ user.display_name }} has no openings at the moment.</p>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
