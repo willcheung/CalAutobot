@@ -6,7 +6,9 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY environment variable must be set")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 ASSISTANT_EMAILS = {

@@ -35,8 +35,17 @@ app = Flask(
     template_folder="templates",
     static_folder="static",
 )
-app.secret_key = os.environ.get("SESSION_SECRET",
-                                "dev-secret-key-change-in-production")
+# Security: Session secret must be set via environment variable
+# No hardcoded fallback - app will fail to start if not configured
+secret_key = os.environ.get("SESSION_SECRET")
+if not secret_key:
+    if os.environ.get("VERCEL_ENV") == "production":
+        raise RuntimeError("SESSION_SECRET environment variable must be set in production")
+    # Dev only: generate a random secret for this session
+    import secrets
+    secret_key = secrets.token_hex(32)
+    logger.warning("Using generated SESSION_SECRET for development. Set SESSION_SECRET env var for production.")
+app.secret_key = secret_key
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1,
                         x_host=1)  # needed for url_for to generate with https
 
