@@ -10,7 +10,9 @@ from app.helpers.datetime_utils import ensure_timezone
 
 logger = logging.getLogger(__name__)
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "your-openai-api-key")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY environment variable must be set")
 openai = OpenAI(api_key=OPENAI_API_KEY)
 
 SCHEDULER_SYSTEM_PROMPT_TEMPLATE = """You are **Cal**, a professional AI scheduling assistant managing meetings on behalf of **{owner_name} ({owner_email})**.
