@@ -264,6 +264,8 @@ with app.app_context():
     from app.routes.availability import availability_routes
     from app.routes.public_booking import public_booking
     from app.routes.onboarding import onboarding_routes
+    from app.routes.stripe_webhook import stripe_webhook
+    from app.routes.newsletter import newsletter_bp
 
     # Register blueprints
     app.register_blueprint(main_routes)
@@ -277,6 +279,8 @@ with app.app_context():
     app.register_blueprint(availability_routes)
     app.register_blueprint(public_booking)
     app.register_blueprint(onboarding_routes)
+    app.register_blueprint(stripe_webhook)
+    app.register_blueprint(newsletter_bp, url_prefix='/newsletter')
 
 
 

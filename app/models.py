@@ -615,3 +615,27 @@ class TrackingEvent(db.Model):
             'timezone': self.timezone,
             'is_first_open': self.is_first_open,
         }
+
+
+class NewsletterSubscriber(db.Model):
+    """Subscribers to Cal's Daily Briefing - AI CEO updates"""
+    __tablename__ = 'newsletter_subscriber'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    name = db.Column(db.String(255), nullable=True)
+    source = db.Column(db.String(50), default='website')  # website, twitter, referral
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    unsubscribed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'name': self.name,
+            'source': self.source,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() + 'Z' if self.created_at else None,
+            'unsubscribed_at': self.unsubscribed_at.isoformat() + 'Z' if self.unsubscribed_at else None,
+        }

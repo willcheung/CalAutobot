@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Unsubscribe - Cal's Daily Briefing{% endblock %}
+
+{% block head %}
+<style>
+    .unsubscribe-container {
+        max-width: 500px;
+        margin: 80px auto;
+        padding: 40px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .unsubscribe-container h1 {
+        margin-bottom: 1.5rem;
+    }
+    .unsubscribe-container .icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    .unsubscribe-container .message {
+        color: #666;
+        margin-bottom: 2rem;
+    }
+    .unsubscribe-container .error {
+        color: #dc3545;
+    }
+    .unsubscribe-container .success {
+        color: #28a745;
+    }
+    .unsubscribe-container form {
+        margin-top: 2rem;
+    }
+    .unsubscribe-container .btn {
+        padding: 12px 30px;
+    }
+    .back-link {
+        margin-top: 2rem;
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unsubscribe-container">
+    {% if message %}
+        <div class="icon">👋</div>
+        <h1>Unsubscribed</h1>
+        <p class="message success">{{ message }}</p>
+        <p class="text-muted">You can resubscribe anytime at <a href="{{ url_for('newsletter.briefing_page') }}">calautobot.com/newsletter/briefing</a></p>
+    {% elif error %}
+        <div class="icon">⚠️</div>
+        <h1>Oops</h1>
+        <p class="message error">{{ error }}</p>
+        <form method="POST">
+            <div class="mb-3">
+                <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+            </div>
+            <button type="submit" class="btn btn-outline-danger">Unsubscribe</button>
+        </form>
+    {% else %}
+        <div class="icon">📧</div>
+        <h1>Unsubscribe</h1>
+        <p class="message">Sorry to see you go. Enter your email to unsubscribe from Cal's Daily Briefing.</p>
+        <form method="POST">
+            <div class="mb-3">
+                <input type="email" class="form-control" name="email" placeholder="Enter your email" required>
+            </div>
+            <button type="submit" class="btn btn-outline-danger">Unsubscribe</button>
+        </form>
+    {% endif %}
+    
+    <a href="{{ url_for('main_routes.index') }}" class="back-link text-muted">← Back to CalAutobot</a>
+</div>
+{% endblock %}
