@@ -43,7 +43,7 @@ PRICE_TO_PRODUCT = {
 }
 
 
-@checkout_bp.route('/checkout')
+@checkout_bp.route('/e-book')
 def checkout_page():
     """Render the checkout page with product options."""
     return render_template('checkout.html', products=PRODUCTS)
@@ -70,8 +70,8 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url=request.host_url + 'checkout/success?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=request.host_url + 'checkout?canceled=true',
+            success_url=request.host_url + 'e-book/success?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=request.host_url + 'e-book?canceled=true',
             metadata={
                 'product_key': product_key,
             }
@@ -82,7 +82,7 @@ def create_checkout_session():
         return jsonify({'error': str(e)}), 500
 
 
-@checkout_bp.route('/checkout/success')
+@checkout_bp.route('/e-book/success')
 def checkout_success():
     """Render the success page after a completed checkout."""
     session_id = request.args.get('session_id')
