@@ -10,9 +10,18 @@ checkout_bp = Blueprint('checkout', __name__)
 
 try:
     import stripe
-    stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
-except ImportError:
-    logger.warning("Stripe library not installed")
+    api_key = os.environ.get('STRIPE_SECRET_KEY', '')
+    if not api_key:
+        logger.error("STRIPE_SECRET_KEY environment variable is not set")
+        stripe = None
+    else:
+        stripe.api_key = api_key
+        logger.info(f"Stripe configured successfully (key starts with: {api_key[:12]}...)")
+except ImportError as e:
+    logger.warning(f"Stripe library not installed: {e}")
+    stripe = None
+except Exception as e:
+    logger.error(f"Failed to configure Stripe: {e}")
     stripe = None
 
 # Product configuration - maps product keys to Stripe price IDs

@@ -24,3 +24,4 @@ python-dateutil>=2.9.0.post0
 pytz>=2025.2
 python-dotenv>=1.0.0
 user-agents>=2.2.0
+stripe>=10.0.0
