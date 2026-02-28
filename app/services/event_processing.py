@@ -6,6 +6,7 @@ from app import db
 from app.models import User, Event, TextInput
 from app.agents.event_extractor import extract_events_from_text, validate_and_clean_event
 from app.services.google_calendar import create_calendar_event
+from app.services.email_summarizer import save_email_summary
 from app.helpers.text_processing import sanitize_text_for_db
 from app.helpers.event_utils import calculate_event_duration_minutes
 from app.helpers.datetime_utils import ensure_timezone
@@ -157,6 +158,30 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
         skipped_count = len(extracted_events) - len(created_events)
         logger.warning(f"⚠️  {skipped_count} events were SKIPPED due to validation errors")
 
+    # Generate email summary if this appears to be an email
+    email_summary = None
+    if text_input.id and (from_email or 'From:' in text or '@' in text):
+        try:
+            # Extract subject if present
+            subject = None
+            import re
+            subject_match = re.search(r'Subject:\s*(.+?)(?:\n|$)', text, re.IGNORECASE)
+            if subject_match:
+                subject = subject_match.group(1).strip()
+
+            email_summary = save_email_summary(
+                user_id=user.id,
+                text_input_id=text_input.id,
+                text=text,  # Use original text for summarization
+                from_email=from_email,
+                subject=subject
+            )
+            if email_summary:
+                logger.info(f"Generated email summary: category={email_summary.category}, priority={email_summary.priority_score}")
+        except Exception as summary_error:
+            # Don't fail the whole request if summarization fails
+            logger.warning(f"Failed to generate email summary: {str(summary_error)}")
+
     # Auto-sync to Google Calendar if requested
     synced_count = 0
     if auto_sync and created_events:
@@ -222,7 +247,8 @@ def process_text_to_events(text, user, source_type="manual", auto_sync=True):
         'text_input': text_input,
         'events': created_events,
         'synced_count': synced_count,
-        'from_email': from_email
+        'from_email': from_email,
+        'email_summary': email_summary.to_dict() if email_summary else None
     }
 
     if is_offline:
