@@ -267,6 +267,7 @@ with app.app_context():
     from app.routes.stripe_webhook import stripe_webhook
     from app.routes.newsletter import newsletter_bp
     from app.routes.checkout import checkout_bp
+    from app.routes.email_routes import email_bp
 
     # Register blueprints
     app.register_blueprint(main_routes)
@@ -283,6 +284,7 @@ with app.app_context():
     app.register_blueprint(stripe_webhook)
     app.register_blueprint(newsletter_bp, url_prefix='/newsletter')
     app.register_blueprint(checkout_bp)
+    app.register_blueprint(email_bp)
 
 
 
