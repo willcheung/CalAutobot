@@ -588,6 +588,7 @@ class GmailService:
         thread_id: Optional[str] = None,
         reply_to_message_id: Optional[str] = None,
         cc_recipients: Optional[Iterable[str]] = None,
+        attachments: Optional[List[Dict]] = None,
     ) -> bool:
         """
         Send an email using Gmail API.
@@ -617,29 +618,85 @@ class GmailService:
                 logger.error("Cannot send email: no body content provided")
                 return False
 
-            message = MIMEMultipart('alternative')
-            message['To'] = to
-            message['From'] = 'Cal AutoBot <cal@calautobot.com>'
-            message['Subject'] = subject
-            if cc_recipients:
-                cc_header = ", ".join(sorted(addr for addr in cc_recipients if addr))
-                if cc_header:
-                    message['Cc'] = cc_header
+            # Use mixed multipart when attachments are present
+            from email.mime.base import MIMEBase
+            from email import encoders
+            
+            has_attachments = attachments and len(attachments) > 0
+            
+            if has_attachments:
+                message = MIMEMultipart('mixed')
+                message['To'] = to
+                message['From'] = 'Cal AutoBot <cal@calautobot.com>'
+                message['Subject'] = subject
+                
+                if cc_recipients:
+                    cc_header = ", ".join(sorted(addr for addr in cc_recipients if addr))
+                    if cc_header:
+                        message['Cc'] = cc_header
+                
+                if reply_to_message_id:
+                    message_id_value = reply_to_message_id
+                    if not message_id_value.startswith("<"):
+                        message_id_value = f"<{message_id_value}>"
+                    message['In-Reply-To'] = message_id_value
+                    message['References'] = message_id_value
+                
+                # Create alternative part for text/html
+                alt_part = MIMEMultipart('alternative')
+                if text_body:
+                    text_part = MIMEText(text_body, 'plain')
+                    alt_part.attach(text_part)
+                if html_body:
+                    html_part = MIMEText(html_body, 'html')
+                    alt_part.attach(html_part)
+                message.attach(alt_part)
+                
+                # Add attachments
+                for attachment in attachments:
+                    filename = attachment.get('filename') or attachment.get('name', 'attachment')
+                    content = attachment.get('content')  # bytes
+                    mimetype = attachment.get('mimetype') or attachment.get('content_type', 'application/octet-stream')
+                    
+                    if content is None:
+                        # Try to read from file path
+                        filepath = attachment.get('path')
+                        if filepath and os.path.exists(filepath):
+                            with open(filepath, 'rb') as f:
+                                content = f.read()
+                    
+                    if content:
+                        maintype, subtype = mimetype.split('/', 1) if '/' in mimetype else ('application', 'octet-stream')
+                        part = MIMEBase(maintype, subtype)
+                        part.set_payload(content)
+                        encoders.encode_base64(part)
+                        part.add_header('Content-Disposition', 'attachment', filename=filename)
+                        message.attach(part)
+                        logger.info(f"Attached {filename} ({len(content)} bytes)")
+            else:
+                message = MIMEMultipart('alternative')
+                message['To'] = to
+                message['From'] = 'Cal AutoBot <cal@calautobot.com>'
+                message['Subject'] = subject
+                if cc_recipients:
+                    cc_header = ", ".join(sorted(addr for addr in cc_recipients if addr))
+                    if cc_header:
+                        message['Cc'] = cc_header
 
-            if reply_to_message_id:
-                message_id_value = reply_to_message_id
-                if not message_id_value.startswith("<"):
-                    message_id_value = f"<{message_id_value}>"
-                message['In-Reply-To'] = message_id_value
-                message['References'] = message_id_value
+                if reply_to_message_id:
+                    message_id_value = reply_to_message_id
+                    if not message_id_value.startswith("<"):
+                        message_id_value = f"<{message_id_value}>"
+                    message['In-Reply-To'] = message_id_value
+                    message['References'] = message_id_value
 
-            if text_body:
-                text_part = MIMEText(text_body, 'plain')
-                message.attach(text_part)
+                if text_body:
+                    text_part = MIMEText(text_body, 'plain')
+                    message.attach(text_part)
 
-            if html_body:
-                html_part = MIMEText(html_body, 'html')
-                message.attach(html_part)
+                if html_body:
+                    html_part = MIMEText(html_body, 'html')
+                    message.attach(html_part)
             
             # Encode message
             raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
