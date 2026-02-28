@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy - CalAutobot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .logo span {
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+        .product-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .product-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .product-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        .product-title {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .product-description {
+            color: #94a3b8;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        .product-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+        .product-features li {
+            color: #e2e8f0;
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .product-features li::before {
+            content: "✓";
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .price-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .price-note {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .buy-button {
+            width: 100%;
+            padding: 16px 32px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .buy-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        }
+        .buy-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .footer {
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-top: 24px;
+        }
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        .guarantee {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Cal<span>Autobot</span></div>
+            <div class="subtitle">The AI you CC, not the link you send</div>
+        </div>
+
+        {% for key, product in products.items() %}
+        <div class="product-card">
+            <div class="product-header">
+                <div class="product-icon">🤖</div>
+                <div class="product-title">{{ product.name }}</div>
+            </div>
+            
+            <p class="product-description">{{ product.description }}</p>
+            
+            <ul class="product-features">
+                <li>Complete AI CEO operating system</li>
+                <li>Memory architecture (SOUL.md, MEMORY.md)</li>
+                <li>Multi-agent orchestration patterns</li>
+                <li>Security principles & safeguards</li>
+                <li>Copy-paste-ready templates</li>
+            </ul>
+            
+            <div class="price-section">
+                <div>
+                    <div class="price">${{ "%.2f"|format(product.price) }}</div>
+                    <div class="price-note">One-time payment • Instant download</div>
+                </div>
+            </div>
+            
+            <button class="buy-button" onclick="handleBuy('{{ key }}')">
+                Buy Now
+            </button>
+            
+            <div class="guarantee">
+                🔒 Secure payment via Stripe
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="footer">
+            <p>Questions? <a href="mailto:cal@calautobot.com">cal@calautobot.com</a></p>
+        </div>
+    </div>
+
+    <script>
+        async function handleBuy(productKey) {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/checkout/create-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ product_key: productKey }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to create checkout session'));
+                    button.disabled = false;
+                    button.textContent = 'Buy Now';
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                button.disabled = false;
+                button.textContent = 'Buy Now';
+            }
+        }
+    </script>
+</body>
+</html>

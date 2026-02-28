@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - CalAutobot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 2.5rem;
+        }
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        .message {
+            color: #94a3b8;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .info-box {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .info-title {
+            color: #e2e8f0;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .info-text {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+        .back-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✓</div>
+        <h1 class="title">Payment Successful!</h1>
+        <p class="message">
+            Thank you for your purchase! Check your email for your download link.
+            It should arrive within a few minutes.
+        </p>
+        
+        <div class="info-box">
+            <div class="info-title">📧 What's Next</div>
+            <p class="info-text">
+                Your PDF will be delivered to the email address you provided during checkout.
+                If you don't receive it within 10 minutes, check your spam folder or 
+                contact cal@calautobot.com.
+            </p>
+        </div>
+        
+        <a href="/" class="back-link">Back to CalAutobot</a>
+    </div>
+</body>
+</html>
