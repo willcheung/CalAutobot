@@ -49,6 +49,28 @@ def checkout_page():
     return render_template('checkout.html', products=PRODUCTS)
 
 
+@checkout_bp.route('/api/checkout/debug')
+def debug_checkout():
+    """Debug endpoint to check Stripe configuration."""
+    import os
+    has_stripe_key = bool(os.environ.get('STRIPE_SECRET_KEY'))
+    stripe_key_prefix = os.environ.get('STRIPE_SECRET_KEY', '')[:12] + '...' if has_stripe_key else 'NOT SET'
+    
+    try:
+        import stripe
+        stripe_available = True
+    except ImportError as e:
+        stripe_available = False
+        stripe_error = str(e)
+    
+    return jsonify({
+        'has_stripe_key': has_stripe_key,
+        'stripe_key_prefix': stripe_key_prefix,
+        'stripe_available': stripe_available,
+        'stripe_error': stripe_error if not stripe_available else None
+    })
+
+
 @checkout_bp.route('/api/checkout/create-session', methods=['POST'])
 def create_checkout_session():
     """Create a Stripe Checkout Session for a product."""
