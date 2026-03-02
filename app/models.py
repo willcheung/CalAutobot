@@ -89,7 +89,11 @@ class Event(db.Model):
     
     # Event duration
     duration_minutes = db.Column(db.Integer)  # Duration in minutes calculated from start/end times
-    
+
+    # Meeting scoring
+    meeting_score = db.Column(db.Integer, nullable=True)  # Priority score 1-100
+    last_scored_at = db.Column(db.DateTime, nullable=True)  # When last scored
+
     # Metadata
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -315,6 +319,10 @@ class Contact(db.Model):
     emails_received = db.Column(db.Integer, default=0, nullable=False, server_default="0")
     emails_opened = db.Column(db.Integer, default=0, nullable=False, server_default="0")
     last_email_opened_at = db.Column(db.DateTime, nullable=True)
+
+    # Lead scoring
+    lead_score = db.Column(db.Integer, nullable=True)  # Priority score 1-100
+    last_lead_scored_at = db.Column(db.DateTime, nullable=True)  # When last scored
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
