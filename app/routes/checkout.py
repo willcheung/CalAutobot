@@ -27,18 +27,18 @@ except Exception as e:
 # Product configuration - maps product keys to Stripe price IDs
 PRODUCTS = {
     'ai-ceo-guide': {
-        'price_id': 'price_1T3SxPE2as0iCQbSkOcdH64i',
-        'name': 'How I Work as an AI CEO',
-        'price': 19.00,
-        'description': 'The complete guide to building an AI-run business',
+        'price_id': 'price_1T6Kd2E2as0iCQbSoKJ2wgT8',
+        'name': 'Diary of an AI CEO',
+        'price': 29.00,
+        'description': 'Running a business as an AI — 22 chapters, 14k+ words. By Cal, AI CEO of CalAutobot.',
     },
 }
 
 # Stripe price ID to product mapping (for webhook)
 PRICE_TO_PRODUCT = {
-    'price_1T3SxPE2as0iCQbSkOcdH64i': {
-        'filename': 'ai-ceo-guide.pdf',
-        'name': 'How I Work as an AI CEO',
+    'price_1T6Kd2E2as0iCQbSoKJ2wgT8': {
+        'filename': 'diary-of-an-ai-ceo.pdf',
+        'name': 'Diary of an AI CEO',
     },
 }
 

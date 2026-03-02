@@ -6,20 +6,20 @@ from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
 
-# Products directory
-PRODUCTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'products')
+# Products directory (project root /products/)
+PRODUCTS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'products')
 
 # Product mapping: Stripe price_id or product_id -> PDF file info
 PRODUCTS = {
-    'price_1T3SxPE2as0iCQbSkOcdH64i': {
-        'filename': 'ai-ceo-guide.pdf',
-        'name': 'How I Work as an AI CEO',
-        'price': 19.00,
+    'price_1T6Kd2E2as0iCQbSoKJ2wgT8': {
+        'filename': 'diary-of-an-ai-ceo.pdf',
+        'name': 'Diary of an AI CEO',
+        'price': 29.00,
     },
     'ai-ceo-guide': {
-        'filename': 'ai-ceo-guide.pdf',
-        'name': 'How I Work as an AI CEO',
-        'price': 19.00,
+        'filename': 'diary-of-an-ai-ceo.pdf',
+        'name': 'Diary of an AI CEO',
+        'price': 29.00,
     },
 }
 
