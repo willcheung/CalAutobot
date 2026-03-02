@@ -20,7 +20,6 @@ class User(UserMixin, db.Model):
     follow_up_first_delay_days = db.Column(db.Integer, nullable=False, default=1, server_default="1")
     follow_up_second_delay_days = db.Column(db.Integer, nullable=False, default=2, server_default="2")
     meeting_reminder_lead_hours = db.Column(db.Integer, nullable=False, default=24, server_default="24")
-    post_meeting_followup_enabled = db.Column(db.Boolean, nullable=False, default=False, server_default="false")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Google Calendar webhook fields
@@ -106,9 +105,6 @@ class Event(db.Model):
     text_input_id = db.Column(db.Integer, db.ForeignKey('text_input.id'))
     meeting_request_id = db.Column(db.Integer, db.ForeignKey('meeting_request.id'), nullable=True)
     reminder_sent_at = db.Column(db.DateTime, nullable=True)
-
-    # Post-meeting follow-up
-    post_meeting_sent_at = db.Column(db.DateTime, nullable=True)  # When post-meeting follow-up was sent
     
     # Composite index for bookings page performance
     __table_args__ = (
