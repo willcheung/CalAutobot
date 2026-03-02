@@ -627,3 +627,35 @@ class TrackingEvent(db.Model):
             'timezone': self.timezone,
             'is_first_open': self.is_first_open,
         }
+
+
+class UserKnowledge(db.Model):
+    """User-uploaded knowledge/context for the scheduling AI."""
+    __tablename__ = "user_knowledge"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+
+    # Knowledge content
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=True)  # preference, contact_context, meeting_template, etc.
+
+    # Metadata
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    user = db.relationship("User", backref=db.backref("knowledge_entries", lazy=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "category": self.category,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() + "Z" if self.created_at else None,
+        }
+
