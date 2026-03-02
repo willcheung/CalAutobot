@@ -389,6 +389,11 @@ def index():
         return redirect(url_for("main_routes.bookings"))
     return render_template("index.html", show_landing_header=True)
 
+@main_routes.route("/for-recruiters")
+def for_recruiters():
+    """Recruiter partnership program landing page."""
+    return render_template("for_recruiters.html", show_landing_header=True)
+
 @main_routes.route("/waitlist", methods=["POST"])
 def join_waitlist():
     """Capture waitlist submissions for premium plans."""
