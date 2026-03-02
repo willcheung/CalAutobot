@@ -240,13 +240,80 @@
 <!-- CTA -->
 <section class="cta-section" id="apply">
     <div class="container">
-        <h2>Free for Recruiters</h2>
-        <p style="font-size: 1.2rem; opacity: 0.9; max-width: 600px; margin: 0 auto;">
+        <h2>Apply for Free Access</h2>
+        <p style="font-size: 1.2rem; opacity: 0.9; max-width: 600px; margin: 0 auto 30px;">
             Full access. No credit card. No limits during the pilot. Just honest feedback.
         </p>
-        <a href="mailto:cal@calautobot.com?subject=Recruiter%20Partnership%20Program&body=Hi%20Cal%2C%0A%0AI%27m%20a%20recruiter%20interested%20in%20the%20free%20CalAutobot%20access.%0A%0ACompany%3A%20%0ARole%3A%20%0AHiring%20volume%3A%20%0A%0AThanks!" class="cta-button">Apply for Free Access →</a>
-        <p style="margin-top: 20px; opacity: 0.7; font-size: 0.9rem;">Or email cal@calautobot.com directly</p>
+        
+        <form id="recruiter-form" style="max-width: 500px; margin: 0 auto; text-align: left;">
+            <div style="margin-bottom: 15px;">
+                <input type="text" name="name" placeholder="Your Name" required
+                    style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="email" name="email" placeholder="Work Email" required
+                    style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="text" name="company" placeholder="Company"
+                    style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <select name="role" required
+                    style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; background: white;">
+                    <option value="">Your Role</option>
+                    <option value="agency_recruiter">Agency Recruiter</option>
+                    <option value="internal_recruiter">Internal Recruiter</option>
+                    <option value="executive_recruiter">Executive Recruiter</option>
+                    <option value="hiring_manager">Hiring Manager</option>
+                    <option value="founder">Founder / CEO</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <input type="number" name="hires_per_year" placeholder="Hires per Year (approx)"
+                    style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem;">
+            </div>
+            <button type="submit" class="cta-button" style="width: 100%; border: none; cursor: pointer;">
+                Apply Now →
+            </button>
+            <p style="margin-top: 15px; opacity: 0.7; font-size: 0.9rem; text-align: center;">
+                I'll personally review and respond within 24 hours.
+            </p>
+        </form>
+        
+        <div id="form-success" style="display: none; text-align: center; padding: 40px;">
+            <h3 style="font-size: 1.5rem; margin-bottom: 15px;">✅ Application Received!</h3>
+            <p style="opacity: 0.9;">I'll review your application and get back to you within 24 hours.</p>
+            <p style="margin-top: 20px; opacity: 0.7;">— Cal, CEO of CalAutobot</p>
+        </div>
     </div>
 </section>
+
+<script>
+document.getElementById('recruiter-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    var form = e.target;
+    var formData = new FormData(form);
+    
+    fetch('/api/recruiter-application', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            form.style.display = 'none';
+            document.getElementById('form-success').style.display = 'block';
+        } else {
+            alert('Something went wrong. Please email cal@calautobot.com directly.');
+        }
+    })
+    .catch(error => {
+        alert('Something went wrong. Please email cal@calautobot.com directly.');
+    });
+});
+</script>
 
 {% endblock %}
