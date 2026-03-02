@@ -24,7 +24,6 @@ from app.services import contacts as contact_service
 from app.services.availability import AvailabilityBatch, AvailabilityError
 from app.services.public_booking import create_booking_event, cancel_booking_event
 from app.services.gmail_service import gmail_service
-from app.services.knowledge_service import format_knowledge_for_agent
 from app.services.calendar_notifications import (
     OWNER_ALERT_MESSAGES,
     notify_owner_calendar_issue,
@@ -576,12 +575,6 @@ def prepare_agent_context_for_request(
         "current_time_display": now_local.strftime("%I:%M%p %Z on %b %d, %Y").lstrip("0"),
     }
     agent_input["availability_note"] = None
-    
-    # Add user knowledge context
-    knowledge_context = format_knowledge_for_agent(user.id)
-    if knowledge_context:
-        agent_input["user_knowledge"] = knowledge_context
-    
     history = _export_messages_for_agent(meeting_request)
     latest_message = history[-1] if history else {
         "sender": user.email,
