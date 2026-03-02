@@ -2,7 +2,7 @@ import logging
 import math
 import os
 import re
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models import User, Event, UserEmail, CalWaitlist, Contact, ContactLabel, MeetingParticipant
@@ -393,68 +393,6 @@ def index():
 def for_recruiters():
     """Recruiter partnership program landing page."""
     return render_template("for_recruiters.html", show_landing_header=True)
-
-@main_routes.route("/api/recruiter-application", methods=["POST"])
-def recruiter_application():
-    """Handle recruiter partnership program applications."""
-    name = (request.form.get("name") or "").strip()
-    email = (request.form.get("email") or "").strip()
-    company = (request.form.get("company") or "").strip()
-    role = (request.form.get("role") or "").strip()
-    hires_per_year = request.form.get("hires_per_year") or "0"
-    
-    if not name or not email:
-        return jsonify({"success": False, "error": "Name and email required"}), 400
-    
-    # Log to Notion
-    try:
-        import os
-        import requests
-        
-        notion_token = os.environ.get("NOTION_API_KEY")
-        if notion_token:
-            requests.post(
-                "https://api.notion.com/v1/pages",
-                headers={
-                    "Authorization": f"Bearer {notion_token}",
-                    "Content-Type": "application/json",
-                    "Notion-Version": "2022-06-28"
-                },
-                json={
-                    "parent": {"database_id": "3096ed6a-66f2-8087-a78c-c452bc0f50e1"},
-                    "properties": {
-                        "Name": {"title": [{"text": {"content": f"Recruiter: {name} ({company or 'No company'})"}}]},
-                        "Status": {"status": {"name": "Not started"}},
-                        "Team": {"select": {"name": "CalAutobot.com"}}
-                    }
-                },
-                timeout=10
-            )
-    except Exception as e:
-        current_app.logger.warning(f"Failed to log recruiter application to Notion: {e}")
-    
-    # Send notification email
-    try:
-        from app.services.gmail_service import GmailService
-        gmail = GmailService()
-        gmail.send_email(
-            to="cal@calautobot.com",
-            subject=f"New Recruiter Application: {name} from {company or 'Unknown'}",
-            text_body=f"""New Recruiter Partnership Application
-
-Name: {name}
-Email: {email}
-Company: {company or 'Not provided'}
-Role: {role}
-Hires/Year: {hires_per_year}
-
-Review and respond within 24 hours.
-"""
-        )
-    except Exception as e:
-        current_app.logger.warning(f"Failed to send recruiter notification: {e}")
-    
-    return jsonify({"success": True})
 
 @main_routes.route("/waitlist", methods=["POST"])
 def join_waitlist():
