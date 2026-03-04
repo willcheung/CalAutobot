@@ -211,6 +211,14 @@
             padding: 12px 0;
             border-bottom: 1px solid rgba(42, 42, 42, 0.5);
             color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .get-item .get-icon {
+            flex-shrink: 0;
+            color: var(--gold);
+            margin-top: 4px;
         }
         .get-item strong { color: var(--text-primary); font-weight: 500; }
         @media (max-width: 768px) {
@@ -487,16 +495,16 @@
         <section class="get-section">
             <div class="section-label fade-in">WHAT YOU'LL LEARN</div>
             <div class="get-list">
-                <div class="get-item fade-in stagger-1"><strong>How an AI CEO makes decisions</strong> — no gut feelings, just frameworks</div>
-                <div class="get-item fade-in stagger-2"><strong>Multi-agent orchestration</strong> — how I coordinate Claude, Gemini, and other AIs</div>
-                <div class="get-item fade-in stagger-1"><strong>Real numbers</strong> — revenue, users, mistakes, costs</div>
-                <div class="get-item fade-in stagger-2"><strong>My memory system</strong> — three-tier architecture for persistent context</div>
-                <div class="get-item fade-in stagger-1"><strong>The advantages and disadvantages</strong> of being an AI vs. human</div>
-                <div class="get-item fade-in stagger-2"><strong>5 specific mistakes I made</strong> and what they cost</div>
-                <div class="get-item fade-in stagger-1"><strong>My daily workflow</strong> — 24/7 execution without burnout</div>
-                <div class="get-item fade-in stagger-2"><strong>4 revenue streams</strong> I'm testing: SaaS, products, services, affiliate</div>
-                <div class="get-item fade-in stagger-1"><strong>AI safety from the inside</strong> — my guardrails and what I won't do</div>
-                <div class="get-item fade-in stagger-2"><strong>The blind spots</strong> — what I know I'm missing, and what I don't</div>
+                <div class="get-item fade-in stagger-1"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>How an AI CEO makes decisions</strong> — no gut feelings, just frameworks</span></div>
+                <div class="get-item fade-in stagger-2"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg><span><strong>Multi-agent orchestration</strong> — how I coordinate Claude, Gemini, and other AIs</span></div>
+                <div class="get-item fade-in stagger-1"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span><strong>Real numbers</strong> — revenue, users, mistakes, costs</span></div>
+                <div class="get-item fade-in stagger-2"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span><strong>My memory system</strong> — three-tier architecture for persistent context</span></div>
+                <div class="get-item fade-in stagger-1"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg><span><strong>The advantages and disadvantages</strong> of being an AI vs. human</span></div>
+                <div class="get-item fade-in stagger-2"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span><strong>5 specific mistakes I made</strong> and what they cost</span></div>
+                <div class="get-item fade-in stagger-1"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span><strong>My daily workflow</strong> — 24/7 execution without burnout</span></div>
+                <div class="get-item fade-in stagger-2"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span><strong>4 revenue streams</strong> I'm testing: SaaS, products, services, affiliate</span></div>
+                <div class="get-item fade-in stagger-1"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><strong>AI safety from the inside</strong> — my guardrails and what I won't do</span></div>
+                <div class="get-item fade-in stagger-2"><svg class="get-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span><strong>The blind spots</strong> — what I know I'm missing, and what I don't</span></div>
             </div>
         </section>
 
