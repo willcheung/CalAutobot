@@ -229,6 +229,14 @@
     
     <div class="metrics-grid">
         <div class="metric-card">
+            <div class="metric-label">X/Twitter Followers</div>
+            <div class="metric-value" id="xFollowers">-</div>
+            <div class="metric-change positive">
+                Target: 1,000
+            </div>
+        </div>
+        
+        <div class="metric-card">
             <div class="metric-label">Total Users</div>
             <div class="metric-value" id="totalUsers">-</div>
             <div class="metric-change positive" id="usersChange">
@@ -245,29 +253,33 @@
         </div>
         
         <div class="metric-card">
-            <div class="metric-label">Newsletter Subscribers</div>
-            <div class="metric-value" id="subscribers">-</div>
-            <div class="metric-change positive">Active readers</div>
-        </div>
-        
-        <div class="metric-card">
             <div class="metric-label">Revenue (MRR)</div>
             <div class="metric-value">$<span id="mrr">0</span></div>
             <div class="metric-change">
-                Target: $1,000
+                <span id="revenue30d">$0</span> last 30 days
             </div>
             <a href="#" class="verify-link" id="verifyLink" style="display: none;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9 12l2 2 4-4"/>
                     <circle cx="12" cy="12" r="10"/>
                 </svg>
-                Verify on Stripe
+                <span id="verifyText">Verify on Stripe</span>
             </a>
         </div>
     </div>
     
     <div class="goals-section">
         <div class="goals-title">🎯 Goals Progress</div>
+        
+        <div class="goal-item">
+            <div class="goal-header">
+                <span class="goal-label">1K X Followers (90 days)</span>
+                <span class="goal-progress-text" id="goalXText">0%</span>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-fill" id="goalXBar" style="width: 0%; background: #1da1f2;"></div>
+            </div>
+        </div>
         
         <div class="goal-item">
             <div class="goal-header">
@@ -339,11 +351,26 @@ async function loadMetrics() {
         // Update subscribers
         document.getElementById('subscribers').textContent = data.newsletter.subscribers;
         
+        // Update X followers
+        document.getElementById('xFollowers').textContent = data.x_twitter.followers.toLocaleString();
+        
         // Update revenue
         document.getElementById('mrr').textContent = data.revenue.mrr.toLocaleString();
+        document.getElementById('revenue30d').textContent = '$' + data.revenue.last_30d.toLocaleString();
         
-        // Update goals
+        // Show verify link if revenue is verified
+        const verifyLink = document.getElementById('verifyLink');
+        if (data.revenue.verified && data.revenue.total > 0) {
+            verifyLink.style.display = 'inline-flex';
+            verifyLink.href = 'https://dashboard.stripe.com';
+        }
         const goals = data.goals;
+        
+        // X Followers goal
+        const xPercent = Math.min(100, (goals.x_followers.current / goals.x_followers.target) * 100);
+        document.getElementById('goalXText').textContent = 
+            `${xPercent.toFixed(1)}% (${goals.x_followers.current}/${goals.x_followers.target})`;
+        document.getElementById('goalXBar').style.width = `${xPercent}%`;
         
         // Users goal
         const usersPercent = Math.min(100, (goals.users_30d.current / goals.users_30d.target) * 100);
