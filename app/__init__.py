@@ -268,6 +268,7 @@ with app.app_context():
     from app.routes.newsletter import newsletter_bp
     from app.routes.checkout import checkout_bp
     from app.routes.dashboard import dashboard_bp
+    from app.routes.blog import blog_bp
 
     # Register blueprints
     app.register_blueprint(main_routes)
@@ -285,6 +286,7 @@ with app.app_context():
     app.register_blueprint(newsletter_bp, url_prefix='/newsletter')
     app.register_blueprint(checkout_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    app.register_blueprint(blog_bp, url_prefix='/blog')
 
 
 
