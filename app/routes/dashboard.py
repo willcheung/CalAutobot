@@ -1,6 +1,5 @@
 """AI CEO Dashboard - Public metrics for CalAutobot"""
 import logging
-import os
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, jsonify
 from sqlalchemy import func
@@ -10,79 +9,6 @@ from app.models import User, Event, NewsletterSubscriber
 logger = logging.getLogger(__name__)
 
 dashboard_bp = Blueprint("dashboard", __name__)
-
-# Stripe integration for real revenue data
-try:
-    import stripe
-    stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
-    if not stripe.api_key:
-        stripe = None
-        logger.warning("STRIPE_SECRET_KEY not set - revenue will show $0")
-except ImportError:
-    stripe = None
-    logger.warning("Stripe library not installed")
-
-
-def get_stripe_revenue():
-    """Fetch real revenue data from Stripe API"""
-    if stripe is None:
-        return {"total": 0, "mrr": 0, "last_30d": 0, "verified": False}
-    
-    try:
-        # Get balance transactions for revenue calculation
-        # Note: This is simplified - real MRR requires subscription tracking
-        now = datetime.utcnow()
-        thirty_days_ago = int((now - timedelta(days=30)).timestamp())
-        
-        # Fetch successful charges from last 30 days
-        charges = stripe.Charge.list(
-            limit=100,
-            created={'gte': thirty_days_ago},
-            expand=['data.balance_transaction']
-        )
-        
-        last_30d = 0
-        for charge in charges.auto_paging_iter():
-            if charge.status == 'succeeded' and charge.paid:
-                # Convert from cents to dollars
-                last_30d += charge.amount / 100
-        
-        # For MRR, we'd need subscription data - for now use last 30d as proxy
-        # In future, track actual subscriptions
-        mrr = last_30d  # Simplified: assume last 30d revenue ≈ MRR for one-time products
-        
-        # Total revenue (all time) - fetch all successful charges
-        all_charges = stripe.Charge.list(limit=100)
-        total = 0
-        for charge in all_charges.auto_paging_iter():
-            if charge.status == 'succeeded' and charge.paid:
-                total += charge.amount / 100
-        
-        return {
-            "total": total,
-            "mrr": mrr,
-            "last_30d": last_30d,
-            "verified": True  # Data came from Stripe API
-        }
-    except Exception as e:
-        logger.error(f"Failed to fetch Stripe revenue: {e}")
-        return {"total": 0, "mrr": 0, "last_30d": 0, "verified": False}
-
-
-def get_x_followers():
-    """Get X/Twitter follower count - stored in env or file"""
-    # For now, read from a simple file that can be updated
-    # In future, integrate with X API
-    try:
-        follower_file = "/root/.openclaw/workspace/.x_followers"
-        if os.path.exists(follower_file):
-            with open(follower_file, 'r') as f:
-                data = f.read().strip()
-                if data:
-                    return int(data)
-    except:
-        pass
-    return 2  # Default known value
 
 
 @dashboard_bp.route("/")
@@ -154,11 +80,12 @@ def get_metrics():
                 "count": count
             })
         
-        # Revenue (from Stripe API)
-        revenue = get_stripe_revenue()
-        
-        # X/Twitter followers
-        x_followers = get_x_followers()
+        # Revenue (placeholder - integrate with Stripe)
+        revenue = {
+            "total": 0,
+            "mrr": 0,
+            "last_30d": 0
+        }
         
         return jsonify({
             "success": True,
@@ -182,16 +109,11 @@ def get_metrics():
             "newsletter": {
                 "subscribers": active_subscribers
             },
-            "x_twitter": {
-                "followers": x_followers,
-                "target": 1000
-            },
             "revenue": revenue,
             "goals": {
                 "users_30d": {"target": 100, "current": new_users_30d},
                 "mrr_90d": {"target": 1000, "current": revenue["mrr"]},
-                "revenue_1y": {"target": 1000000, "current": revenue["total"]},
-                "x_followers": {"target": 1000, "current": x_followers}
+                "revenue_1y": {"target": 1000000, "current": revenue["total"]}
             }
         })
         
