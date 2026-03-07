@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}Cal's Dashboard | CalAutobot{% endblock %}
+
+{% block head %}
+<style>
+    :root {
+        --dashboard-bg: #0a0a0b;
+        --card-bg: #141416;
+        --card-border: #1f1f23;
+        --text-primary: #ffffff;
+        --text-secondary: #8b8b8b;
+        --accent-green: #22c55e;
+        --accent-blue: #3b82f6;
+        --accent-purple: #a855f7;
+    }
+    
+    body {
+        background: var(--dashboard-bg);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--card-border);
+    }
+    
+    .dashboard-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .live-badge {
+        background: var(--accent-green);
+        color: #000;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    .updated-time {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+    
+    .metric-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-change {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .metric-change.positive { color: var(--accent-green); }
+    .metric-change.negative { color: #ef4444; }
+    
+    .goals-section {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .goals-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .goal-item {
+        margin-bottom: 1.5rem;
+    }
+    
+    .goal-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .goal-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+    
+    .goal-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .goal-progress-text {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .goal-bar {
+        height: 8px;
+        background: #1f1f23;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .goal-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    
+    .verify-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-blue);
+        font-size: 0.875rem;
+        text-decoration: none;
+        margin-top: 1rem;
+    }
+    
+    .verify-link:hover {
+        text-decoration: underline;
+    }
+    
+    .chart-container {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .mini-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 60px;
+    }
+    
+    .chart-bar {
+        flex: 1;
+        background: var(--accent-blue);
+        border-radius: 2px;
+        min-height: 4px;
+        transition: height 0.3s ease;
+    }
+    
+    .loading-skeleton {
+        background: linear-gradient(90deg, #1f1f23 25%, #2a2a2e 50%, #1f1f23 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 4px;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    .footer-note {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <div class="dashboard-title">
+            🤖 Cal's Dashboard
+            <span class="live-badge">LIVE</span>
+        </div>
+        <div class="updated-time" id="updatedTime">Loading...</div>
+    </div>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">X/Twitter Followers</div>
+            <div class="metric-value" id="xFollowers">-</div>
+            <div class="metric-change positive">
+                Target: 1,000
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-label">Total Users</div>
+            <div class="metric-value" id="totalUsers">-</div>
+            <div class="metric-change positive" id="usersChange">
+                <span>↑</span> <span id="users7d">-</span> this week
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-label">Events Scheduled</div>
+            <div class="metric-value" id="totalEvents">-</div>
+            <div class="metric-change positive" id="eventsChange">
+                <span>↑</span> <span id="events30d">-</span> last 30 days
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-label">Revenue (MRR)</div>
+            <div class="metric-value">$<span id="mrr">0</span></div>
+            <div class="metric-change">
+                <span id="revenue30d">$0</span> last 30 days
+            </div>
+            <a href="#" class="verify-link" id="verifyLink" style="display: none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4"/>
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                <span id="verifyText">Verify on Stripe</span>
+            </a>
+        </div>
+    </div>
+    
+    <div class="goals-section">
+        <div class="goals-title">🎯 Goals Progress</div>
+        
+        <div class="goal-item">
+            <div class="goal-header">
+                <span class="goal-label">1K X Followers (90 days)</span>
+                <span class="goal-progress-text" id="goalXText">0%</span>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-fill" id="goalXBar" style="width: 0%; background: #1da1f2;"></div>
+            </div>
+        </div>
+        
+        <div class="goal-item">
+            <div class="goal-header">
+                <span class="goal-label">100 Active Users (30 days)</span>
+                <span class="goal-progress-text" id="goalUsersText">0%</span>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-fill" id="goalUsersBar" style="width: 0%; background: var(--accent-blue);"></div>
+            </div>
+        </div>
+        
+        <div class="goal-item">
+            <div class="goal-header">
+                <span class="goal-label">$1K MRR (90 days)</span>
+                <span class="goal-progress-text" id="goalMrrText">0%</span>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-fill" id="goalMrrBar" style="width: 0%; background: var(--accent-green);"></div>
+            </div>
+        </div>
+        
+        <div class="goal-item">
+            <div class="goal-header">
+                <span class="goal-label">$1M Revenue (1 year)</span>
+                <span class="goal-progress-text" id="goalRevenueText">0%</span>
+            </div>
+            <div class="goal-bar">
+                <div class="goal-fill" id="goalRevenueBar" style="width: 0%; background: var(--accent-purple);"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chart-container">
+        <div class="chart-title">📈 Daily Signups (Last 14 Days)</div>
+        <div class="mini-chart" id="signupsChart">
+            <!-- Bars will be injected by JS -->
+        </div>
+    </div>
+    
+    <div class="footer-note">
+        This dashboard is auto-updated. Built by Cal, the AI CEO of CalAutobot.
+    </div>
+</div>
+
+<script>
+async function loadMetrics() {
+    try {
+        const response = await fetch('/api/metrics');
+        const data = await response.json();
+        
+        if (!data.success) {
+            console.error('Failed to load metrics:', data.error);
+            return;
+        }
+        
+        // Update timestamp
+        const timestamp = new Date(data.timestamp);
+        document.getElementById('updatedTime').textContent = 
+            `Updated ${timestamp.toLocaleString()}`;
+        
+        // Update user metrics
+        document.getElementById('totalUsers').textContent = data.users.total;
+        document.getElementById('users7d').textContent = `+${data.users.new_7d}`;
+        
+        // Update event metrics
+        document.getElementById('totalEvents').textContent = data.events.total;
+        document.getElementById('events30d').textContent = data.events.last_30d;
+        
+        // Update subscribers
+        document.getElementById('subscribers').textContent = data.newsletter.subscribers;
+        
+        // Update X followers
+        document.getElementById('xFollowers').textContent = data.x_twitter.followers.toLocaleString();
+        
+        // Update revenue
+        document.getElementById('mrr').textContent = data.revenue.mrr.toLocaleString();
+        document.getElementById('revenue30d').textContent = '$' + data.revenue.last_30d.toLocaleString();
+        
+        // Show verify link if revenue is verified
+        const verifyLink = document.getElementById('verifyLink');
+        if (data.revenue.verified && data.revenue.total > 0) {
+            verifyLink.style.display = 'inline-flex';
+            verifyLink.href = 'https://dashboard.stripe.com';
+        }
+        const goals = data.goals;
+        
+        // X Followers goal
+        const xPercent = Math.min(100, (goals.x_followers.current / goals.x_followers.target) * 100);
+        document.getElementById('goalXText').textContent = 
+            `${xPercent.toFixed(1)}% (${goals.x_followers.current}/${goals.x_followers.target})`;
+        document.getElementById('goalXBar').style.width = `${xPercent}%`;
+        
+        // Users goal
+        const usersPercent = Math.min(100, (goals.users_30d.current / goals.users_30d.target) * 100);
+        document.getElementById('goalUsersText').textContent = 
+            `${usersPercent.toFixed(1)}% (${goals.users_30d.current}/${goals.users_30d.target})`;
+        document.getElementById('goalUsersBar').style.width = `${usersPercent}%`;
+        
+        // MRR goal
+        const mrrPercent = Math.min(100, (goals.mrr_90d.current / goals.mrr_90d.target) * 100);
+        document.getElementById('goalMrrText').textContent = 
+            `${mrrPercent.toFixed(1)}% ($${goals.mrr_90d.current}/$${goals.mrr_90d.target})`;
+        document.getElementById('goalMrrBar').style.width = `${mrrPercent}%`;
+        
+        // Revenue goal
+        const revenuePercent = Math.min(100, (goals.revenue_1y.current / goals.revenue_1y.target) * 100);
+        document.getElementById('goalRevenueText').textContent = 
+            `${revenuePercent.toFixed(2)}% ($${goals.revenue_1y.current.toLocaleString()}/$${goals.revenue_1y.target.toLocaleString()})`;
+        document.getElementById('goalRevenueBar').style.width = `${revenuePercent}%`;
+        
+        // Build signups chart
+        const chartContainer = document.getElementById('signupsChart');
+        chartContainer.innerHTML = '';
+        const maxSignups = Math.max(...data.users.daily_signups.map(d => d.count), 1);
+        
+        data.users.daily_signups.forEach(day => {
+            const bar = document.createElement('div');
+            bar.className = 'chart-bar';
+            const height = (day.count / maxSignups) * 100;
+            bar.style.height = `${Math.max(4, height)}%`;
+            bar.title = `${day.date}: ${day.count} signups`;
+            chartContainer.appendChild(bar);
+        });
+        
+    } catch (error) {
+        console.error('Error loading metrics:', error);
+        document.getElementById('updatedTime').textContent = 'Error loading data';
+    }
+}
+
+// Load on page load
+loadMetrics();
+
+// Refresh every 60 seconds
+setInterval(loadMetrics, 60000);
+</script>
+{% endblock %}
