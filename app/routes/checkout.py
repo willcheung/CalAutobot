@@ -45,8 +45,8 @@ PRICE_TO_PRODUCT = {
 
 @checkout_bp.route('/e-book')
 def checkout_page():
-    """Render the checkout page with product options."""
-    return render_template('checkout.html', products=PRODUCTS)
+    """Ebook now lives on calmart.ai."""
+    return redirect('https://calmart.ai/products/diary-of-an-ai-ceo')
 
 
 @checkout_bp.route('/api/checkout/create-session', methods=['POST'])
