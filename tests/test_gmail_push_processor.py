@@ -406,3 +406,57 @@ class TestListHistorySSLRetry:
         result = gs.list_history("50")
         assert result == []
         assert mock_get_service.call_count == 2  # original + one retry, no more
+
+
+# ---------------------------------------------------------------------------
+# SSL retry tests (gmail_service.mark_as_read)
+# ---------------------------------------------------------------------------
+
+
+class TestMarkAsReadSSLRetry:
+    @patch("app.services.gmail_service.GmailService.get_service")
+    def test_retries_on_ssl_error(self, mock_get_service):
+        from app.services.gmail_service import gmail_service as gs
+
+        # First service: modify raises SSL error
+        first_service = MagicMock()
+        first_service.users.return_value.messages.return_value.modify.return_value.execute.side_effect = (
+            ssl.SSLError("EOF occurred in violation of protocol")
+        )
+        # Second service: modify succeeds
+        second_service = MagicMock()
+        second_service.users.return_value.messages.return_value.modify.return_value.execute.return_value = {}
+
+        mock_get_service.side_effect = [first_service, second_service]
+
+        result = gs.mark_as_read("msg-123")
+        assert result is True
+        assert mock_get_service.call_count == 2  # original + retry
+
+    @patch("app.services.gmail_service.GmailService.get_service")
+    def test_does_not_retry_non_ssl_errors(self, mock_get_service):
+        from app.services.gmail_service import gmail_service as gs
+
+        mock_service = MagicMock()
+        mock_service.users.return_value.messages.return_value.modify.return_value.execute.side_effect = (
+            ValueError("unrelated error")
+        )
+        mock_get_service.return_value = mock_service
+
+        result = gs.mark_as_read("msg-123")
+        assert result is False
+        assert mock_get_service.call_count == 1  # no retry
+
+    @patch("app.services.gmail_service.GmailService.get_service")
+    def test_does_not_retry_more_than_once(self, mock_get_service):
+        from app.services.gmail_service import gmail_service as gs
+
+        mock_service = MagicMock()
+        mock_service.users.return_value.messages.return_value.modify.return_value.execute.side_effect = (
+            ssl.SSLError("EOF occurred in violation of protocol")
+        )
+        mock_get_service.return_value = mock_service
+
+        result = gs.mark_as_read("msg-123")
+        assert result is False
+        assert mock_get_service.call_count == 2  # original + one retry, no more

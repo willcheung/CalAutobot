@@ -584,13 +584,13 @@ class GmailService:
             logger.error(f"Error listing Gmail history from {start_history_id}: {str(e)}")
             return []
     
-    def mark_as_read(self, message_id: str) -> bool:
+    def mark_as_read(self, message_id: str, _retried: bool = False) -> bool:
         """
         Mark email as read after processing.
-        
+
         Args:
             message_id (str): Gmail message ID
-        
+
         Returns:
             bool: True if successful
         """
@@ -598,18 +598,21 @@ class GmailService:
             service = self.get_service()
             if not service:
                 return False
-            
+
             # Remove UNREAD label
             service.users().messages().modify(
                 userId='me',
                 id=message_id,
                 body={'removeLabelIds': ['UNREAD']}
             ).execute()
-            
+
             logger.info(f"Marked email {message_id} as read")
             return True
-            
+
         except Exception as e:
+            if not _retried and self._is_ssl_error(e):
+                logger.warning("SSL error marking email %s as read, retrying with fresh service: %s", message_id, e)
+                return self.mark_as_read(message_id, _retried=True)
             logger.error(f"Error marking email as read {message_id}: {str(e)}")
             return False
     
