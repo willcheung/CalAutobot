@@ -6,10 +6,13 @@ from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY environment variable must be set")
-openai = OpenAI(api_key=OPENAI_API_KEY)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY environment variable must be set")
+openai = OpenAI(
+    api_key=GEMINI_API_KEY,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+)
 
 ASSISTANT_EMAILS = {
     "go@calautobot.com",
@@ -105,7 +108,7 @@ Body:
 
     try:
         response = openai.chat.completions.create(
-            model="gpt-4.1-nano",
+            model="gemini-3.1-flash-lite-preview",
             messages=[
                 {"role": "system", "content": CLASSIFIER_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},

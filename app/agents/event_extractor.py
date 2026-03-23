@@ -4,8 +4,6 @@ import logging
 from datetime import datetime, date
 import re
 
-# the well-rounded OpenAI model is "gpt-4.1-mini".
-# do not change this unless explicitly requested by the user
 from openai import OpenAI
 import sentry_sdk
 
@@ -13,10 +11,13 @@ from app.helpers.datetime_utils import ensure_timezone
 
 logger = logging.getLogger(__name__)
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY environment variable must be set")
-openai = OpenAI(api_key=OPENAI_API_KEY)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY environment variable must be set")
+openai = OpenAI(
+    api_key=GEMINI_API_KEY,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+)
 
 # Centralized prompt template - single place to edit the extraction prompt
 EVENT_EXTRACTION_SYS_PROMPT = """You are an expert at extracting structured calendar events from unstructured text, documents, and images.  Always respond with a valid JSON object. No extra commentary, no explanations.  
@@ -133,15 +134,15 @@ def extract_events_from_text(text,
                     }
                 }]
             }
-            model = "gpt-4.1-mini"
+            model = "gemini-3.1-flash-lite-preview"
         else:
             # For text-only processing
             user_message = {"role": "user", "content": prompt}
-            model = "gpt-4.1-mini"
+            model = "gemini-3.1-flash-lite-preview"
 
         messages.append(user_message)
 
-        # Make synchronous OpenAI API call with shorter timeout to prevent worker timeouts
+        # Make synchronous Gemini API call with shorter timeout to prevent worker timeouts
         response = openai.chat.completions.create(
             model=model,
             messages=messages,

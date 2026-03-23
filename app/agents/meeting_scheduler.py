@@ -10,10 +10,13 @@ from app.helpers.datetime_utils import ensure_timezone
 
 logger = logging.getLogger(__name__)
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY environment variable must be set")
-openai = OpenAI(api_key=OPENAI_API_KEY)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY environment variable must be set")
+openai = OpenAI(
+    api_key=GEMINI_API_KEY,
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+)
 
 SCHEDULER_SYSTEM_PROMPT_TEMPLATE = """You are **Cal**, a professional AI scheduling assistant managing meetings on behalf of **{owner_name} ({owner_email})**.
 
@@ -263,7 +266,7 @@ available_slots:
     logger.info("👉 PAYLOAD %s", payload)
 
     response = openai.chat.completions.create(
-        model="gpt-4.1-mini",
+        model="gemini-3.1-flash-lite-preview",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": payload},
