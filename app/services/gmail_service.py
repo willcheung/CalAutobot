@@ -99,11 +99,11 @@ class GmailService:
     
     def get_unread_emails(self, max_results: int = 50) -> List[Dict]:
         """
-        Get unread emails sent to go@calautobot.com only.
-        
+        Get unread emails sent to any allowed recipient address.
+
         Args:
             max_results (int): Maximum number of emails to fetch
-        
+
         Returns:
             List[Dict]: List of email data
         """
@@ -112,21 +112,30 @@ class GmailService:
             if not service:
                 logger.error("Gmail service not available")
                 return []
-            
-            # Search for unread emails sent to go@calautobot.com only
+
+            # Search for unread emails sent to any allowed address
+            raw_recipients = os.environ.get("GMAIL_ALLOWED_RECIPIENTS")
+            if raw_recipients:
+                addresses = [a.strip() for a in raw_recipients.split(",") if a.strip()]
+            else:
+                addresses = ["go@calautobot.com", "cal@calautobot.com"]
+
+            to_query = " OR ".join(f"to:{addr}" for addr in addresses)
+            query = f"is:unread ({to_query})"
+
             results = service.users().messages().list(
                 userId='me',
-                q='is:unread to:go@calautobot.com',
+                q=query,
                 maxResults=max_results
             ).execute()
-            
+
             messages = results.get('messages', [])
-            
+
             if not messages:
-                logger.info("No unread emails found for go@calautobot.com")
+                logger.info("No unread emails found for %s", addresses)
                 return []
-            
-            logger.info(f"Found {len(messages)} unread emails for go@calautobot.com")
+
+            logger.info(f"Found {len(messages)} unread emails for {addresses}")
             
             # Get full message details for each email
             emails = []
