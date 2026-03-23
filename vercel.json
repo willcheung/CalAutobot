@@ -5,6 +5,7 @@
       "src": "main.py",
       "use": "@vercel/python",
       "config": {
+        "maxDuration": 60,
         "includeFiles": ["app/**", "app/templates/**/*", "app/static/**/*", "app/templates/public/*", "app/templates/settings/*", "app/templates/emails/*", "app/templates/event_types/*", "app/templates/availability/*", "app/templates/contacts/*", "app/templates/partials/*", "app/templates/public/*"]
       }
     }

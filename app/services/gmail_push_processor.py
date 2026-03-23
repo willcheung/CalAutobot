@@ -3,12 +3,10 @@ import json
 import logging
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Optional, Set, List
 
 import sentry_sdk
-from flask import current_app
 
 from app import db
 from app.models import GmailPushState
@@ -16,99 +14,10 @@ from app.services.gmail_service import gmail_service
 
 logger = logging.getLogger(__name__)
 
-# Lock window keeps concurrent push deliveries from stepping on each other.
-# Keep it short so we rarely skip pushes yet still avoid parallel processing.
-LOCK_TIMEOUT_SECONDS = 5
-
-_MAX_WORKERS = max(1, int(os.environ.get("GMAIL_PUSH_WORKERS", "2")))
-_PUSH_EXECUTOR = ThreadPoolExecutor(
-    max_workers=_MAX_WORKERS,
-    thread_name_prefix="gmail-push",
-)
-
-
-def _queue_depth() -> Optional[int]:
-    work_queue = getattr(_PUSH_EXECUTOR, "_work_queue", None)
-    if not work_queue:
-        return None
-    try:
-        return work_queue.qsize()
-    except Exception:
-        return None
-
-
-def enqueue_history_message(envelope: dict) -> bool:
-    """Submit a Gmail push payload for background processing."""
-    if not envelope:
-        return False
-
-    app = current_app._get_current_object()
-    message_attrs = (envelope.get("message") or {}).get("attributes") or {}
-    history_id = None
-
-    raw_data = (envelope.get("message") or {}).get("data")
-    if raw_data:
-        try:
-            decoded = base64.b64decode(raw_data).decode("utf-8")
-            payload = json.loads(decoded)
-            history_id = payload.get("historyId")
-        except Exception:
-            history_id = None
-
-    depth = _queue_depth()
-    sentry_sdk.add_breadcrumb(
-        category="gmail_push.enqueue",
-        message="Queued Gmail push task",
-        level="info",
-        data={
-            "queue_depth": depth,
-            "history_id": history_id,
-            "resource_id": message_attrs.get("resourceId"),
-        },
-    )
-
-    logger.info(
-        "Enqueuing Gmail push task history_id=%s resource_id=%s depth=%s",
-        history_id,
-        message_attrs.get("resourceId"),
-        depth,
-    )
-
-    _PUSH_EXECUTOR.submit(_run_history_task, app, envelope, depth)
-    return True
-
-
-def _run_history_task(app, envelope: dict, enqueue_depth: Optional[int] = None) -> None:
-    start = time.monotonic()
-    with app.app_context():
-        try:
-            sentry_sdk.add_breadcrumb(
-                category="gmail_push.worker",
-                message="Processing Gmail push task",
-                level="info",
-                data={"enqueue_depth": enqueue_depth},
-            )
-            handle_history_message(envelope)
-            duration = time.monotonic() - start
-            logger.info(
-                "Completed Gmail push task in %.2fs (queued_depth=%s)",
-                duration,
-                enqueue_depth,
-            )
-            sentry_sdk.add_breadcrumb(
-                category="gmail_push.worker",
-                message="Completed Gmail push task",
-                level="info",
-                data={"duration_sec": round(duration, 2)},
-            )
-        except Exception as exc:
-            duration = time.monotonic() - start
-            logger.exception(
-                "Background Gmail push task failed after %.2fs: %s",
-                duration,
-                exc,
-            )
-            sentry_sdk.capture_exception(exc)
+# Lock timeout must exceed the longest expected processing duration.
+# Processing typically takes 20-60s; 120s gives ample safety margin.
+# After this timeout, a stale lock is considered abandoned (e.g. function crash).
+LOCK_TIMEOUT_SECONDS = 120
 
 
 def _get_allowed_recipients() -> Set[str]:
@@ -155,22 +64,50 @@ def _acquire_state(email_address: str) -> GmailPushState:
     return state
 
 
-def _acquire_lock(state: GmailPushState) -> bool:
+def _acquire_lock(email_address: str) -> Optional[GmailPushState]:
+    """
+    Atomically acquire the processing lock using SELECT FOR UPDATE.
+
+    Returns the locked GmailPushState row if acquired, or None if another
+    instance already holds the lock. The SELECT FOR UPDATE ensures only one
+    concurrent caller can read-then-write the lock column, eliminating the
+    race condition in the previous non-atomic implementation.
+    """
     now = datetime.utcnow()
+
+    # SELECT FOR UPDATE blocks concurrent readers on this row until we commit.
+    # Falls back to a plain SELECT on databases that don't support row locking
+    # (e.g. SQLite in tests) — acceptable because SQLite serialises writes anyway.
+    query = GmailPushState.query.filter_by(email_address=email_address)
+    try:
+        state = query.with_for_update().first()
+    except Exception:
+        # SQLite or other engines that don't support FOR UPDATE
+        state = query.first()
+
+    if not state:
+        # First time seeing this mailbox — create the row.
+        state = GmailPushState(email_address=email_address, processing_locked_at=now)
+        db.session.add(state)
+        db.session.commit()
+        return state
+
     if (
         state.processing_locked_at
         and (now - state.processing_locked_at) < timedelta(seconds=LOCK_TIMEOUT_SECONDS)
     ):
-        logger.warning(
-            "Gmail push processor locked for %s (started at %s)",
+        logger.info(
+            "Gmail push processor locked for %s (started at %s, %ds ago)",
             state.email_address,
             state.processing_locked_at.isoformat(),
+            (now - state.processing_locked_at).total_seconds(),
         )
-        return False
+        db.session.rollback()
+        return None
 
     state.processing_locked_at = now
     db.session.commit()
-    return True
+    return state
 
 
 def _release_lock(state: GmailPushState):
@@ -217,9 +154,10 @@ def _extract_message_ids(history_records: List[dict]) -> Set[str]:
 
 def handle_history_message(pubsub_message: dict) -> None:
     """
-    Entry point for Pub/Sub push payloads. The payload is already decoded
-    from JSON when routed here.
+    Entry point for Pub/Sub push payloads. Called synchronously from
+    the webhook handler — processing completes before the 204 is returned.
     """
+    start = time.monotonic()
     message_data = pubsub_message.get("message", {})
     attributes = message_data.get("attributes", {})
     email_address = attributes.get("emailAddress", "me")
@@ -242,8 +180,14 @@ def handle_history_message(pubsub_message: dict) -> None:
         logger.warning("Gmail push payload missing historyId; skipping")
         return
 
-    resource_state = message_data.get("attributes", {}).get("resourceState")
-    resource_id = message_data.get("attributes", {}).get("resourceId")
+    resource_state = attributes.get("resourceState")
+    resource_id = attributes.get("resourceId")
+
+    logger.info(
+        "Processing Gmail push history_id=%s resource_id=%s",
+        history_id,
+        resource_id,
+    )
 
     handle_history(
         email_address=email_address,
@@ -251,6 +195,9 @@ def handle_history_message(pubsub_message: dict) -> None:
         resource_state=resource_state,
         resource_id=resource_id,
     )
+
+    duration = time.monotonic() - start
+    logger.info("Completed Gmail push processing in %.2fs", duration)
 
 
 def handle_history(
@@ -261,17 +208,11 @@ def handle_history(
 ) -> None:
     """
     Process Gmail history entries starting at the provided history ID.
-
-    Args:
-        email_address (str): Gmail account that generated the push.
-        history_id (str): Starting history ID from the push message.
-        resource_state (Optional[str]): Optional Gmail resource state header.
-        resource_id (Optional[str]): Optional Gmail resource identifier.
     """
     allowed_recipients = _get_allowed_recipients()
-    state = _acquire_state(email_address)
 
-    if not _acquire_lock(state):
+    state = _acquire_lock(email_address)
+    if not state:
         return
 
     try:

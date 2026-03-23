@@ -1,6 +1,7 @@
 import os
 import logging
 import base64
+import ssl
 from typing import List, Dict, Optional, Tuple, Iterable
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -57,24 +58,31 @@ class GmailService:
             self.credentials = None
     
     def get_service(self):
-        """Get Gmail API service with fresh token"""
+        """Get a fresh Gmail API service with valid token.
+
+        Always builds a new service instance to avoid reusing HTTP
+        connections that may have gone stale during a serverless freeze.
+        """
         try:
             if not self.credentials:
                 logger.error("Gmail credentials not initialized")
                 return None  # Don't raise OAuth error for missing credentials
-            
-            # Refresh token if needed
-            if self.credentials.expired:
+
+            # Refresh token if expired or missing access token
+            if self.credentials.expired or not self.credentials.token:
                 logger.info("Refreshing expired Gmail access token")
                 self.credentials.refresh(Request())
-            
-            service = build('gmail', 'v1', credentials=self.credentials)
+
+            # Always build fresh to avoid stale SSL connections after
+            # Vercel serverless freeze/thaw cycles.
+            service = build('gmail', 'v1', credentials=self.credentials,
+                            cache_discovery=False)
             return service
-            
+
         except Exception as e:
             error_msg = str(e).lower()
             logger.error(f"Error getting Gmail service: {str(e)}")
-            
+
             # More specific OAuth authentication error detection
             oauth_errors = [
                 'invalid_grant',
@@ -82,10 +90,10 @@ class GmailService:
                 'token_expired',
                 'invalid_token'
             ]
-            
+
             if any(phrase in error_msg for phrase in oauth_errors):
                 raise GmailOAuthError(f"Gmail OAuth authentication failed: {str(e)}")
-            
+
             # For other errors, re-raise as generic exception
             raise
     
@@ -505,15 +513,25 @@ class GmailService:
             logger.error(f"Error starting Gmail watch: {str(e)}")
             return None
 
-    def list_history(self, start_history_id: str) -> List[Dict]:
+    def _is_ssl_error(self, exc: Exception) -> bool:
+        """Check if an exception is caused by a stale SSL connection."""
+        if isinstance(exc, ssl.SSLError):
+            return True
+        msg = str(exc).lower()
+        return any(phrase in msg for phrase in [
+            'unexpected_eof_while_reading',
+            'ssl',
+            'connection reset',
+            'broken pipe',
+            'connection aborted',
+        ])
+
+    def list_history(self, start_history_id: str, _retried: bool = False) -> List[Dict]:
         """
         Fetch Gmail history records starting from the provided history ID.
 
-        Args:
-            start_history_id (str): Starting history ID from which to fetch events.
-
-        Returns:
-            List[Dict]: History records containing messageAdded/labelAdded entries.
+        Retries once with a fresh service on SSL errors, which occur when
+        a stale connection is reused after a Vercel serverless freeze.
         """
         try:
             service = self.get_service()
@@ -547,6 +565,13 @@ class GmailService:
             return all_history
 
         except Exception as e:
+            if not _retried and self._is_ssl_error(e):
+                logger.warning(
+                    "SSL error listing Gmail history from %s, retrying with fresh service: %s",
+                    start_history_id, e,
+                )
+                return self.list_history(start_history_id, _retried=True)
+
             logger.error(f"Error listing Gmail history from {start_history_id}: {str(e)}")
             return []
     

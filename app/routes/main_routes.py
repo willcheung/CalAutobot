@@ -274,7 +274,9 @@ def _verify_pubsub_request():
 def gmail_push_webhook():
     """
     Pub/Sub push endpoint for Gmail history notifications.
-    Respond quickly with 204 to acknowledge receipt.
+    Processes emails synchronously before returning 204 so that work
+    completes reliably on Vercel serverless (background threads get
+    frozen after the response is sent).
     """
     try:
         if request.method == "GET":
@@ -296,19 +298,7 @@ def gmail_push_webhook():
             logger.warning("Received Gmail push request without message payload")
             return ("", 204)
 
-        from app.services.gmail_push_processor import (
-            enqueue_history_message,
-            handle_history_message,
-        )
-
-        try:
-            if enqueue_history_message(envelope):
-                return ("", 204)
-        except Exception as exc:
-            logger.exception(
-                "Failed to enqueue Gmail push task; falling back to inline processing: %s",
-                exc,
-            )
+        from app.services.gmail_push_processor import handle_history_message
 
         handle_history_message(envelope)
         return ("", 204)
