@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting to Sign Up...</title>
+    <title>Cal Autobot is closed to new customers</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -18,18 +18,9 @@
         .container {
             text-align: center;
         }
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        a {
+            color: white;
+            font-weight: 600;
         }
         h2 {
             margin: 0;
@@ -39,20 +30,10 @@
 </head>
 <body>
     <div class="container">
-        <div class="spinner"></div>
-        <h2>Redirecting to sign up...</h2>
+        <h2>Cal Autobot is no longer accepting new customers.</h2>
+        <p>We’re preparing to retire the app.</p>
+        <p><a href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">Explore my other builds →</a></p>
+        <p><a href="https://ai.meta.com/muse/" target="_blank" rel="noopener noreferrer">Try Muse from Meta →</a></p>
     </div>
-    
-    <script>
-        // Detect user's timezone
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-
-        // Preserve existing query parameters such as full=1 or email=...
-        const params = new URLSearchParams(window.location.search);
-        params.set('timezone', timezone);
-
-        // Auto-redirect to Google OAuth with timezone and original params
-        window.location.href = '/google_login?' + params.toString();
-    </script>
 </body>
 </html>
