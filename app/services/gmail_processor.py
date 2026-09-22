@@ -226,7 +226,9 @@ def process_single_email(email_data: Dict) -> bool:
 
         if task_type == "schedule_meeting" or (task_type == "no_action" and (not user or user.google_id is None)):
             if not user:
-                user = ensure_provisional_user(sender_email)
+                logger.info("Declining new provisional scheduling user %s", sender_email)
+                send_provisional_scheduler_email(sender_email)
+                return True
 
             if user.google_id is None:
                 handle_provisional_scheduler_user(user)
@@ -367,14 +369,9 @@ def process_single_email(email_data: Dict) -> bool:
                         send_no_events_response(email_data, sender_email)
                     return provisional_result["success"]
         else:
-            # New user - create provisional user
-            logger.info(f"📧 Creating new provisional user for {sender_email}")
-            provisional_result = process_new_provisional_user_email(
-                formatted_text, attachments_data, sender_email, subject
-            )
-            if provisional_result["success"] and provisional_result["events_count"] == 0:
-                send_no_events_response(email_data, sender_email)
-            return provisional_result["success"]
+            logger.info("Declining new provisional event user %s", sender_email)
+            send_provisional_scheduler_email(sender_email)
+            return True
             
     except Exception as e:
         logger.error(f"Error processing single email: {str(e)}")
@@ -533,44 +530,20 @@ def process_provisional_user_email(formatted_text: str, attachments_data: List[D
 
 def process_new_provisional_user_email(formatted_text: str, attachments_data: List[Dict], 
                                        sender_email: str, subject: str) -> Dict[str, object]:
-    """Process email for new provisional user (create provisional user)"""
-    try:
-        # Create provisional user
-        new_user = User()
-        new_user.email = sender_email
-        new_user.username = sender_email
-        new_user.google_id = None  # No Google auth yet
-        new_user.email_count = 1  # First email
-        new_user.timezone = 'UTC'
-        
-        db.session.add(new_user)
-        assign_unique_handle(new_user, sender_email)
-        db.session.commit()
-        
-        logger.info(f"✅ Created provisional user for {sender_email}")
-        
-        # Process the email for this new provisional user
-        return process_provisional_user_email(formatted_text, attachments_data, new_user, sender_email, subject)
-        
-    except Exception as e:
-        logger.error(f"Error creating provisional user for {sender_email}: {str(e)}")
-        sentry_sdk.capture_exception(e)
-        db.session.rollback()
-        return {"success": False, "events_count": 0}
+    """Decline service for an unknown sender without creating an account."""
+    logger.info("Declining new provisional user %s", sender_email)
+    send_provisional_scheduler_email(sender_email)
+    return {"success": True, "events_count": 0}
 
 def send_provisional_summary_email(recipient_email: str, events_data: List):
-    """Send email to provisional user with extracted events and signup link"""
+    """Send extracted event results with the new-customer closure notice."""
     try:
         from flask import render_template
-        
-        base_url = get_base_url()
-        signup_url = f"{base_url}/signup"
         
         # Render email template
         html_body = render_template(
             'emails/provisional_summary.html',
             events=events_data,
-            signup_url=signup_url
         )
         
         subject = f"✅ We found {len(events_data)} event{'s' if len(events_data) != 1 else ''} in your email!"
@@ -599,13 +572,9 @@ def send_provisional_scheduler_email(recipient_email: str):
     try:
         from flask import render_template
 
-        signup_url = f"{get_base_url()}/signup"
-        html_body = render_template(
-            'emails/provisional_scheduler.html',
-            signup_url=signup_url,
-        )
+        html_body = render_template('emails/provisional_scheduler.html')
 
-        subject = "✨ Unlock Cal's meeting coordination assistant"
+        subject = "Cal Autobot is closed to new customers"
         success = gmail_service.send_email(
             to=recipient_email,
             subject=subject,
@@ -626,13 +595,10 @@ def send_limit_reached_email(recipient_email: str):
     try:
         from flask import render_template
         
-        base_url = get_base_url()
-        signup_url = f"{base_url}/signup"
-        
         # Render email template
-        html_body = render_template('emails/limit_reached.html', signup_url=signup_url)
+        html_body = render_template('emails/limit_reached.html')
         
-        subject = "⚠️ Email limit reached - Sign up to continue"
+        subject = "Cal Autobot is closed to new customers"
         
         # Send email using Gmail service
         success = gmail_service.send_email(
@@ -670,23 +636,14 @@ def send_confirmation_email(recipient_email: str, events_count: int, synced_coun
         sentry_sdk.capture_exception(e)
         return False
 
-def ensure_provisional_user(sender_email: str) -> User:
-    """Create or retrieve a provisional user record for the sender."""
+def ensure_provisional_user(sender_email: str) -> Optional[User]:
+    """Return an existing user; new provisional account creation is disabled."""
     user = db.session.query(User).filter_by(email=sender_email).first()
     if user:
         return user
 
-    user = User()
-    user.email = sender_email
-    user.username = sender_email
-    user.google_id = None
-    user.email_count = 0
-    user.timezone = 'UTC'
-
-    db.session.add(user)
-    db.session.commit()
-    logger.info("✅ Created provisional user for scheduling: %s", sender_email)
-    return user
+    logger.info("New provisional account creation is disabled for %s", sender_email)
+    return None
 
 
 def handle_provisional_scheduler_user(user: User) -> None:

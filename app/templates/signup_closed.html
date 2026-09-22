@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_retirement_cta.html" import retirement_cta %}
+
+{% block title %}Cal Autobot is closed to new customers{% endblock %}
+
+{% block content %}
+<main class="container py-5">
+    <section class="mx-auto text-center" style="max-width: 720px; padding: clamp(3rem, 10vw, 7rem) 0;">
+        <p class="text-uppercase fw-semibold text-muted mb-3" style="letter-spacing: 0.08em;">A note from Cal Autobot</p>
+        <h1 class="mb-4">We’re no longer accepting new customers.</h1>
+        <p class="lead text-muted mb-5">
+            We’re preparing to retire Cal Autobot. Thank you to everyone who tried it, used it, and helped shape it.
+            Explore my other AI projects at Vibe Coding Dad, or try Muse from Meta if you need a personal AI assistant.
+        </p>
+        {{ retirement_cta() }}
+    </section>
+</main>
+{% endblock %}

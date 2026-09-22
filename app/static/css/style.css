@@ -236,6 +236,106 @@
     }
 }
 
+/* New customer retirement notice */
+.service-deprecation-banner {
+    width: 100%;
+    padding: 11px 20px;
+    background: #312e81;
+    color: #fff;
+    text-align: center;
+}
+
+.service-deprecation-banner__content {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px 8px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-size: calc(14px * var(--font-scale));
+    line-height: 1.45;
+}
+
+.service-deprecation-banner a {
+    color: #fff;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.service-deprecation-banner a:hover,
+.service-deprecation-banner a:focus {
+    color: #e0e7ff;
+}
+
+.retirement-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px 16px;
+    color: inherit;
+}
+
+.retirement-cta__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--min-touch-target);
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: #f97316;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.retirement-cta__link:hover,
+.retirement-cta__link:focus {
+    background: #ea580c;
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.25);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.retirement-cta__alternative,
+.retirement-cta__signin {
+    color: inherit;
+    font-size: calc(13px * var(--font-scale));
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    opacity: 0.8;
+}
+
+.retirement-cta__alternative:hover,
+.retirement-cta__alternative:focus,
+.retirement-cta__signin:hover,
+.retirement-cta__signin:focus {
+    color: inherit;
+    opacity: 1;
+}
+
+.retirement-cta--compact {
+    justify-content: flex-end;
+    max-width: 440px;
+    font-size: calc(13px * var(--font-scale));
+}
+
+.retirement-cta--compact .retirement-cta__link {
+    min-height: 40px;
+    padding: 8px 16px;
+}
+
+@media (max-width: 991px) {
+    .retirement-cta--compact {
+        max-width: none;
+        justify-content: center;
+        text-align: center;
+    }
+}
+
 /* Google Sign-In Button Styles */
 .google-signin-btn {
     display: inline-flex;

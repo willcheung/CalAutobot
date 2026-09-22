@@ -5,10 +5,9 @@ import os
 
 import requests
 from app import db
-from flask import Blueprint, redirect, request, url_for, session
+from flask import Blueprint, redirect, render_template, request, url_for, session
 from flask_login import current_user, login_required, login_user, logout_user
 from app.models import User, Event
-from app.services.event_types import create_event_type
 from app.services.users import assign_unique_handle
 from oauthlib.oauth2 import WebApplicationClient
 
@@ -38,11 +37,6 @@ def login():
     # Store timezone in session for later use during user creation
     timezone = request.args.get('timezone', 'UTC')
     session['user_timezone'] = timezone
-
-    # Store email parameter for new user signup flow
-    email = request.args.get('email')
-    if email:
-        session['signup_email'] = email
 
     full_access = request.args.get('full') == '1'
     if full_access:
@@ -135,38 +129,17 @@ def callback():
     logger = logging.getLogger(__name__)
 
     user = User.query.filter_by(email=users_email).first()
-    is_provisional_user_signup = False  # Track if this is a provisional user upgrading
-    old_timezone = (user.timezone if user else None) or 'UTC'
-    
-    if not user:
-        user = User()
-        user.username = users_name
-        user.email = users_email
-        user.google_id = google_id
-        user.timezone = user_timezone
-        if profile_picture:
-            user.profile_picture_url = profile_picture
-        user.email_count = 0  # Real users have no email limit
-        db.session.add(user)
-        logger.info(f"Created new user {users_email} with timezone {user_timezone}")
-        is_new_user = True
-    else:
-        # Check if this is a provisional user (no google_id) converting to real user
-        is_provisional_user_signup = (user.google_id is None)
-        is_new_user = False
-        
-        # Never update timezone for existing users - they can change it in settings
-        
-        if is_provisional_user_signup:
-            # Upgrade provisional user to real authenticated user
-            user.google_id = google_id
-            user.username = users_name
-            user.email_count = 0  # Reset email count - real users have no limit
-            logger.info(f"✅ Upgraded provisional user {users_email} to authenticated user")
+    if not user or not user.google_id:
+        logger.info("Rejected closed signup attempt for %s", users_email)
+        session.pop('signup_email', None)
+        session.pop('in_onboarding', None)
+        return render_template("signup_closed.html"), 403
+
+    old_timezone = user.timezone or 'UTC'
+
+    # Never update timezone for existing users - they can change it in settings.
     if profile_picture:
         user.profile_picture_url = profile_picture
-
-    has_existing_event_types = bool(user.event_types)
 
     if not user.handle:
         assign_unique_handle(user, users_name)
@@ -186,48 +159,12 @@ def callback():
 
     db.session.commit()
 
-    # Create a default event type for new users
-    should_create_default_event_type = is_new_user or (is_provisional_user_signup and not has_existing_event_types)
-
-    if should_create_default_event_type:
-        try:
-            create_event_type(
-                user_id=user.id,
-                title="30 min chat",
-                duration_minutes=30,
-                description="",
-                slug=None,
-                is_public=True,
-            )
-            logger.info(
-                "Created default event type for user %s (reason: %s)",
-                users_email,
-                "new_signup" if is_new_user else "provisional_upgrade",
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "Failed to create default event type for user %s: %s",
-                users_email,
-                exc,
-            )
-
     login_user(user)
-
-    # Check if this is a new signup from email invitation
-    signup_email = session.get('signup_email')
-    if signup_email and signup_email == users_email:
-        # Clear the signup email from session
-        session.pop('signup_email', None)
-
-        # Check for any pending events that were extracted from their email
-        # This could be implemented by storing temporary events in a separate table
-        # or by re-processing their recent emails
-        logger.info(f"New user {users_email} signed up after email invitation")
 
     gained_calendar_access = bool(user.google_token) and not had_calendar_access
 
-    # Auto-sync events for provisional users who just signed up or anyone who just granted calendar access
-    if is_provisional_user_signup or gained_calendar_access:
+    # Auto-sync events when an existing customer grants calendar access.
+    if gained_calendar_access:
         try:
             from app.services.google_calendar import create_calendar_event
             from app.helpers.event_utils import prepare_event_data_for_calendar
@@ -298,16 +235,13 @@ def callback():
         
         except Exception as e:
             logger.error(f"Error auto-syncing events for provisional user {users_email}: {str(e)}")
-            # Don't fail the signup process if sync fails
+            # Don't fail the calendar connection process if sync fails
 
     # Check if user is in onboarding flow (via session flag)
     in_onboarding = session.get('in_onboarding', False)
     
-    # Redirect to onboarding for:
-    # 1. New users or provisional upgrades
-    # 2. Users who are currently in the onboarding flow (e.g., connecting calendar from onboarding page)
-    if is_new_user or is_provisional_user_signup or in_onboarding:
-        logger.info(f"Redirecting {users_email} to onboarding (is_new_user={is_new_user}, is_provisional={is_provisional_user_signup}, in_onboarding={in_onboarding})")
+    if in_onboarding:
+        logger.info("Redirecting existing customer %s back to onboarding", users_email)
         return redirect(url_for("onboarding_routes.onboarding"))
     
     return redirect(url_for("main_routes.bookings"))

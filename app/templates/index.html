@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% from "_retirement_cta.html" import retirement_cta %}
 
-{% block title %}Cal Autobot | AI Scheduling Assistant in Email - Free for Solopreneurs{% endblock %}
+{% block title %}Cal Autobot | Closed to New Customers{% endblock %}
 
 {% block head %}
 <!-- SEO Meta Tags -->
 <meta name="description"
-    content="Qualify leads and book meetings automatically with Cal, your AI scheduling assistant. Works via email CC—auto follow-ups, 24/7 availability, Google Calendar sync. Free for individuals. Save 5+ hours/week. No credit card required.">
+    content="Cal Autobot is no longer accepting new customers as we prepare to retire the app. Existing customers can continue to sign in.">
 <meta name="keywords"
     content="AI scheduling assistant, email scheduling, AI meeting scheduler, sales automation, Calendly add-on, Google Calendar scheduling, email assistant, appointment booking, AI lead closer, solopreneur tools, small business scheduling">
 <meta name="author" content="Cal Autobot">
@@ -16,7 +17,7 @@
 <meta property="og:url" content="https://CalAutobot.com/">
 <meta property="og:title" content="Cal Autobot | AI That Qualifies Leads & Books Meetings Automatically">
 <meta property="og:description"
-    content="Keep leads warm with AI that works 24/7 via email. Auto follow-ups, meeting scheduling, and Google Calendar sync. Free for solopreneurs. Just CC Cal—no new workflow needed.">
+    content="Cal Autobot is no longer accepting new customers as we prepare to retire the app.">
 <meta property="og:image" content="{{ url_for('static', filename='images/logo.png') }}">
 <meta property="og:site_name" content="Cal Autobot">
 <meta property="og:locale" content="en_US">
@@ -26,7 +27,7 @@
 <meta name="twitter:url" content="https://CalAutobot.com/">
 <meta name="twitter:title" content="Cal Autobot | AI Scheduling Assistant in Email">
 <meta name="twitter:description"
-    content="Your AI assistant that qualifies leads and books meetings via email. Auto follow-ups, reminders, 24/7 availability. Free for individuals. Save 5+ hours per week.">
+    content="Cal Autobot is no longer accepting new customers as we prepare to retire the app.">
 <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png') }}">
 <meta name="twitter:creator" content="@CalAutobot">
 <meta name="twitter:site" content="@CalAutobot">
@@ -65,8 +66,8 @@
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "USD",
-    "availability": "https://schema.org/InStock",
-    "description": "Free forever for individuals with unlimited bookings"
+    "availability": "https://schema.org/Discontinued",
+    "description": "Closed to new customers"
   },
   "featureList": [
     "Automated meeting scheduling via email",
@@ -74,8 +75,7 @@
     "Google Calendar integration",
     "Event extraction from images and PDFs",
     "Public booking page",
-    "Unlimited bookings for free tier",
-    "No credit card required"
+    "Unlimited bookings for existing customers"
   ],
   "screenshot": "{{ url_for('static', filename='images/product-cc-cal.jpg', _external=True) }}",
   "aggregateRating": {
@@ -120,7 +120,7 @@
       "name": "How much does Cal cost for appointment scheduling?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Cal Autobot is free forever for individuals with unlimited bookings, calendars, and event types. Power user features with AI leads closer and CRM tracking will be available for a monthly subscription in the future."
+        "text": "Cal Autobot is no longer accepting new customers as we prepare to retire the app. Existing customers can continue using their accounts while the service remains available."
       }
     },
     {
@@ -1134,35 +1134,19 @@
         <div class="row justify-content-center">
             <div class="col-lg-10 text-center">
                 <div class="hero-badge">
-                    🚀 BETA
+                    SERVICE UPDATE
                 </div>
 
-                <h1 class="waitlist-title">Your meetings, booked automatically</h1>
+                <h1 class="waitlist-title">Cal Autobot is winding down</h1>
 
                 <p class="waitlist-subtitle">
-                    CC Cal on any email and your AI assistant schedules the meeting, follows up, and sends reminders.
-                    You stay focused.
+                    We’re no longer accepting new customers as we prepare to retire the app. Thank you to everyone
+                    who tried Cal and helped shape it.
                 </p>
 
                 {% if not current_user.is_authenticated %}
                 <div class="hero-actions mt-4">
-                    <div class="hero-cc-cta" id="hero-cc-cta">
-                        <span class="hero-cc-label">cc</span>
-                        <span class="hero-cc-email" id="hero-cc-email">Cal@CalAutobot.com</span>
-                        <button type="button" class="hero-cc-copy" id="hero-cc-copy-btn"
-                            onclick="copyEmailAddress('Cal@CalAutobot.com', this).then(function(){ var el=document.getElementById('hero-cc-cta'); el.classList.add('copied'); setTimeout(function(){ el.classList.remove('copied'); }, 2000); })"
-                            title="Copy email address">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">
-                        Try Cal free. Just add this address to any email cc and Cal handles the rest.
-                    </p>
+                    {{ retirement_cta() }}
                 </div>
                 {% else %}
                 <div class="hero-actions mt-4">
@@ -1239,8 +1223,7 @@
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
                 <h2 class="mb-3">Your AI assistant and scheduling app</h2>
-                <p class="text-muted">Discover a variety of our advanced features. Unlimited and free for individuals.
-                </p>
+                <p class="text-muted">A look back at the features available to existing customers.</p>
             </div>
         </div>
 
@@ -1308,23 +1291,7 @@
 
 <div class="section-cta text-center">
     {% if not current_user.is_authenticated %}
-    <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large"
-        onclick="startGoogleLogin(); return false;">
-        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-            <path fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-            <path fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-        </svg>
-        Sign up free with Google
-    </a>
-    <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
-        No credit card required. Zero setup.
-    </p>
+    {{ retirement_cta() }}
     {% else %}
     <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
         Go to Bookings
@@ -1368,7 +1335,7 @@
                 <p>Qualifies leads automatically and moves them toward a meeting. Cal uses form data, enrichment, and
                     email context so you spend zero time chasing cold prospects.</p>
                 <p class="mb-0"><em class="coming-soon-badge">Coming Soon</em><br /><em class="coming-soon-badge">Get
-                        $150 off when you sign up for free today.</em></p>
+                        available to existing customers.</em></p>
             </div>
 
             <div class="ai-agent-card">
@@ -1381,7 +1348,7 @@
                 <p>Updates your CRM with context from emails and meetings. No more manual notes or missing data. You
                     focus on the relationship, Cal handles the busywork.</p>
                 <p class="mb-0"><em class="coming-soon-badge">Coming Soon</em><br /><em class="coming-soon-badge">Get
-                        $150 off when you sign up for free today.</em></p>
+                        available to existing customers.</em></p>
             </div>
 
             <div class="ai-agent-card">
@@ -1400,25 +1367,7 @@
         </div>
     </div>
 
-    <div class="hero-actions mt-5 text-center">
-        <a href="#" class="google-signin-btn google-signin-btn-large" onclick="startGoogleLogin(); return false;">
-            <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-                <path fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            Sign up free with Google
-        </a>
-
-        <p class="mt-2" style="font-size: 0.9rem; font-weight: 300; color:white">
-            No credit card required. Zero setup.
-        </p>
-    </div>
+    <div class="hero-actions mt-5 text-center">{{ retirement_cta() }}</div>
 </section>
 -->
 <div class="use-cases-section">
@@ -1474,23 +1423,7 @@
 
 <div class="section-cta text-center">
     {% if not current_user.is_authenticated %}
-    <a href="#" class="google-signin-btn google-signin-btn-dark google-signin-btn-large"
-        onclick="startGoogleLogin(); return false;">
-        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-            <path fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-            <path fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-        </svg>
-        Sign up free with Google
-    </a>
-    <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
-        No credit card required. Zero setup.
-    </p>
+    {{ retirement_cta() }}
     {% else %}
     <a href="{{ url_for('main_routes.bookings') }}" class="btn btn-accent btn-lg">
         Go to Bookings
@@ -1568,39 +1501,21 @@
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
-                <h2 class="mb-3">Free for solopreneurs and hustlers</h2>
-                <p class="text-muted">Start for free with unlimited bookings and event types, then upgrade when you need
-                    more customizations and branding.</p>
+                <h2 class="mb-3">Cal Autobot is winding down</h2>
+                <p class="text-muted">We are no longer accepting new customers. Existing customers can continue to
+                    use their accounts while the service remains available.</p>
             </div>
         </div>
 
         <div class="pricing-grid">
             <div class="pricing-card">
-                <span class="pricing-badge">Beta</span>
-                <h3>Free for Individuals</h3>
-                <p class="plan-subtitle">Perfect for solo founders and personal scheduling</p>
+                <span class="pricing-badge">Closed</span>
+                <h3>Existing customers only</h3>
+                <p class="plan-subtitle">New account registration is disabled</p>
                 <div class="plan-price">
-                    <span class="plan-price-current">$0</span>
-                    <span class="plan-price-unit">/ forever</span>
+                    <span class="plan-price-current">No new accounts</span>
                 </div>
-                <a href="#" class="pricing-cta pricing-cta-primary google-signin-btn google-signin-btn-dark"
-                    onclick="startGoogleLogin(); return false;">
-                    <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"
-                        focusable="false">
-                        <path fill="#4285F4"
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                        <path fill="#34A853"
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                        <path fill="#FBBC05"
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                        <path fill="#EA4335"
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                    </svg>
-                    Sign up free with Google
-                </a>
-                <p class="text-center" style="font-size: 0.9rem; font-weight: 300;">
-                    No credit card required
-                </p>
+                {{ retirement_cta() }}
                 <p class="fw-semibold mb-2">Includes:</p>
                 <ul class="pricing-features">
                     <li><i data-feather="check"></i>AI Scheduler 🤖</li>
@@ -1827,33 +1742,14 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 text-center">
-                <h2 class="mb-4">Smart, Simpler Scheduling</h2>
+                <h2 class="mb-4">Thanks for being part of Cal Autobot</h2>
                 <p class="mb-4" style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.9);">
-                    Join forward-thinking individuals who are using AI to reclaim their time and focus on what truly
-                    matters.
+                    We are no longer accepting new customers as we prepare to retire the app.
                 </p>
 
                 {% if not current_user.is_authenticated %}
                 <div class="hero-actions mt-4">
-                    <a href="#" class="google-signin-btn google-signin-btn-large"
-                        onclick="startGoogleLogin(); return false;">
-                        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"
-                            focusable="false">
-                            <path fill="#4285F4"
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                            <path fill="#34A853"
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="#FBBC05"
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                            <path fill="#EA4335"
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                        </svg>
-                        Sign up free with Google
-                    </a>
-
-                    <p class="mt-2" style="font-size: 0.9rem; font-weight: 300;">
-                        No credit card required. Zero setup.
-                    </p>
+                    {{ retirement_cta() }}
                 </div>
                 {% else %}
                 <div class="hero-actions mt-4">

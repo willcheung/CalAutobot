@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import pytest
 
 from app import db
-from app.models import EventType, User
+from app.models import User
 from app.routes.google_auth import CALENDAR_SCOPE, GOOGLE_DISCOVERY_URL
 from app.services.users import assign_unique_handle
 
@@ -49,7 +49,7 @@ def _mock_oauth_flow(monkeypatch, token_payload, userinfo_payload):
 
 
 @pytest.mark.usefixtures("app_context")
-def test_new_google_signup_creates_default_event_type(client, monkeypatch):
+def test_new_google_signup_is_rejected(client, monkeypatch):
     email = "new-user@example.com"
     timezone = "America/New_York"
 
@@ -73,18 +73,13 @@ def test_new_google_signup_creates_default_event_type(client, monkeypatch):
         sess["oauth_flow"] = "basic"
 
     response = client.get("/google_login/callback?code=dummy-code")
-    assert response.status_code == 302
-
-    user = User.query.filter_by(email=email).one()
-    assert user.timezone == timezone
-    assert user.google_id == "google-sub-123"
-    assert user.google_token is None  # Basic flow doesn't store token (no calendar scope)
-    assert len(user.event_types) == 1
-    assert user.event_types[0].title == "30 min chat"
+    assert response.status_code == 403
+    assert b"no longer accepting new customers" in response.data
+    assert User.query.filter_by(email=email).first() is None
 
 
 @pytest.mark.usefixtures("app_context")
-def test_provisional_upgrade_with_full_scope_gets_default_event_type(client, monkeypatch):
+def test_provisional_upgrade_is_rejected(client, monkeypatch):
     email = "provisional@example.com"
     provisional_user = User(
         username=email,
@@ -96,8 +91,6 @@ def test_provisional_upgrade_with_full_scope_gets_default_event_type(client, mon
     db.session.flush()
     assign_unique_handle(provisional_user, email)
     db.session.commit()
-
-    assert EventType.query.filter_by(user_id=provisional_user.id).count() == 0
 
     _mock_oauth_flow(
         monkeypatch,
@@ -120,12 +113,56 @@ def test_provisional_upgrade_with_full_scope_gets_default_event_type(client, mon
         sess["oauth_flow"] = "calendar"
 
     response = client.get("/google_login/callback?code=upgrade-code")
-    assert response.status_code == 302
+    assert response.status_code == 403
 
     user = User.query.filter_by(email=email).one()
-    # Upgrades should populate Google credentials but keep existing timezone
-    assert user.google_id == "google-sub-456"
-    assert user.google_refresh_token == "refresh-token-456"
+    assert user.google_id is None
+    assert user.google_refresh_token is None
     assert user.timezone == "UTC"
-    assert len(user.event_types) == 1
-    assert user.event_types[0].title == "30 min chat"
+
+
+@pytest.mark.usefixtures("app_context")
+def test_existing_google_customer_can_still_sign_in(client, monkeypatch):
+    email = "existing@example.com"
+    user = User(
+        username="Existing Customer",
+        email=email,
+        google_id="google-sub-existing",
+        timezone="America/Los_Angeles",
+    )
+    db.session.add(user)
+    db.session.flush()
+    assign_unique_handle(user, user.username)
+    db.session.commit()
+
+    _mock_oauth_flow(
+        monkeypatch,
+        token_payload={
+            "access_token": "access-existing",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "scope": "openid email profile",
+        },
+        userinfo_payload={
+            "email": email,
+            "email_verified": True,
+            "sub": "google-sub-existing",
+        },
+    )
+
+    response = client.get("/google_login/callback?code=existing-code")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/bookings")
+    assert User.query.filter_by(email=email).count() == 1
+
+
+def test_signup_page_is_closed(client):
+    response = client.get("/signup")
+
+    assert response.status_code == 403
+    assert b"no longer accepting new customers" in response.data
+    assert b"Please start moving your workflows away from the service" in response.data
+    assert b"Explore my other builds" in response.data
+    assert b"vibecodingdad.com/#applied-ai" in response.data
+    assert b"Try Muse from Meta" in response.data

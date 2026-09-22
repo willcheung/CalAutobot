@@ -426,8 +426,8 @@ def image_to_calendar():
 
 @main_routes.route("/signup")
 def signup():
-    """Landing page that detects timezone and redirects to Google OAuth"""
-    return render_template("signup_redirect.html")
+    """Explain that Cal Autobot is closed to new customers."""
+    return render_template("signup_closed.html", show_landing_header=True), 403
 
 @main_routes.route("/bookings")
 @login_required
