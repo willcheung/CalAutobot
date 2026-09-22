@@ -300,7 +300,6 @@
     transform: translateY(-1px);
 }
 
-.retirement-cta__alternative,
 .retirement-cta__signin {
     color: inherit;
     font-size: calc(13px * var(--font-scale));
@@ -309,8 +308,6 @@
     opacity: 0.8;
 }
 
-.retirement-cta__alternative:hover,
-.retirement-cta__alternative:focus,
 .retirement-cta__signin:hover,
 .retirement-cta__signin:focus {
     color: inherit;

@@ -165,4 +165,4 @@ def test_signup_page_is_closed(client):
     assert b"Please start moving your workflows away from the service" in response.data
     assert b"Explore my other builds" in response.data
     assert b"vibecodingdad.com/#applied-ai" in response.data
-    assert b"Try Muse from Meta" in response.data
+    assert b"Muse from Meta" not in response.data
