@@ -1,19 +1,14 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxDuration": 120,
-        "includeFiles": ["app/**", "app/templates/**/*", "app/static/**/*", "app/templates/public/*", "app/templates/settings/*", "app/templates/emails/*", "app/templates/event_types/*", "app/templates/availability/*", "app/templates/contacts/*", "app/templates/partials/*", "app/templates/public/*"]
-      }
-    }
-  ],
+  "framework": null,
+  "installCommand": "",
+  "buildCommand": "node tools/build_retired_site.mjs",
+  "outputDirectory": "public",
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "main.py"
-    }
+    { "src": "/health", "dest": "/health.json" },
+    { "src": "/terms", "dest": "/terms.html" },
+    { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/image-to-calendar", "dest": "/image-to-calendar.html" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/retired.html", "status": 410 }
   ]
 }

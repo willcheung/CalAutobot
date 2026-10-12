@@ -1,0 +1,1135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Autobot | Turn Emails and Pictures to Calendar Events</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/logo.png">
+    <link rel="apple-touch-icon" href="/static/images/logo.png">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;500&family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    
+    
+    
+    
+    
+    
+
+    <meta name="description" content="CalAutobot.com schedules your meetings directly in email, so
+    you can book faster with AI.">
+    <meta property="og:site_name" content="CalAutobot">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CalAutobot | Your AI scheduling copilot">
+    <meta property="og:description" content="CalAutobot.com schedules your meetings directly in email, so
+    you can book faster with AI.">
+    <meta property="og:url" content="https://calautobot.com/image-to-calendar">
+    <meta property="og:image" content="https://calautobot.com/static/images/og-card.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CalAutobot | Your AI scheduling copilot">
+    <meta name="twitter:description" content="CalAutobot.com schedules your meetings directly in email, so
+    you can book faster with AI.">
+    <meta name="twitter:image" content="https://calautobot.com/static/images/og-card.png">
+    <link rel="canonical" href="https://calautobot.com/image-to-calendar">
+
+    
+<!-- SEO Meta Tags -->
+<meta name="description" content="Transform emails, websites, photos, and text into Google Calendar events with AI. Forward any email to Cal@CalAutobot.com and our AI automatically extracts dates, times, and event details to sync with your calendar.">
+<meta name="keywords" content="calendar automation, email to calendar, AI calendar, Google Calendar sync, event extraction, calendar events, email automation, schedule management">
+<meta name="author" content="Calendar Autobot">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://CalAutobot.com/">
+<meta property="og:title" content="Calendar Autobot | Turn Emails and Pictures to Calendar Events">
+<meta property="og:description" content="Turn emails, photos, and text into Google Calendar events with AI. Forward any email and our AI automatically extracts dates, times, and event details to sync with your calendar.">
+<meta property="og:image" content="/static/images/logo.png">
+<meta property="og:site_name" content="Calendar Autobot">
+
+<!-- Twitter -->
+<meta property="twitter:card" content="summary_large_image">
+<meta property="twitter:url" content="https://CalAutobot.com/">
+<meta property="twitter:title" content="Calendar Autobot | Turn Emails and Pictures to Calendar Events">
+<meta property="twitter:description" content="Turn emails, photos, and text into Google Calendar events with AI. Forward any email to Cal@CalAutobot.com and our AI automatically extracts dates, times, and event details to sync with your calendar.">
+<meta property="twitter:image" content="/static/images/logo.png">
+
+<!-- Additional SEO -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#3F51B5">
+<link rel="canonical" href="https://CalAutobot.com/">
+
+<!-- Schema.org structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Calendar Autobot",
+  "description": "Transform emails, photos, and text into Google Calendar events with AI",
+  "url": "https://CalAutobot.com",
+  "applicationCategory": "Productivity",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "127"
+  }
+}
+</script>
+
+</head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BNWS2QVDNV"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-BNWS2QVDNV');
+</script>
+
+<body>
+    
+    
+    <aside class="service-deprecation-banner" aria-label="Service deprecation notice">
+        <div class="service-deprecation-banner__content">
+            <strong>Cal Autobot has been retired.</strong>
+            <span>Scheduling, sign in, and signups are no longer available. This site remains as an archive.</span>
+            <a href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+                Explore my other builds <span aria-hidden="true">&rarr;</span>
+            </a>
+        </div>
+    </aside>
+    
+
+    
+    <header class="landing-header">
+        <div class="container landing-header-container">
+            <a class="landing-brand" href="/">
+                <img src="/static/images/logo.svg" alt="CalAutobot logo" width="36"
+                    height="36">
+                <span>Cal Autobot</span>
+            </a>
+            <button class="landing-menu-toggle" id="landingMenuToggle" type="button" aria-label="Toggle navigation"
+                aria-controls="landingNavMenu" aria-expanded="false">
+                <i data-feather="menu"></i>
+            </button>
+            <nav class="landing-nav" id="landingNavMenu" aria-label="Primary site navigation">
+                <div class="landing-nav-links">
+                    <a class="landing-link" href="/#product">Product</a>
+                    <a class="landing-link" href="/#chrome-extension">Chrome
+                        Extension</a>
+                    <a class="landing-link" href="/#pricing">Pricing</a>
+                    <a class="landing-link" href="https://calmart.ai/products/diary-of-an-ai-ceo">E-Book</a>
+                    <a class="landing-link" href="https://blog.calautobot.com">Blog</a>
+                </div>
+                <div class="retirement-cta retirement-cta--compact">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+            </nav>
+        </div>
+    </header>
+    
+
+    <div class="layout">
+        
+
+        <div class="layout-content">
+            
+            
+            
+
+            <!-- Main Content -->
+            <main class="main-content">
+                
+
+<div class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="hero-title">Stop Wasting Time Scheduling. <br/>Let AI Do It for You.</h1>
+                <p class="hero-subtitle">
+                    No typing. No copy-paste. Turn emails, pictures, or websites into Google Calendar events. 
+                </p>
+                
+                
+                    <div class="hero-actions mt-4">
+                        <p class="mb-2" style="font-size: 0.9rem; font-weight: 300;">Try it free. Forward any email to:</p>
+                        <div class="email-cta-wrapper">
+                            <a href="mailto:Cal@CalAutobot.com" class="email-address-link">
+                                <i data-feather="mail" style="width: 20px; height: 20px;"></i>
+                                Cal@CalAutobot.com
+                            </a>
+                            <button class="copy-email-btn" data-email="Cal@calautobot.com" onclick="copyEmailAddress('Cal@CalAutobot.com', this); return false;" title="Copy email address">
+                                <i data-feather="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
+
+                        <p class="mt-4" style="font-size: 0.9rem; font-weight: 300;">Take web screenshots without leaving your tab using our <a style="color: #81D4FA; text-decoration: underline;" href="https://chromewebstore.google.com/detail/calautobot-pictures-to-go/lmempdbkammjlmomcgjglolnmebeedok">Chrome Extension</a></p>
+                    </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="example-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2>Try Live Examples</h2>
+                <p class="text-muted">See how our AI extracts events from different types of content</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Tab Navigation -->
+                <ul class="nav nav-pills justify-content-center mb-4" id="exampleTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="sports-tab" data-bs-toggle="pill" data-bs-target="#sports-example" type="button" role="tab" aria-controls="sports-example" aria-selected="true">
+                            <i data-feather="award" class="me-2"></i>Sports Schedule
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="photo-tab" data-bs-toggle="pill" data-bs-target="#photo-example" type="button" role="tab" aria-controls="photo-example" aria-selected="false">
+                            <i data-feather="camera" class="me-2"></i>Photo Events
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="travel-tab" data-bs-toggle="pill" data-bs-target="#travel-example" type="button" role="tab" aria-controls="travel-example" aria-selected="false">
+                            <i data-feather="briefcase" class="me-2"></i>Travel Itinerary
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="school-tab" data-bs-toggle="pill" data-bs-target="#school-example" type="button" role="tab" aria-controls="school-example" aria-selected="false">
+                            <i data-feather="book-open" class="me-2"></i>School Events
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="exampleTabContent">
+                    <!-- Sports Schedule Tab -->
+                    <div class="tab-pane fade show active" id="sports-example" role="tabpanel" aria-labelledby="sports-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Real Madrid Match Schedule</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample4()" id="extractBtn4">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents4" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Villarreal ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 4, 2025 • 12:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Getafe vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 19, 2025 • 12:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Juventus ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 22, 2025 • 12:00 PM • UEFA Champions League - Matchday 3 of 8</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Barcelona ⚽</h6>
+                                            <p class="mb-0 text-muted small">Oct 26, 2025 • 8:15 AM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Real Madrid vs Valencia ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 1, 2025 • 1:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Liverpool vs Real Madrid ⚽</h6>
+                                            <p class="mb-0 text-muted small">Nov 4, 2025 • 12:00 PM • UEFA Champions League - Matchday 4 of 8</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+<!-- CTA Buttons after extraction -->
+<div class="text-center mt-4 mb-4" id="ctaButtons4" style="display: none;">
+    
+        <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+            <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+            Take web screenshots with Chrome Extension
+        </a>
+    
+</div>
+
+                            </div>
+                            
+                            <div class="example-text text-center">
+                                <img src="/static/images/sports-schedule.png" alt="Real Madrid match schedule" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Photo Events Tab -->
+                    <div class="tab-pane fade" id="photo-example" role="tabpanel" aria-labelledby="photo-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Photo of Events</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample3()" id="extractBtn3">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents3" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Napa Valley Wine Festival</h6>
+                                            <p class="mb-0 text-muted small">Apr 12, 2025 • 2:00 PM - 8:00 PM • Riverside Park Amphitheater</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Book Club Meeting</h6>
+                                            <p class="mb-0 text-muted small">Every Thursday • 7:00 PM - 8:30 PM • Central Library</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Art Gallery Opening</h6>
+                                            <p class="mb-0 text-muted small">Apr 18, 2025 • 6:00 PM - 10:00 PM • Downtown Art Center</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+<!-- CTA Buttons after extraction -->
+<div class="text-center mt-4 mb-4" id="ctaButtons3" style="display: none;">
+    
+        <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+            <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+            Take web screenshots with Chrome Extension
+        </a>
+    
+</div>
+
+                            </div>
+                            
+                            <div class="example-text text-center">
+                                <img src="/static/images/wine-festival.PNG" alt="Community bulletin board with event flyers" class="img-fluid rounded" style="max-width: 80%; height: auto; max-height: 400px; object-fit: contain;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Travel Itinerary Tab -->
+                    <div class="tab-pane fade" id="travel-example" role="tabpanel" aria-labelledby="travel-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Flight and Hotel Itinerary</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample2()" id="extractBtn2">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents2" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Flight UA 2847 (SFO → JFK)</h6>
+                                            <p class="mb-0 text-muted small">Mar 28, 2025 • 8:15 AM PDT - 4:45 PM EDT • San Francisco to New York</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Hotel Check-in - Marriott Downtown</h6>
+                                            <p class="mb-0 text-muted small">Mar 28, 2025 • 3:00 PM • Confirmation: HTL789456 • 123 Business District, New York, NY</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Hotel Check-out - Marriott Downtown</h6>
+                                            <p class="mb-0 text-muted small">Mar 30, 2025 • 11:00 AM • Confirmation: HTL789456 • 123 Business District, New York, NY</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+<!-- CTA Buttons after extraction -->
+<div class="text-center mt-4 mb-4" id="ctaButtons2" style="display: none;">
+    
+        <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+            <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+            Take web screenshots with Chrome Extension
+        </a>
+    
+</div>
+
+                            </div>
+                            
+                            <div class="example-text">
+                                <code style="font-size: 0.7rem; line-height: 1.2;">
+<strong>Subject: Your Flight and Hotel Confirmation<br>
+From: noreply@united.com<br><br></strong>
+
+Flight Details:<br>
+United Airlines Flight UA 2847<br>
+March 28, 2025<br>
+Departure: 8:15 AM PDT - San Francisco International Airport (SFO)<br>
+Arrival: 4:45 PM EDT - John F. Kennedy International Airport (JFK)<br>
+Duration: 5 hours 30 minutes<br><br>
+
+Hotel: Marriott Downtown<br>
+Address: 123 Business District, New York, NY<br>
+Check-in: March 28, 2025 at 3:00 PM<br>
+Check-out: March 30, 2025 at 11:00 AM<br>
+Nights: 2<br>
+Room Type: King Deluxe<br>
+Confirmation Number: HTL789456<br><br>
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- School Events Tab -->
+                    <div class="tab-pane fade" id="school-example" role="tabpanel" aria-labelledby="school-tab">
+                        <div class="example-card">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="mb-0">Back to School Events</h3>
+                                <button class="btn btn-primary btn-sm" onclick="extractExample1()" id="extractBtn1">
+                                    <i data-feather="calendar" class="me-1"></i>Extract
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4" id="extractedEvents1" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i data-feather="check" class="me-2"></i>Extracted events that will sync to Google Calendar:
+                                </h5>
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">9th Grade/New Student Orientation</h6>
+                                            <p class="mb-0 text-muted small">Aug 12, 2025 • 2:00 PM - 5:30 PM • Bow Gym</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">School Photos/Student ID Cards</h6>
+                                            <p class="mb-0 text-muted small">Aug 13, 2025 • 9:00 AM - 3:00 PM • Bow Gym</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Welcome-Back BBQ</h6>
+                                            <p class="mb-0 text-muted small">Aug 15, 2025 • 12:00 PM - 1:00 PM • Senior Quad</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="event-preview-card">
+                                            <h6 class="mb-1">Welcome-Back Dance</h6>
+                                            <p class="mb-0 text-muted small">Aug 22, 2025 • 7:30 PM - 10:30 PM • Senior Quad</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+<!-- CTA Buttons after extraction -->
+<div class="text-center mt-4 mb-4" id="ctaButtons1" style="display: none;">
+    
+        <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+            <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+            Take web screenshots with Chrome Extension
+        </a>
+    
+</div>
+
+                            </div>
+                            
+                            <div class="example-text">
+                                <code style="font-size: 0.7rem; line-height: 1.2;">
+                                <strong>9th Grade/New Student Orientation</strong><br>
+                                Date: Tuesday, Aug. 12, 2025<br>
+                                Time: 2:00-5:30 pm (Check-in begins at 1:00 pm)<br>
+                                Location: Bow Gym<br><br>
+
+                                <strong>School Photos/Student ID Cards</strong><br>
+                                9th Graders & New to HS Students: Aug. 12 during orientation<br>
+                                10th-12th Graders: Wednesday, Aug. 13, 9:00 am - 3:00 pm<br>
+                                Location: Bow Gym<br><br>
+
+                                <strong>Welcome-Back BBQ</strong><br>
+                                Date: Friday, Aug. 15, 2025<br>
+                                Time: During lunch<br>
+                                Location: Senior Quad<br>
+                                A fun and free event for all students with food, games, and music!<br><br>
+
+                                <strong>Welcome-Back Dance</strong><br>
+                                Date: Friday, Aug. 22, 2025<br>
+                                Time: 7:30-10:30 pm<br>
+                                Location: Senior Quad
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="features-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2>How It Works</h2>
+                <p class="text-muted">Simple, fast, and intelligent event extraction</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="mail"></i>
+                    </div>
+                    <h4>Forward Email or Take Web Screenshot</h4>
+                    <p>Forward your emails to us or use our Chrome extension to capture screenshots of events. Works with any text or image content.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="cpu"></i>
+                    </div>
+                    <h4>AI Processes Your Content</h4>
+                    <p>Our advanced AI analyzes your emails, documents, and images to extract event details like dates, times, locations, and descriptions with high accuracy.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="calendar"></i>
+                    </div>
+                    <h4>Auto-Sync to Google Calendar</h4>
+                    <p>Extracted events are automatically added to your Google Calendar. Review, edit, or approve events before they sync - you stay in complete control.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                
+                    <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+                    <div class="mt-2">
+                        <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+                        <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+                            Take web screenshots with Chrome Extension
+                    </a>
+                    </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="why-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-4">Why We Created This</h2>
+                <p class="lead text-muted mb-4">
+                    As a parent of two kids, I was drowning in stream of school events, afterschool activities, and endless emails from teachers, coaches, and school portals. Every week meant manually copying dates from different places and frantically adding events to our family calendar.
+                </p>
+                <p class="text-muted mb-4">
+                    There had to be a better way. That's why we built Calendar Autobot - to help busy parents, students, and anyone juggling multiple schedules get their time back.
+                </p>
+                <p class="text-success fw-medium">
+                    <i data-feather="heart" class="me-2"></i>
+                    This service is completely free because we believe everyone deserves more time for what matters most.
+                </p>
+                
+                
+                    <div class="mt-4">
+                        <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+                        <div class="mt-3">
+                            <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+                                <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+                                Take web screenshots with Chrome Extension
+                            </a>
+                        </div>
+                    </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="faq-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2>Frequently Asked Questions</h2>
+                <p class="text-muted">Everything you need to know about Calendar Autobot</p>
+            </div>
+        </div>
+        
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false" aria-controls="faq1">
+                                How does Calendar Autobot work?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Calendar Autobot uses advanced AI to analyze your text input (emails, documents, website screenshots) and automatically extracts event information like dates, times, locations, and descriptions. It then creates these events in your Google Calendar with just one click.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false" aria-controls="faq4">
+                                Do you create a separate calendar for events?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes! We automatically create a "Cal Autobot" calendar in your Google Calendar account. This keeps all extracted events organized separately from your personal calendar, making it easy to manage and review them without cluttering your main calendar.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6" aria-expanded="false" aria-controls="faq6">
+                                Is Calendar Autobot free to use?
+                            </button>
+                        </h2>
+                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Cal Autobot is no longer accepting new customers as we prepare to retire the app. Existing customers can continue using their accounts while the service remains available.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">
+                                What types of content can I process?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                You can process various types of content including email confirmations, flight itineraries, hotel bookings, meeting invites, event flyers, screenshots of calendars, and any text containing event information. The AI is designed to handle different formats and layouts.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">
+                                Is my data secure and private?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes, your privacy is our priority. We cannot access your main Google Calendar events and create a new "Cal Autobot" calendar. We use secure encryption for all data transmission. Your text input is processed by AI but not permanently stored. Read our <a href="/privacy">Privacy Policy</a> for full details.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5" aria-expanded="false" aria-controls="faq5">
+                                Can I edit events before they're added to my calendar?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Absolutely! After extraction, you can review and edit all event details including title, date, time, location, and description before syncing to your Google Calendar. You have full control over what gets added.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7" aria-expanded="false" aria-controls="faq7">
+                                What if the AI doesn't extract events correctly?
+                            </button>
+                        </h2>
+                        <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Our AI is highly accurate, but there's always room for it to make mistakes. If extraction doesn't work as expected, you can manually adjust the details. Send a note to <a href="https://calautobot.featurebase.app/">our support site</a> with any issues.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8" aria-expanded="false" aria-controls="faq8">
+                                Can I add multiple email addresses to my account?
+                            </button>
+                        </h2>
+                        <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes! You can add multiple email addresses to your Calendar Autobot account. This allows you to forward emails from any of your email addresses (work, personal, etc.) to <a href="mailto:Cal@CalAutobot.com">Cal@CalAutobot.com</a> and they'll all be added to the same calendar You can manage your additional email addresses from your Bookings page.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta-section" id="cta">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <div class="cta-card">
+                    <h2 class="mb-3">Looking for more AI builds?</h2>
+                    <p class="mb-4">See the other AI products and experiments I’m building at Vibe Coding Dad.</p>
+                    
+                    
+                        <div class="retirement-cta">
+    <a class="retirement-cta__link" href="https://vibecodingdad.com/#applied-ai" target="_blank" rel="noopener noreferrer">
+        Explore my other builds <span aria-hidden="true">&rarr;</span>
+    </a>
+</div>
+                        <div class="mt-1">
+                            <a href="https://chromewebstore.google.com/detail/calendar-autobot-ai/lmempdbkammjlmomcgjglolnmebeedok" target="_blank" class="chrome-extension-btn chrome-extension-btn-large">
+                                <img src="/static/images/chrome-icon.svg" alt="Chrome Extension" class="chrome-icon">
+                                Take web screenshots with Chrome Extension
+                            </a>
+                        </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.event-preview-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.event-preview-card:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.example-card {
+    position: relative;
+}
+
+.extract-loading {
+    position: relative;
+    overflow: hidden;
+}
+
+.extract-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom styling for nav pills */
+.nav-pills .nav-link {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    color: #6c757d;
+    margin: 0 4px;
+    border-radius: 25px;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.nav-pills .nav-link:hover {
+    background: #e9ecef;
+    color: #495057;
+    border-color: #dee2e6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.nav-pills .nav-link.active {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.nav-pills .nav-link i {
+    font-size: 16px;
+}
+
+/* Tab content styling */
+.tab-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.example-card {
+    padding: 30px;
+    border: none;
+}
+
+/* Make examples section stand out */
+.example-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 60px 0;
+    margin: 0;
+}
+</style>
+
+<script>
+function extractExample1() {
+    const btn = document.getElementById('extractBtn1');
+    const eventsDiv = document.getElementById('extractedEvents1');
+    const ctaDiv = document.getElementById('ctaButtons1');
+    
+    // Button loading state
+    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
+    btn.disabled = true;
+    btn.classList.add('extract-loading');
+    
+    // Add shimmer effect to example text
+    const exampleText = btn.closest('.example-card').querySelector('.example-text');
+    exampleText.classList.add('extract-loading');
+    
+    // Simulate AI processing delay
+    setTimeout(() => {
+        // Remove loading effects
+        exampleText.classList.remove('extract-loading');
+        btn.classList.remove('extract-loading');
+        
+        // Show extracted events with animation
+        eventsDiv.style.display = 'block';
+        eventsDiv.classList.add('fade-in');
+        
+        // Show CTA buttons
+        ctaDiv.style.display = 'block';
+        ctaDiv.classList.add('fade-in');
+        
+        // Update button
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Replace feather icons
+        feather.replace();
+        
+        // Hide button after a moment
+        setTimeout(() => {
+            btn.style.display = 'none';
+        }, 2000);
+    }, 2000);
+}
+
+function extractExample2() {
+    const btn = document.getElementById('extractBtn2');
+    const eventsDiv = document.getElementById('extractedEvents2');
+    const ctaDiv = document.getElementById('ctaButtons2');
+    
+    // Button loading state
+    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
+    btn.disabled = true;
+    btn.classList.add('extract-loading');
+    
+    // Add shimmer effect to example text
+    const exampleText = btn.closest('.example-card').querySelector('.example-text');
+    exampleText.classList.add('extract-loading');
+    
+    // Simulate AI processing delay
+    setTimeout(() => {
+        // Remove loading effects
+        exampleText.classList.remove('extract-loading');
+        btn.classList.remove('extract-loading');
+        
+        // Show extracted events with animation
+        eventsDiv.style.display = 'block';
+        eventsDiv.classList.add('fade-in');
+        
+        // Show CTA buttons
+        ctaDiv.style.display = 'block';
+        ctaDiv.classList.add('fade-in');
+        
+        // Update button
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Replace feather icons
+        feather.replace();
+        
+        // Hide button after a moment
+        setTimeout(() => {
+            btn.style.display = 'none';
+        }, 2000);
+    }, 2500);
+}
+
+function extractExample3() {
+    const btn = document.getElementById('extractBtn3');
+    const eventsDiv = document.getElementById('extractedEvents3');
+    const ctaDiv = document.getElementById('ctaButtons3');
+    
+    // Button loading state
+    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
+    btn.disabled = true;
+    btn.classList.add('extract-loading');
+    
+    // Add shimmer effect to example image
+    const exampleText = btn.closest('.example-card').querySelector('.example-text');
+    exampleText.classList.add('extract-loading');
+    
+    // Simulate AI processing delay for image
+    setTimeout(() => {
+        // Remove loading effects
+        exampleText.classList.remove('extract-loading');
+        btn.classList.remove('extract-loading');
+        
+        // Show extracted events with animation
+        eventsDiv.style.display = 'block';
+        eventsDiv.classList.add('fade-in');
+        
+        // Show CTA buttons
+        ctaDiv.style.display = 'block';
+        ctaDiv.classList.add('fade-in');
+        
+        // Update button
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Replace feather icons
+        feather.replace();
+        
+        // Hide button after a moment
+        setTimeout(() => {
+            btn.style.display = 'none';
+        }, 2000);
+    }, 3000);
+}
+
+function extractExample4() {
+    const btn = document.getElementById('extractBtn4');
+    const eventsDiv = document.getElementById('extractedEvents4');
+    const ctaDiv = document.getElementById('ctaButtons4');
+    
+    // Button loading state
+    btn.innerHTML = '<i data-feather="loader" class="me-1"></i>Extracting...';
+    btn.disabled = true;
+    btn.classList.add('extract-loading');
+    
+    // Add shimmer effect to example image
+    const exampleText = btn.closest('.example-card').querySelector('.example-text');
+    exampleText.classList.add('extract-loading');
+    
+    // Simulate AI processing delay for image
+    setTimeout(() => {
+        // Remove loading effects
+        exampleText.classList.remove('extract-loading');
+        btn.classList.remove('extract-loading');
+        
+        // Show extracted events with animation
+        eventsDiv.style.display = 'block';
+        eventsDiv.classList.add('fade-in');
+        
+        // Show CTA buttons
+        ctaDiv.style.display = 'block';
+        ctaDiv.classList.add('fade-in');
+        
+        // Update button
+        btn.innerHTML = '<i data-feather="check" class="me-1"></i>Extracted!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        // Replace feather icons
+        feather.replace();
+        
+        // Hide button after a moment
+        setTimeout(() => {
+            btn.style.display = 'none';
+        }, 2000);
+    }, 3000);
+}
+
+// Reset examples when tab changes
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('#exampleTabs button[data-bs-toggle="pill"]');
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function() {
+            // Reset all examples
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById(`extractBtn${i}`);
+                const eventsDiv = document.getElementById(`extractedEvents${i}`);
+                
+                if (btn && eventsDiv) {
+                    // Reset button
+                    btn.innerHTML = '<i data-feather="calendar" class="me-1"></i>Extract';
+                    btn.disabled = false;
+                    btn.className = 'btn btn-primary btn-sm';
+                    btn.style.display = 'inline-block';
+                    
+                    // Hide events
+                    eventsDiv.style.display = 'none';
+                    eventsDiv.classList.remove('fade-in');
+                }
+            }
+            
+            // Replace feather icons
+            feather.replace();
+        });
+    });
+});
+</script>
+
+            </main>
+        </div>
+    </div>
+
+    
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-2">&copy; 2026 CalAutobot.com</p>
+                    <p class="mb-0">
+                        <a href="/terms" class="me-3">Terms of Service</a>
+                        <a href="/privacy" class="me-3">Privacy Policy</a>
+
+                        <a href="https://calautobot.featurebase.app/">Submit your feedback</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS -->
+    <script src="/static/js/main.js"></script>
+
+    
+
+    <!-- Initialize Feather Icons -->
+    <script>
+        feather.replace();
+    </script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
+</body>
+
+</html>
