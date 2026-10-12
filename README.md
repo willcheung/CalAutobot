@@ -1,3 +1,13 @@
+> **Retired service (October 12, 2026).** Vercel serves only the archived public
+> site from `public/`. Accounts, scheduling, webhooks, payments, and APIs are
+> unavailable. Production does not run Flask or use a database. Legacy code
+> below is kept for reference.
+>
+> To update archived pages, install Jinja2 locally, edit `app/templates/`, run
+> `python tools/render_retired_site.py`, and commit the generated `public/*.html`.
+> Vercel runs `node tools/build_retired_site.mjs` to copy assets into `public/static`.
+> All former app URLs return HTTP 410 with the retirement notice.
+
 # CalAutobot — an AI scheduling agent for email
 
 ## Overview

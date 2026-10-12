@@ -16,3 +16,4 @@ pyproject.toml
 repl_nix_workspace.egg-info/
 .vercel
 .DS_Store
+public/static/
